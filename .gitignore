@@ -1,0 +1,45 @@
+# Ambientes e segredos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# Bancos e dados locais
+*.sqlite3
+*.db
+pgdata/
+exports/
+
+# Logs e temporários
+*.log
+logs/
+tmp/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+# Migrações (backend/alembic/versions) e lockfiles DEVEM ser versionados.

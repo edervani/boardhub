@@ -1,0 +1,9 @@
+{
+  "name": "boardhub-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fase 0: sem dependências. O frontend (frontend/package.json com lockfile) será criado na Fase 1 após verificar versões (DT-012).",
+  "scripts": {
+    "check:docs": "python3 scripts/check_docs.py"
+  }
+}

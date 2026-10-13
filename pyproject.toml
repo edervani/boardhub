@@ -1,0 +1,13 @@
+# Arquivo mínimo da Fase 0. As dependências NÃO foram fixadas porque o
+# ambiente não tinha acesso ao PyPI para verificar versões (DT-012 / P-02).
+# Na Fase 1 este arquivo vai para backend/pyproject.toml com versões verificadas.
+[project]
+name = "boardhub"
+version = "0.0.0"
+description = "Plataforma recreativa e educacional de jogos de tabuleiro (especificação)."
+requires-python = ">=3.12"   # a confirmar (P-02)
+dependencies = []
+
+# Dependências propostas (não verificadas): fastapi, uvicorn, sqlalchemy, alembic,
+# psycopg, pydantic, pydantic-settings, argon2-cffi, python-chess, httpx.
+# Desenvolvimento: pytest, hypothesis, ruff, mypy, pip-audit.

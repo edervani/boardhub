@@ -1,0 +1,69 @@
+# 09 — Segurança e Privacidade
+
+> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · **Este documento não constitui parecer jurídico nem certifica conformidade com a LGPD.**
+
+## 1. Ativos
+Credenciais e sessões; dados pessoais (e-mail, nome de exibição); integridade de partidas e ratings; conteúdo da Academy; segredos de infraestrutura; disponibilidade do serviço.
+
+## 2. Modelo de ameaças (STRIDE resumido)
+
+| Ameaça | Exemplo | Controles |
+|--------|---------|-----------|
+| Spoofing | Força bruta de login, sequestro de sessão | SEC-01, SEC-04, SEC-08 |
+| Tampering | Enviar resultado/estado falso, jogar no turno do outro | SEC-05, validação no servidor (doc 07 §6) |
+| Repudiation | Moderador nega ação | SEC-11 auditoria |
+| Information disclosure | Enumeração de e-mails, IDOR em partidas, logs com dados | SEC-02, SEC-05, SEC-12 |
+| DoS | Inundação de WS, IA cara | SEC-06, SEC-08, limites de tempo da IA |
+| Elevation of privilege | Usuário acessa `/admin` | SEC-05, papéis no servidor |
+| Abuso de jogo | Uso de motor externo em ranqueadas, manipulação de rating entre contas | SEC-13 |
+
+Limites de confiança: [doc 04 §13](04-arquitetura-tecnica.md#13-limites-de-confiança).
+
+## 3. Controles
+
+- **SEC-01 Senhas:** Argon2id (biblioteca `argon2-cffi` proposta), parâmetros ≥ recomendação OWASP vigente na implementação; mínimo 12 caracteres, máximo 128; checagem contra lista local de senhas comuns (sem enviar senha a terceiros); rehash automático se parâmetros mudarem.
+- **SEC-02 Antienumeração:** respostas idênticas em cadastro/recuperação; perfil privado e inexistente retornam o mesmo 404.
+- **SEC-03 Tokens de e-mail:** 256 bits aleatórios (`secrets`), armazenados como SHA-256, uso único, expiração curta.
+- **SEC-04 Sessões:** identificador opaco de 256 bits; cookie `HttpOnly; Secure; SameSite=Lax; Path=/`; hash no banco; rotação no login e na troca de senha; expiração por inatividade e absoluta; revogação imediata.
+- **SEC-05 Autorização por recurso:** cada caso de uso verifica posse/participação; testes de IDOR para todo endpoint com `{id}`. Papéis checados no servidor; a UI esconder botões não é controle.
+- **SEC-06 WebSocket:** autenticação no handshake, verificação de `Origin`, limite de tamanho e taxa de mensagens, revalidação de participação por mensagem, fechamento de conexões de sessões revogadas.
+- **SEC-07 CSRF:** `SameSite=Lax` + token double-submit em métodos que alteram estado; CORS restrito à origem do frontend, `allow_credentials` só para ela; nenhum `*`.
+- **SEC-08 Rate limiting:** por IP e por conta (doc 06 §1); atraso progressivo em login; implementação em memória na v1, compartilhada (Redis) se houver várias instâncias.
+- **SEC-09 XSS:** React escapa por padrão; proibido `dangerouslySetInnerHTML` sem sanitização aprovada; CSP sem `unsafe-inline` para scripts; textos de usuário e de LLM sempre como texto.
+- **SEC-10 Injeção:** SQL apenas via SQLAlchemy com parâmetros; sem concatenação. **SSRF:** a única saída HTTP configurável é Ollama, com URL fixa em configuração (nunca vinda do usuário).
+- **SEC-11 Auditoria:** ações administrativas, troca de senha, exclusão/exportação de conta gravadas em `audit_log` imutável.
+- **SEC-12 Logs seguros:** proibido registrar senha, token, cookie, cabeçalho `Authorization`, corpo de requisições de auth, e-mail completo (mascarar: `a***@d***.com`), conteúdo de exportações. Filtro central no logger + teste automatizado (RNF-013). Retenção 30 dias; acesso restrito à operação.
+- **SEC-13 Antitrapaça e antiabuso:** sem ajuda do Mentor em partidas ranqueadas em andamento; detecção heurística posterior (precisão acima do esperado sustentada — fase 7, apenas sinaliza para revisão humana, nunca pune automaticamente); limite de partidas ranqueadas repetidas contra o mesmo oponente; anulação de partidas abortadas cedo; CAPTCHA acessível no cadastro se houver automação maliciosa (decisão adiada, P-10).
+- **SEC-14 Segredos:** apenas em variáveis de ambiente/gerenciador de segredos; `.env` real no `.gitignore`; varredura de segredos (ex.: gitleaks) no CI; rotação documentada no doc 12.
+- **SEC-15 Dependências:** versões fixadas em lock; `pip-audit`/`npm audit` no CI; atualização mensal; novas dependências exigem justificativa (CONTRIBUTING).
+- **SEC-16 Cabeçalhos:** HSTS, CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `frame-ancestors 'none'`, `Permissions-Policy` restritiva.
+- **SEC-17 Backups:** criptografados, fora do servidor principal, testados (doc 12).
+
+## 4. Validação de entradas
+Esquemas Pydantic estritos; tamanhos máximos; enums fechados; normalização Unicode (NFKC) e filtro de caracteres de controle em nomes; lances validados pelo motor.
+
+## 5. Resposta a incidentes
+1. Detecção (alerta/relato) → 2. Contenção (revogar sessões, rotacionar segredos, desabilitar recurso) → 3. Avaliação de impacto em dados pessoais → 4. Comunicação: se houver risco ou dano relevante aos titulares, comunicação à ANPD e aos titulares conforme a LGPD e regulamentação da ANPD vigente (**prazos e critérios a confirmar com o jurídico — P-04**) → 5. Correção → 6. Pós-incidente documentado. Runbook no doc 13.
+
+## 6. Direitos dos titulares
+Acesso/portabilidade (RF-029), correção (RF-006), eliminação (RF-030), informação sobre compartilhamento (política de privacidade), revogação de consentimento quando a base for consentimento. Canal de contato do encarregado a definir (P-04).
+
+## 7. Minimização e privacidade por padrão
+- Coleta só e-mail, nome de exibição e senha. Sem nome real, telefone, data de nascimento, localização precisa.
+- Sem rastreadores de terceiros/analytics externos na v1.
+- IP não armazenado em banco; em logs, retenção curta.
+- Nenhum dado pessoal enviado ao Ollama ou a qualquer serviço externo além do provedor de e-mail (operador — exige contrato).
+
+## 8. LGPD — análise de aplicabilidade (preliminar)
+- O BoardHub trata dados pessoais de pessoas no Brasil ⇒ LGPD aplicável.
+- **Bases legais propostas (a validar):** execução de contrato (conta, partidas, ranking); legítimo interesse (segurança, prevenção de fraude, logs) com teste de balanceamento documentado; consentimento para comunicações opcionais.
+- Obrigações que **dependem de validação jurídica e organizacional** (não resolvidas por código): nomeação do encarregado; política de privacidade e termos; registro das operações de tratamento; contratos com operadores (hospedagem, e-mail); avaliação sobre relatório de impacto; procedimento de comunicação de incidentes.
+
+## 9. Exclusão e exportação
+Ver doc 05 §7 e RF-029/RF-030.
+
+## 10. Crianças e adolescentes
+Decisão pendente (P-03): permitir ou não contas de menores de 18 anos.
+- **Se não permitir na v1 (recomendado até análise jurídica):** termos exigem 18+ ou uso sob conta de responsável; não coletar data de nascimento além de autodeclaração "tenho 18 anos ou mais"; uso escolar via conta do educador em modo local.
+- **Se permitir:** exigir análise jurídica do art. 14 da LGPD (melhor interesse; consentimento específico de pelo menos um dos pais/responsável para menores de 12 anos) e de normas posteriores aplicáveis a ambientes digitais para crianças e adolescentes (verificar legislação vigente na data da decisão); perfil privado por padrão, sem chat, sem ranking público, sem comunicação com desconhecidos; linguagem e ilustrações adequadas; mecanismo de verificação de consentimento parental.
+Em nenhum caso a idade altera dificuldade ou nível (doc 01 §2).

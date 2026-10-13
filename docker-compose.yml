@@ -1,0 +1,38 @@
+# Ambiente de DESENVOLVIMENTO. Não usar em produção (ver docs/12).
+# Fase 0: apenas o banco. Backend/frontend entram na Fase 1.
+# A tag da imagem deve ser fixada após verificação de versão (P-02).
+name: boardhub
+
+services:
+  db:
+    image: postgres:${POSTGRES_IMAGE_TAG:-17}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"   # nunca 0.0.0.0
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Opcional (perfil "ai"): docker compose --profile ai up -d ollama
+  ollama:
+    image: ollama/ollama:${OLLAMA_IMAGE_TAG:-latest}
+    profiles: ["ai"]
+    volumes:
+      - ollama:/root/.ollama
+    networks: [internal]     # sem portas publicadas
+
+volumes:
+  pgdata:
+  ollama:
+
+networks:
+  internal:
