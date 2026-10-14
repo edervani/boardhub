@@ -184,6 +184,7 @@ PARCIAIS = {6, 7, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33, 34}  # códi
 
 
 ACADEMY = {22, 23, 24, 25}  # Academy e Mentor (fase 6)
+RANKING = {19, 21}  # ranking Elo e estatísticas (fase 5); damas fora do ranking: P-21
 
 
 def state_evidence(n: int) -> tuple[str, str]:
@@ -191,6 +192,8 @@ def state_evidence(n: int) -> tuple[str, str]:
         return "implementado", f"{PR1}; CI verde"
     if n in PARCIAIS:
         return "aprovado", f"parcial em {PR1}; lacunas em P-15"
+    if n in RANKING:
+        return "aprovado", "código na branch `feat/fase-5-ranking` (PR aberto; `implementado` só após merge; damas: P-21)"
     if n in ACADEMY:
         return "aprovado", "código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge)"
     return "aprovado", "—"

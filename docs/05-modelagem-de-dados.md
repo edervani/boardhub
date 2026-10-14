@@ -90,6 +90,7 @@ PK (`match_id`,`ply`); `seat`; `move` text (notação do jogo: índice 0–8, PD
 ### ratings / rating_history
 `ratings`: PK (`user_id`,`game_id`); `rating` int default 1200; `games_played` int; `updated_at`.
 `rating_history`: `id`; `user_id`; `game_id`; `match_id` UNIQUE com `user_id`; `before`; `after`; `created_at`.
+> **Implementado (migração 0007, DT-019):** as duas tabelas acima; `match_players.rating_before`/`rating_after` (nulos até a partida ranqueada ser liquidada; `rating_after` não nulo = já liquidada); `matchmaking_queue.ranked` (fila ranqueada × casual) e `games.ranked_enabled = true` só para o xadrez (P-21). `ratings` e `rating_history` caem em cascata com a conta (RF-030).
 
 ### Academy (fase 3)
 > **DT-018:** `lessons` e `exercises` não são tabelas; o conteúdo vive em `backend/app/academy/content/*.json`. Tabelas criadas na migração 0006: `exercise_attempts`, `user_skill_progress`, `exercise_hints`, `academy_placements`, `match_analyses`.

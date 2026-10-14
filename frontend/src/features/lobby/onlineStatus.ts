@@ -31,6 +31,7 @@ export function onlineStatusText(
   const mine = mySeat(m);
   if (m.status === "waiting") return "Aguardando o oponente entrar com o código.";
   if (m.status === "aborted") return "Sala cancelada ou expirada.";
+  if (m.status === "annulled") return "Partida anulada: terminou cedo demais e não altera o rating.";
   if (m.status === "finished") {
     if (m.result === "draw") {
       return m.end_reason === "agreement" ? "Empate por acordo." : "Empate.";
@@ -50,4 +51,16 @@ export function onlineStatusText(
   return toMove === mine
     ? `Sua vez (${seatName(m.game_id, toMove)}).`
     : `Vez do adversário (${seatName(m.game_id, toMove)}).`;
+}
+
+/** Variação de rating do próprio jogador ao fim de uma partida ranqueada (RF-019). */
+export function ratingChangeText(
+  m: Pick<MatchView, "seats" | "rating_changes">,
+): string | null {
+  const mine = mySeat(m);
+  const c = (m.rating_changes ?? []).find((r) => r.seat === mine);
+  if (!c) return null;
+  const delta = c.after - c.before;
+  const signed = delta > 0 ? `+${delta}` : String(delta);
+  return `Seu rating: ${c.before} → ${c.after} (${signed}).`;
 }

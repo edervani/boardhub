@@ -53,6 +53,13 @@ def update_profile(db: Session, user: User, patch: ProfilePatch) -> UserProfile:
         # RF-034: menores só ficam públicos por decisão do responsável.
         raise ProblemError(403, "supervision_required", "Ação restrita ao responsável",
                            "O perfil de menores só pode ser tornado público pelo responsável.")
+    if "show_in_ranking" in fields and patch.show_in_ranking and user.is_minor:
+        raise ProblemError(403, "supervision_required", "Ação restrita ao responsável",
+                           "Só o responsável pode incluir o menor no ranking público.")
+    if patch.show_in_ranking and not (profile.is_public if patch.is_public is None
+                                      else patch.is_public):
+        raise ProblemError(422, "ranking_requires_public_profile",
+                           "Para aparecer no ranking o perfil precisa ser público")
     if patch.display_name is not None:
         _change_name(db, user, patch.display_name)
     if patch.avatar_key is not None:
@@ -63,6 +70,8 @@ def update_profile(db: Session, user: User, patch: ProfilePatch) -> UserProfile:
         profile.is_public = patch.is_public
         if not patch.is_public:
             profile.show_in_ranking = False
+    if patch.show_in_ranking is not None and patch.is_public is not False:
+        profile.show_in_ranking = patch.show_in_ranking
     try:
         db.commit()
     except IntegrityError as exc:  # corrida na unicidade do nome

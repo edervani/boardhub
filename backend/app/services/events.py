@@ -21,10 +21,13 @@ class Event:
 
 
 def match_ended(match_id: uuid.UUID, result: str | None, end_reason: str | None,
-                ply: int) -> Event:
-    return Event("match_ended", {"match_id": str(match_id), "result": result,
-                                 "end_reason": end_reason, "ply": ply},
-                 seq=ply, match_id=match_id)
+                ply: int, rating_changes: list[dict[str, int]] | None = None) -> Event:
+    """`rating_changes` (por assento: before/after) só existe em partida ranqueada liquidada."""
+    payload: dict[str, Any] = {"match_id": str(match_id), "result": result,
+                               "end_reason": end_reason, "ply": ply}
+    if rating_changes:
+        payload["rating_changes"] = rating_changes
+    return Event("match_ended", payload, seq=ply, match_id=match_id)
 
 
 def match_started(match_id: uuid.UUID, game_id: str,

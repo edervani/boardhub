@@ -8,10 +8,11 @@ import { AcademyPage } from "../features/academy/AcademyPage";
 import { ReviewPage } from "../features/academy/ReviewPage";
 import { MatchBoard } from "../features/tictactoe/MatchBoard";
 import { ProfilePage } from "../features/profile/ProfilePage";
+import { RankingPage } from "../features/ranking/RankingPage";
 import { ApiError, api } from "../services/api";
 import type { Me } from "../services/types";
 
-type View = "jogos" | "jogar" | "online" | "historico" | "academy" | "revisao" | "perfil" | "entrar" | "cadastro";
+type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "revisao" | "perfil" | "entrar" | "cadastro";
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -38,6 +39,7 @@ export function App() {
           <strong>BoardHub</strong>
           <button className="secondary" onClick={() => setView("jogos")}>Jogos</button>
           <button className="secondary" onClick={() => setView("jogar")}>Jogar</button>
+          <button className="secondary" onClick={() => setView("ranking")}>Ranking</button>
           {me ? (
             <>
               <button className="secondary" onClick={() => setView("online")}>Online</button>
@@ -64,6 +66,7 @@ export function App() {
               <LobbyPage me={me} renderBoard={(p) => <MatchBoard {...p} />} />
             )}
                         {view === "historico" && me && <History onReview={(id) => { setReviewId(id); setView("revisao"); }} />}
+            {view === "ranking" && <RankingPage me={me} />}
             {view === "academy" && me && <AcademyPage />}
             {view === "revisao" && me && <ReviewPage matchId={reviewId} onBack={() => setView("historico")} />}
             {view === "perfil" && me && <ProfilePage me={me} />}

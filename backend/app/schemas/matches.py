@@ -7,11 +7,12 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.auth import Strict
+from app.schemas.ranking import RatingChangeOut
 
 
 class CreateMatchIn(Strict):
     game_id: str = Field(max_length=16)
-    mode: Literal["ai", "local", "online_casual"]
+    mode: Literal["ai", "local", "online_casual", "online_ranked"]
     ai_level: int | None = Field(default=None, ge=1, le=5)
     preferred_seat: Literal[1, 2] | None = None
 
@@ -21,7 +22,7 @@ class CreateMatchIn(Strict):
             raise ValueError("ai_level é obrigatório contra a IA")
         if self.mode == "local" and (self.ai_level is not None or self.preferred_seat):
             raise ValueError("ai_level e preferred_seat não se aplicam à partida local")
-        if self.mode == "online_casual" and self.ai_level is not None:
+        if self.mode in ("online_casual", "online_ranked") and self.ai_level is not None:
             raise ValueError("ai_level não se aplica à partida online")
         return self
 
@@ -68,6 +69,8 @@ class MatchOut(BaseModel):
     invite_code: str | None = None
     invite_expires_at: datetime | None = None
     draw_offer_by_seat: int | None = None
+    # Partida ranqueada encerrada e liquidada: rating de cada assento antes e depois (RF-019).
+    rating_changes: list[RatingChangeOut] = []
 
 
 class MoveOut(BaseModel):
@@ -103,6 +106,7 @@ class DrawResponseIn(Strict):
 
 class QueueIn(Strict):
     game_id: str = Field(max_length=16)
+    ranked: bool = False
 
 
 class QueueStatusOut(BaseModel):
@@ -112,6 +116,9 @@ class QueueStatusOut(BaseModel):
     # RF-012: após 60 s o cliente oferece jogar contra a IA.
     offer_ai: bool = False
     match_id: uuid.UUID | None = None
+    ranked: bool = False
+    # Janela de rating (±) usada agora no pareamento ranqueado (RF-012).
+    rating_window: int | None = None
 
 
 class ActiveMatchOut(BaseModel):
