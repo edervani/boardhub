@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (engajamento ético — RF-026 conquistas, RF-027 desafio diário, RF-028 notificações; DT-023, P-25)
+- Módulo de eventos de domínio (`services/domain_events.py`): fim de partida, lance online, desconexão, tentativa da Academy e desafio respondido; consumidores em savepoint (falha de engajamento nunca derruba o jogo).
+- Conquistas: 16 definições versionadas em `achievements.json`, concessão idempotente pelo servidor, progresso em `GET /me/achievements`, vitrine na aba "Conquistas" e em `GET /users/{nome}` (perfis públicos). Só distintivos: sem valor monetário, troca ou vantagem.
+- Desafio diário: `GET /daily-challenge` e `POST /daily-challenge/{jogo}/attempt`; exercício determinístico por (dia de America/Sao_Paulo, jogo) com o conteúdo da Academy; uma tentativa válida por jogo e dia; sem sequência nem perda por faltar.
+- Notificações in-app: `GET /me/notifications`, marcar como lida (uma/todas), preferências por tipo; evento WS `notification`; sino acessível (`aria-live="polite"`). Sem e-mail, push nem avisos de retorno.
+- Migração 0011 (`user_achievements`, `daily_challenge_results`, `notifications`, `notification_preferences`); exportação de dados ganhou a seção `engagement`; exclusão por CASCADE; rotina diária remove avisos antigos.
+- Testes: pytest (`test_engajamento.py`), Vitest (`Engagement.test.tsx`) e E2E/axe das novas telas.
+
 ### Adicionado (limite diário de tempo, painel do responsável e notação de lances — RF-034, RF-007; fecha parte de P-15)
 - Limite diário de tempo para contas supervisionadas: o servidor mede a atividade dos menores (lance, criação de partida, tentativa/dica/avaliação da Academy; intervalos de até 5 min) por dia de America/Sao_Paulo em `daily_usage` (migração 0009). Com o tempo esgotado, criar partida (local, IA ou convite), entrar por código e entrar na fila (e consultá-la) respondem 429 `daily_limit_reached` com `Retry-After` e mensagem em pt-BR; quem esgotou o tempo não é pareado. A partida em andamento pode terminar (RF-034); a chave `DAILY_LIMIT_BLOCKS_MOVES` bloqueia também os lances (HTTP e WebSocket, com `retry_after` no erro) — **P-23**. DT-021 (proposta).
 - API: `GET /guardian/children/{id}` e `usage_today` em `ChildOut` (tempo usado, limite e quando o dia vira); vínculo inexistente ⇒ 404 igual ao inexistente. A exportação de dados inclui `daily_usage`.

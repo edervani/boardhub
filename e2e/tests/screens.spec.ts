@@ -107,3 +107,28 @@ test.describe("tema escuro", () => {
     await auditA11y(page, testInfo, "dark-xadrez");
   });
 });
+
+test("desafio do dia: três jogos, sem cobrança por faltar, e axe", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await nav(page, "Desafio").click();
+  await expect(page.getByRole("heading", { level: 2, name: "Desafio do dia" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 3, name: "Jogo da velha" })).toBeVisible();
+  await expect(page.getByText(/nada se perde/)).toBeVisible();
+  await auditA11y(page, testInfo, "desafio");
+});
+
+test("conquistas: vitrine com progresso e axe", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await nav(page, "Conquistas").click();
+  await expect(page.getByRole("heading", { level: 2, name: "Conquistas" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Conquistas" })).toBeVisible();
+  await auditA11y(page, testInfo, "conquistas");
+});
+
+test("sino de notificações: painel, preferências e axe", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("button", { name: /^Notificações/ }).click();
+  await expect(page.getByRole("region", { name: "Painel de notificações" })).toBeVisible();
+  await expect(page.getByLabel("Vez de jogar numa partida online")).toBeChecked();
+  await auditA11y(page, testInfo, "notificacoes");
+});

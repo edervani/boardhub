@@ -21,8 +21,10 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 | lessons, exercises | **Criar** (fase 3) | Conteúdo da Academy, versionado |
 | user_skill_progress | **Criar** (fase 3) | RF-025 |
 | exercise_attempts | **Criar** (fase 3) | Evidência para domínio — substitui/generaliza `challenge_attempts` |
-| achievements, user_achievements | **Adiar** (fase 6) | RF-026 |
-| daily_challenges | **Adiar** (fase 6); tentativas usam `exercise_attempts` | Evita tabela duplicada |
+| achievements | **Não criar**: definições em arquivo versionado (`achievements.json`), como o conteúdo da Academy (DT-018, DT-023) | RF-026 |
+| user_achievements | **Criar** (DT-023) | RF-026 |
+| daily_challenge_results | **Criar** (DT-023, P-25): o exercício do dia é calculado, não guardado; o resultado fica à parte de `exercise_attempts`, que não tem unicidade por dia e alimenta o domínio | RF-027 |
+| notifications, notification_preferences | **Criar** (DT-023) | RF-028 |
 | friendships, invitations | **Adiar** (fase 6) | RF-032; convites de partida usam `matches.invite_code` |
 | reports, audit_log | **Criar** (`audit_log` fase 1; `reports` fase 6/7) | RF-031, SEC-11 |
 | data_export_requests | **Criar** | RF-029 |
@@ -53,6 +55,18 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 
 ### user_preferences
 `user_id` PK/FK CASCADE; `theme` (`light|dark|system`); `motion` (`full|reduced|none|system`); `sound` bool; `move_confirmation` bool; `move_notation` (`algebraic_pt|san|uci`, padrão `algebraic_pt`; só exibição, RF-007); `piece_styles` jsonb (`{"chess":"classic",…}`, validado por esquema); `locale` default `pt-BR`.
+
+### user_achievements
+`user_id` FK CASCADE + `achievement_key` varchar(48) (PK composta, garante concessão única); `definition_version`; `earned_at`. Sem valor monetário.
+
+### daily_challenge_results
+`user_id` FK CASCADE + `game_id` FK + `day` date (dia civil de America/Sao_Paulo) (PK composta = uma tentativa válida por jogo e dia); `exercise_id`, `content_version`, `answer`, `correct`, `completed_at`.
+
+### notifications
+`id` uuid PK; `user_id` FK CASCADE; `kind` (`your_turn`, `match_ended`, `opponent_disconnected`, `achievement_earned`); `payload` jsonb (ids e título, sem dados de terceiros); `dedupe_key` (único entre não lidas por usuário: um aviso por partida); `read_at`; `created_at`. Retenção: lidas por 30 dias, qualquer uma por 90 (rotina diária).
+
+### notification_preferences
+`user_id` FK CASCADE + `kind` (PK composta); `enabled`. Sem linha = ativo.
 
 ### daily_usage
 `user_id` FK CASCADE + `day` date (PK composta; dia civil de America/Sao_Paulo); `seconds` int ≥ 0; `last_activity_at` timestamptz. Só existe para contas de menores (minimização de dados); some com a conta (CASCADE). Regra de contagem em DT-021.

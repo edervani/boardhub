@@ -38,7 +38,13 @@ from app.models import (
 )
 from app.models.base import new_id
 from app.schemas.matches import ActiveMatchOut, MatchOut, QueueStatusOut
-from app.services import catalog_service, guardian_service, match_service, usage_service
+from app.services import (
+    catalog_service,
+    domain_events,
+    guardian_service,
+    match_service,
+    usage_service,
+)
 from app.services.events import Event, match_started
 from app.services.game_registry import KITS
 
@@ -499,7 +505,7 @@ def respond_draw(db: Session, user: User, match_id: uuid.UUID,
     if accept:
         offer.status = "accepted"
         match_service.finish_with_winner(match, None, "agreement")
-        events = [match_service.finish_event(db, match, players)]
+        events = [match_service.finish_event(db, match, players, user)]
     else:
         offer.status = "declined"
         events = [Event("draw_declined", {"match_id": str(match.id), "by_seat": seat,
@@ -539,7 +545,7 @@ def claim_abandon(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOu
         raise ProblemError(409, "too_early", "Ainda é cedo para reivindicar",
                            f"Aguarde mais {int(limit - elapsed) + 1} segundo(s).")
     match_service.finish_with_winner(match, seat, "abandon")
-    events = [match_service.finish_event(db, match, players)]
+    events = [match_service.finish_event(db, match, players, user)]
     db.commit()
     return match_service.view(db, match, players, user), events
 
@@ -576,6 +582,13 @@ def mark_disconnected(db: Session, user_id: uuid.UUID, match_id: uuid.UUID) -> l
         db.rollback()
         return []
     mine.disconnected_at = clock.now()
+    other = db.scalar(select(MatchPlayer.user_id).where(
+        MatchPlayer.match_id == match_id, MatchPlayer.user_id.is_not(None),
+        MatchPlayer.user_id != user_id))
+    if other is not None:  # RF-028: o oponente é avisado (um aviso por partida)
+        domain_events.emit_new(db, domain_events.PLAYER_DISCONNECTED, user_id,
+                               match_id=str(match_id), game_id=match.game_id,
+                               opponent_user_id=other)
     db.commit()
     return [_connection_event(match, mine)]
 

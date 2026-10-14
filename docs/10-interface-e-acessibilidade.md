@@ -62,6 +62,9 @@ No xadrez, a lista de lances (`<ol>` com brancas e pretas por linha) segue a pre
 ## 11-B. Painel do responsável (RF-034)
 Aba "Responsável" (contas 18+ com e-mail confirmado). Cada menor vinculado é um cartão com: tempo de hoje em texto ("Hoje: 12 min de 60 min.") e `<progress>` com nome acessível, aviso em texto quando o limite foi atingido, formulário de limite diário (campo numérico rotulado, ajuda 15–600, vazio = sem limite) e das demais configurações, exportação (links `download`) e exclusão (senha do responsável + ciência do prazo de 14 dias, com cancelamento). Botões e campos levam o nome do menor no rótulo para leitores de tela; erros em `role="alert"` e confirmações em `role="status"`; nenhum estado depende só de cor.
 
+## 11-C. Conquistas, desafio do dia e notificações (RF-026–028)
+Abas "Desafio" e "Conquistas" e sino "Notificações" na navegação principal. O sino é um botão com `aria-expanded`, contagem em texto ("3 não lidas") e uma região `aria-live="polite"` que só anuncia quando chegam avisos novos; o painel lista avisos com "Marcar como lida" e checkboxes rotulados para desativar cada tipo. Conquistas mostram progresso em `<progress>` rotulado (nunca só cor). O desafio do dia usa o mesmo componente de exercício da Academy e diz em texto que faltar um dia não tira nada; não há contagem regressiva, sequência nem texto de urgência (doc 01 §8).
+
 ## 12. Experiência de aprendizagem
 Lições curtas (≤ 3 min), um conceito por vez; tabuleiro interativo na própria lição; barra de progresso por conceito com rótulo textual ("Em prática — 3 de 5 acertos"); dicas por botão explícito; sem penalização visual humilhante por erro.
 

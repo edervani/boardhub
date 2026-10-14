@@ -80,9 +80,9 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-023 | doc 02 | services/academy_service | /academy/exercises/* | T-023 | CA-023 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
 | RF-024 | doc 02 | ai/mentor + ai/llm | GET /matches/{id}/analysis | T-024 | CA-024 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
 | RF-025 | doc 02 | services/academy_service | features/academy | T-025 | CA-025 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
-| RF-026 | doc 02 | services/achievement_service | (fase 6) | T-026 | CA-026 | aprovado | — |
-| RF-027 | doc 02 | services/academy_service | (fase 6) | T-027 | CA-027 | aprovado | — |
-| RF-028 | doc 02 | services/notification_service | WS eventos | T-028 | CA-028 | aprovado | — |
+| RF-026 | doc 02 | services/achievement_service | GET /me/achievements; domain_events | T-026 | CA-026 | aprovado | código na branch `feat/engajamento` (PR aberto; `implementado` só após merge); decisões em DT-023 e P-25 |
+| RF-027 | doc 02 | services/daily_challenge_service | GET /daily-challenge; POST /daily-challenge/{game}/attempt | T-027 | CA-027 | aprovado | código na branch `feat/engajamento` (PR aberto; `implementado` só após merge); decisões em DT-023 e P-25 |
+| RF-028 | doc 02 | services/notification_service | /me/notifications*; WS `notification` | T-028 | CA-028 | aprovado | código na branch `feat/engajamento` (PR aberto; `implementado` só após merge); decisões em DT-023 e P-25 |
 | RF-029 | doc 02 | services/privacy_service | /me/export, /guardian/children/{id}/export | T-029 | CA-029 | aprovado | código na branch `feat/fase-7-privacidade` (PR aberto; `implementado` só após merge); lacunas em P-21 |
 | RF-030 | doc 02 | services/privacy_service | /me/delete, /guardian/children/{id}/delete | T-030 | CA-030 | aprovado | código na branch `feat/fase-7-privacidade` (PR aberto; `implementado` só após merge); lacunas em P-21 |
 | RF-031 | doc 02 | services/moderation_service | /reports, /admin/* | T-031 | CA-031 | aprovado | — |
