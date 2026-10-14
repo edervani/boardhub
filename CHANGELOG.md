@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 2b — partidas contra a IA e locais)
+- Migração 0002: `matches`, `match_players`, `match_moves`; jogo da velha habilitado (classificação "Livre" a validar — P-04).
+- `POST /matches` (modos `ai` e `local`), `GET /matches/{id}`, `GET /matches/{id}/moves`, `POST /matches/{id}/moves` (idempotente por `client_move_id`, controle otimista por `expected_ply`, bloqueio de linha), `POST /matches/{id}/resign`, `GET /me/matches` (cursor) e `POST /engines/{game_id}/apply` (visitante, sem persistência, limite 8 KB).
+- Estado inválido aborta a partida com registro em auditoria; não participantes recebem 404 (IDOR); replay dos lances reproduz estado e hashes (T-122).
+- Ainda ausentes: partidas online (convite, fila, WebSocket, reconexão), ranking, empate por acordo e interface do tabuleiro.
+
 ### Modificado
 - RF-001 a RF-005 passam a `implementado` (PR #1); matriz de rastreabilidade com evidência.
 

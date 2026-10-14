@@ -11,24 +11,7 @@ from app.db.session import get_engine
 from app.models import AuditLog, Game, User
 from app.services import guardian_service
 from tests.conftest import FakeClock, MemoryMailer
-from tests.helpers import csrf, login, register
-
-API = "/api/v1"
-
-
-def novo_cliente(app: TestClient) -> TestClient:
-    return TestClient(app.app, base_url="https://testserver")
-
-
-def conta_logada(client: TestClient, mailer: MemoryMailer, n: int = 1, **kw: object) -> TestClient:
-    """Cadastra, confirma o e-mail e autentica `client`."""
-    assert register(client, n, **kw).status_code == 201
-    email = f"jogador{n}@example.test"
-    token = mailer.last_token(email)
-    assert client.post(f"{API}/auth/verify-email", json={"token": token}).status_code == 204
-    assert login(client, n).status_code == 200
-    return client
-
+from tests.helpers import API, conta_logada, csrf, login, novo_cliente, register
 
 # ---------- CA-006: perfil ----------
 
@@ -186,7 +169,7 @@ def jogos_habilitados() -> Iterator[None]:
         conn.execute(text("UPDATE games SET age_rating = '16' WHERE id = 'checkers'"))
     yield
     with get_engine().begin() as conn:
-        conn.execute(text("UPDATE games SET enabled = false, age_rating = 'L'"))
+        conn.execute(text("UPDATE games SET enabled = (id = 'tictactoe'), age_rating = 'L'"))
 
 
 def test_catalogo_exibe_selo_textual(client: TestClient, jogos_habilitados: None,
@@ -220,8 +203,18 @@ def test_usuario_abaixo_da_classificacao_nao_ve_o_jogo(
     assert {g["id"] for g in client.get(f"{API}/games").json()} == esperado
 
 
+def test_so_o_jogo_da_velha_esta_habilitado_por_padrao(client: TestClient) -> None:
+    assert [g["id"] for g in client.get(f"{API}/games").json()] == ["tictactoe"]
+
+
 def test_jogos_desabilitados_nao_aparecem(client: TestClient) -> None:
-    assert client.get(f"{API}/games").json() == []
+    with get_engine().begin() as conn:
+        conn.execute(text("UPDATE games SET enabled = false"))
+    try:
+        assert client.get(f"{API}/games").json() == []
+    finally:
+        with get_engine().begin() as conn:
+            conn.execute(text("UPDATE games SET enabled = (id = 'tictactoe')"))
 
 
 def test_jogo_sem_classificacao_nao_pode_ser_habilitado(db: Session) -> None:
