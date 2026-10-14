@@ -364,6 +364,8 @@ def announce_finish(db: Session, match: Match, players: list[MatchPlayer],
         return
     humans = [p for p in players if p.user_id is not None and not p.is_ai]
     for p in humans:
+        if p.user_id is None:
+            continue
         other = next((q.user_id for q in humans if q.user_id != p.user_id), None)
         domain_events.emit_new(
             db, domain_events.MATCH_FINISHED, p.user_id, match_id=str(match.id),

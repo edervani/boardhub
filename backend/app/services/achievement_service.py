@@ -32,7 +32,7 @@ from app.services.domain_events import DomainEvent
 ONLINE_MODES = ("online_casual", "online_ranked")
 
 
-def _finished_matches(uid: uuid.UUID, c: Criterion) -> Select[tuple[int]]:
+def _finished_matches(uid: uuid.UUID, c: Criterion) -> Select[int]:
     stmt = (select(func.count()).select_from(Match)
             .join(MatchPlayer, MatchPlayer.match_id == Match.id)
             .where(MatchPlayer.user_id == uid, MatchPlayer.is_ai.is_(False),
