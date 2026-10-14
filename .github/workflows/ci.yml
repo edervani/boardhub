@@ -36,7 +36,7 @@ jobs:
       - name: Gerar lockfiles ausentes
         run: |
           [ -f backend/uv.lock ] || (cd backend && uv lock)
-          [ -f frontend/package-lock.json ] || (cd frontend && npm install --package-lock-only --no-audit --no-fund)
+          (cd frontend && npm install --package-lock-only --no-audit --no-fund)
       - name: Commitar lockfiles
         run: |
           git add backend/uv.lock frontend/package-lock.json
