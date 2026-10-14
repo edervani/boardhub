@@ -9,6 +9,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - IA em 5 níveis: 1 aleatório com preferência por capturas; 2–5 negamax com poda alfa-beta, aprofundamento iterativo com limite de tempo (0,3/1/2/3 s), tabelas de casas, ordenação MVV-LVA e quiescência de capturas. Stockfish/UCI fica para a Fase 5.
 - Migração 0004 (xadrez habilitado); `stalemate` e `fifty_move` passam a ser gravados como motivo de fim.
 - Testes: perft 20/400/8902 e Kiwipete 48/2039, mate do pastor, afogamento, roque, en passant, promoção, material insuficiente, estados adulterados, IA×IA curta e partidas pela API com replay e hashes.
+- CI: o job `lockfiles` passou a sempre atualizar `backend/uv.lock` (versões já fixadas são preservadas).
 - **Pendência P-17:** sem reivindicação de empate (3x/50 lances) nem acordo nesta fase. Frontend do xadrez não incluído.
 ### Adicionado (Fase 4 — interface do xadrez)
 - Frontend: opção "Xadrez" no seletor, `ChessBoard` acessível (casas rotuladas como "e4: peão branco, jogável", lance por dois cliques sobre os lances UCI legais, seletor de promoção, setas do teclado, tabuleiro invertido para as pretas, glifos Unicode sem depender de cor), `fenToSquares` pura e textos de status (xeque-mate, afogamento, repetição quíntupla, 75 lances, desistência).
