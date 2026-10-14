@@ -80,7 +80,8 @@ def check_jobs_service() -> None:
     rows = [json.loads(line) for line in out.splitlines() if line.strip()]
     check(len(rows) == 1 and rows[0].get("State") == "running", "serviço jobs em execução")
     check(rows[0].get("Health") == "healthy", "serviço jobs saudável (rotina diária executou)")
-    check(not rows[0].get("Publishers"), "serviço jobs não publica portas")
+    published = [p for p in rows[0].get("Publishers") or [] if p.get("PublishedPort")]
+    check(not published, "serviço jobs não publica portas no host")
 
 
 def main() -> None:
