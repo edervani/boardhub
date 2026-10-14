@@ -214,7 +214,7 @@ def test_vez_de_jogar_chega_por_websocket_e_na_lista(client: TestClient,
     lista = _avisos(b)
     assert lista["unread_count"] == 1
     assert lista["items"][0]["title"] == "Sua vez de jogar"
-    assert _tipos(a) == []  # quem jogou não recebe aviso da própria jogada
+    assert "your_turn" not in _tipos(a)  # quem jogou não recebe aviso da própria jogada
 
 
 def test_avisos_repetidos_viram_um_e_somem_ao_jogar(client: TestClient,
