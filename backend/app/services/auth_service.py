@@ -125,7 +125,8 @@ def register(db: Session, mailer: Mailer, data: Registration) -> None:
                                avatar_key="default")
     user.preferences = UserPreferences(allow_open_matchmaking=not minor, piece_styles={},
                                        theme="system", motion="system", sound=True,
-                                       move_confirmation=False, locale="pt-BR")
+                                       move_confirmation=False, locale="pt-BR",
+                                       move_notation="algebraic_pt")
     db.add(user)
     db.flush()
     verify = _issue_token(db, user, "verify_email", VERIFY_TTL)

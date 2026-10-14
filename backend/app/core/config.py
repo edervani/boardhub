@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     online_grace_seconds: int = Field(default=60, ge=1)
     online_inactivity_seconds: int = Field(default=600, ge=30)
 
+    # RF-034: com o limite diário esgotado, a partida em andamento pode terminar. Ligar esta
+    # chave bloqueia também os lances (conflito com o pedido de bloqueio, docs/16 P-23).
+    daily_limit_blocks_moves: bool = False
+
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_user: str = ""

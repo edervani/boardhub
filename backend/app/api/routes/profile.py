@@ -4,6 +4,7 @@ import re
 import uuid
 
 from fastapi import APIRouter, Response, status
+from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentAuth, DbSession, OptionalAuth, VerifiedAuth
 from app.core.errors import ProblemError
@@ -12,6 +13,7 @@ from app.schemas.profile import (
     ChildOut,
     ChildSettings,
     ChildSettingsPatch,
+    ChildUsage,
     GameOut,
     GuardianConfirmIn,
     PreferencesModel,
@@ -19,7 +21,13 @@ from app.schemas.profile import (
     ProfilePatch,
     PublicProfileOut,
 )
-from app.services import catalog_service, guardian_service, privacy_service, profile_service
+from app.services import (
+    catalog_service,
+    guardian_service,
+    privacy_service,
+    profile_service,
+    usage_service,
+)
 
 router = APIRouter(tags=["perfil"])
 NAME_RE = re.compile(r"^[\w-]{3,24}$")
@@ -32,7 +40,8 @@ def _profile_out(user: User) -> ProfileOut:
                       display_name_change_allowed_at=profile_service.name_change_allowed_at(p))
 
 
-def _child_out(child: User) -> ChildOut:
+def _child_out(db: Session, child: User) -> ChildOut:
+    usage = usage_service.usage_today(db, child)
     return ChildOut(
         id=child.id, display_name=child.profile.display_name, age_band=child.age_band,
         settings=ChildSettings(
@@ -40,6 +49,8 @@ def _child_out(child: User) -> ChildOut:
             profile_public=child.profile.is_public,
             show_in_ranking=child.profile.show_in_ranking,
             daily_minutes_limit=child.preferences.daily_minutes_limit),
+        usage_today=ChildUsage(used_seconds=usage.used_seconds,
+                               limit_seconds=usage.limit_seconds, resets_at=usage.resets_at),
         deletion_scheduled_for=privacy_service.deletion_scheduled_for(child))
 
 
@@ -84,18 +95,23 @@ def games(auth: OptionalAuth, db: DbSession) -> list[GameOut]:
 
 @router.post("/guardian/links/confirm")
 def confirm_link(body: GuardianConfirmIn, auth: VerifiedAuth, db: DbSession) -> ChildOut:
-    return _child_out(guardian_service.confirm_link(db, auth.user, body.token))
+    return _child_out(db, guardian_service.confirm_link(db, auth.user, body.token))
 
 
 @router.get("/guardian/children")
 def children(auth: VerifiedAuth, db: DbSession) -> list[ChildOut]:
-    return [_child_out(c) for c in guardian_service.list_children(db, auth.user)]
+    return [_child_out(db, c) for c in guardian_service.list_children(db, auth.user)]
+
+
+@router.get("/guardian/children/{child_id}")
+def child(child_id: uuid.UUID, auth: VerifiedAuth, db: DbSession) -> ChildOut:
+    return _child_out(db, guardian_service.supervised_child(db, auth.user, child_id))
 
 
 @router.put("/guardian/children/{child_id}/settings")
 def child_settings(child_id: uuid.UUID, body: ChildSettingsPatch, auth: VerifiedAuth,
                    db: DbSession) -> ChildOut:
-    return _child_out(guardian_service.update_settings(db, auth.user, child_id, body))
+    return _child_out(db, guardian_service.update_settings(db, auth.user, child_id, body))
 
 
 @router.delete("/guardian/children/{child_id}/link", status_code=status.HTTP_204_NO_CONTENT)

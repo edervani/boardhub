@@ -21,6 +21,7 @@ from app.core.security import verify_password
 from app.models import (
     AuditLog,
     AuthSession,
+    DailyUsage,
     DataExportRequest,
     ExerciseAttempt,
     ExerciseHint,
@@ -72,11 +73,18 @@ def _profile_section(user: User) -> dict[str, Any]:
         "display_name_changed_at": _iso(p.display_name_changed_at),
         "preferences": {
             "theme": prefs.theme, "motion": prefs.motion, "sound": prefs.sound,
-            "move_confirmation": prefs.move_confirmation, "piece_styles": prefs.piece_styles,
+            "move_confirmation": prefs.move_confirmation, "move_notation": prefs.move_notation,
+            "piece_styles": prefs.piece_styles,
             "locale": prefs.locale, "allow_open_matchmaking": prefs.allow_open_matchmaking,
             "daily_minutes_limit": prefs.daily_minutes_limit,
         },
     }
+
+
+def _usage_section(db: Session, user: User) -> list[dict[str, Any]]:
+    rows = db.scalars(select(DailyUsage).where(DailyUsage.user_id == user.id)
+                      .order_by(DailyUsage.day))
+    return [{"day": d.day.isoformat(), "seconds": d.seconds} for d in rows]
 
 
 def _sessions_section(db: Session, user: User) -> list[dict[str, Any]]:
@@ -194,6 +202,7 @@ def build_export(db: Session, user: User) -> dict[str, Any]:
         "account": _account_section(user),
         "profile": _profile_section(user),
         "sessions": _sessions_section(db, user),
+        "daily_usage": _usage_section(db, user),
         "matches": _matches_section(db, user),
         "academy": _academy_section(db, user),
         "ratings": _ratings_section(db, user),

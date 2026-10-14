@@ -55,9 +55,14 @@ export function useOnlineMatch(matchId: string) {
         const ply = num(p.ply);
         if (!prev || ply === null || ply <= prev.ply) break; // repetido ou antigo
         if (ply > prev.ply + 1) join(); // lacuna: pede o estado oficial de novo
+        // Xadrez: o servidor manda a SAN do lance (RF-007); acrescenta se a lista está em dia.
+        const san = str(p.san);
+        const sanMoves = san !== null && (prev.san_moves?.length ?? 0) === ply - 1
+          ? [...(prev.san_moves ?? []), san] : prev.san_moves;
         setMatch({
           ...prev, ply, state: p.state as MatchView["state"], to_move_seat: num(p.next_seat),
           legal_moves: Array.isArray(p.legal_moves) ? (p.legal_moves as string[]) : [],
+          san_moves: sanMoves,
         });
         if (num(p.seat) !== mine) setPolite(`O adversário jogou ${str(p.move) ?? ""}. Sua vez.`);
         break;

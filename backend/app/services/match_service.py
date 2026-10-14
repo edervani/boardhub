@@ -11,10 +11,12 @@ import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ai.mentor.notation import chess_san_moves
 from app.core import clock
 from app.core.config import get_settings
 from app.core.errors import ProblemError
@@ -25,7 +27,7 @@ from app.models import AuditLog, DrawOffer, Match, MatchMove, MatchPlayer, User,
 from app.models.base import new_id
 from app.schemas.matches import MatchOut, MatchPage, MatchSummary, PlayerOut, SeatOut
 from app.schemas.ranking import RatingChangeOut
-from app.services import catalog_service, rating_service
+from app.services import catalog_service, rating_service, usage_service
 from app.services.events import Event, match_ended
 from app.services.game_registry import KITS, GameKit
 
@@ -87,6 +89,13 @@ def _players_out(db: Session, players: list[MatchPlayer]) -> list[PlayerOut]:
             for p in players if not p.is_ai]
 
 
+def _san_moves(match: Match) -> list[str]:
+    if match.game_id != "chess":
+        return []
+    moves = match.state.get("moves")
+    return chess_san_moves([str(m) for m in moves]) if isinstance(moves, list) else []
+
+
 def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
          invite_code: str | None = None) -> MatchOut:
     kit = _kit(match)
@@ -111,6 +120,7 @@ def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
                for p in players],
         rating_changes=[RatingChangeOut(seat=c.seat, before=c.before, after=c.after)
                         for c in rating_service.changes_from_players(players)],
+        san_moves=_san_moves(match),
         created_at=match.created_at, finished_at=match.finished_at,
     )
 
@@ -135,6 +145,7 @@ def create_match(db: Session, user: User, game_id: str, mode: str, ai_level: int
     kit = KITS.get(game_id)
     if game_id not in visible or kit is None:
         raise ProblemError(404, "game_not_found", "Jogo não encontrado")
+    usage_service.require_within_limit(db, user)  # RF-034: limite diário esgotado
     state = kit.engine.serialize(kit.engine.initial_state())
     now = clock.now()
     match = Match(id=new_id(), game_id=game_id, mode=mode, status="in_progress", state=state,
@@ -153,6 +164,7 @@ def create_match(db: Session, user: User, game_id: str, mode: str, ai_level: int
     db.add_all(players)
     db.flush()
     _play_ai_turn_if_due(db, match, players, kit)
+    usage_service.touch(db, user, now)
     db.commit()
     return view(db, match, players, user)
 
@@ -238,10 +250,13 @@ def move_applied(match: Match, seat: int, move: str) -> Event:
     legal = [str(m) for m in kit.engine.legal_moves(kit.engine.deserialize(match.state))] \
         if in_progress else []
     next_seat = _seat_to_move(match.ply) if in_progress else None
-    return Event("move_applied", {"match_id": str(match.id), "ply": match.ply, "seat": seat,
-                                  "move": move, "state": match.state, "next_seat": next_seat,
-                                  "legal_moves": legal},
-                 seq=match.ply, match_id=match.id)
+    payload: dict[str, Any] = {"match_id": str(match.id), "ply": match.ply, "seat": seat,
+                               "move": move, "state": match.state, "next_seat": next_seat,
+                               "legal_moves": legal}
+    san = _san_moves(match)
+    if san:  # xadrez: o cliente exibe o lance na notação escolhida (RF-007) sem motor próprio
+        payload["san"] = san[-1]
+    return Event("move_applied", payload, seq=match.ply, match_id=match.id)
 
 
 def _expire_draw_offers_on_move(db: Session, match: Match, mover_seat: int) -> list[Event]:
@@ -272,6 +287,7 @@ def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_pl
         raise ProblemError(409, "match_not_started", "A partida ainda não começou")
     if match.status != "in_progress":
         raise ProblemError(409, "match_finished", "A partida já terminou")
+    usage_service.require_within_limit_for_move(db, user)
     if expected_ply != match.ply:
         raise StaleStateError(match.ply)
     seat = _seat_to_move(match.ply)
@@ -290,6 +306,7 @@ def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_pl
         if match.status == "finished":
             events.append(finish_event(db, match, players))
     _play_ai_turn_if_due(db, match, players, kit)
+    usage_service.touch(db, user)
     db.commit()
     return MoveResult(view(db, match, players, user), events)
 

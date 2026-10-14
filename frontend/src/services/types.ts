@@ -37,11 +37,15 @@ export interface Profile {
   display_name_change_allowed_at: string | null;
 }
 
+export type MoveNotation = "algebraic_pt" | "san" | "uci";
+
 export interface Preferences {
   theme: "light" | "dark" | "system";
   motion: "full" | "reduced" | "none" | "system";
   sound: boolean;
   move_confirmation: boolean;
+  /** RF-007: só exibição (xadrez); o servidor segue em UCI. */
+  move_notation: MoveNotation;
   piece_styles: Record<string, "infantil" | "intermediario" | "classico">;
   locale: "pt-BR";
 }
@@ -90,6 +94,8 @@ export interface MatchView {
   draw_offer_by_seat?: number | null;
   // Partida ranqueada liquidada (RF-019): rating de cada assento antes e depois.
   rating_changes?: RatingChange[];
+  /** Xadrez: lances já jogados em SAN internacional (K, Q, R, B, N), para exibição. */
+  san_moves?: string[];
 }
 
 export interface RatingChange {
@@ -194,4 +200,27 @@ export interface GameStats {
 
 export interface Stats {
   games: GameStats[];
+}
+
+export interface ChildSettings {
+  allow_open_matchmaking: boolean;
+  profile_public: boolean;
+  show_in_ranking: boolean;
+  daily_minutes_limit: number | null;
+}
+
+/** Tempo de jogo de hoje (dia de America/Sao_Paulo); `resets_at` é quando o dia vira. */
+export interface ChildUsage {
+  used_seconds: number;
+  limit_seconds: number | null;
+  resets_at: string;
+}
+
+export interface Child {
+  id: string;
+  display_name: string;
+  age_band: AgeBand;
+  settings: ChildSettings;
+  usage_today: ChildUsage;
+  deletion_scheduled_for?: string | null;
 }

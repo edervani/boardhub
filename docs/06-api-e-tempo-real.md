@@ -33,12 +33,12 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | POST /auth/password/reset | Redefinir | — | `token, new_password` | 204 | 400, 422 | 10/h/IP | users, sessões revogadas, audit | RF-005 |
 | GET /me | Dados da conta | U | — | 200 | — | — | — | RF-006 |
 | PATCH /me/profile | Editar perfil | U | `display_name?, bio?, avatar_key?, is_public?, show_in_ranking?` | 200 | 422 (`ranking_requires_public_profile`), 403 (menor: só o responsável), 409, 429 (troca de nome) | — | user_profiles | RF-006 |
-| GET /me/preferences · PUT | Preferências | U | objeto completo validado | 200 | 422 | — | user_preferences | RF-007 |
+| GET /me/preferences · PUT | Preferências (inclui `move_notation`: `algebraic_pt|san|uci`) | U | objeto completo validado | 200 | 422 | — | user_preferences | RF-007 |
 | GET /users/{display_name} | Perfil público | — | — | 200 | 404 (inexistente **ou** privado) | — | — | RF-006 |
 | GET /games | Catálogo | — | — | 200 | — | — | — | RF-008 |
 | POST /matches | Criar partida (IA, convite, local salva) | U (V se ranqueada) | `game_id, mode, ai_level?, preferred_seat?` (`mode`: `ai`, `local`, `online_casual`, `online_ranked`; DT-019 substitui o campo `ranked?` pelo valor de `mode`) | 201 partida + `invite_code` se convite (mostrado uma vez) | 422 (`ranked_not_available`: jogo sem ranking), 403 (`email_not_verified`), 409 (já tem partida ativa; `repeat_opponent_limit` ao entrar em sala ranqueada) | 20/h | matches, match_players | RF-009–011 |
 | POST /matches/join | Entrar por código | U | `invite_code` | 200 partida | 404, 409, 403 | 20/h | match_players, status | RF-011 |
-| GET /matches/{id} | Estado e metadados | U participante ou partida pública finalizada | — | 200 | 403/404 | — | — | RF-013/020 |
+| GET /matches/{id} | Estado e metadados (xadrez: `san_moves`, lances em SAN internacional para exibição) | U participante ou partida pública finalizada | — | 200 | 403/404 | — | — | RF-013/020 |
 | GET /matches/{id}/moves | Lances | idem | `?since_ply=` | 200 | 403/404 | — | — | RF-014/020 |
 | POST /matches/{id}/moves | Lance (alternativa REST ao WS, para IA/local) | U participante | `expected_ply, move, client_move_id` | 200 estado novo | 409 `stale_state`, 422 `illegal_move`, 403 | 120/min | match_moves, matches | RF-013 |
 | POST /engines/{game_id}/apply | Validar lance de partida local de visitante (sem persistência — DT-007) | — | `state, move` (estado validado por desserialização estrita, tamanho ≤ 8 KB) | 200 `{state, outcome, legal}` | 422 | 120/min/IP | Nenhuma | RF-009 |
@@ -63,7 +63,7 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | POST /guardian/children/{id}/export · GET …/export · GET …/export/{export_id} | Responsável exporta os dados do menor vinculado | U responsável do menor | — | 202 / 200 | 404 (não vinculado), 410, 429 | 1/24 h por titular | data_export_requests, audit | RF-029, RF-034 |
 | POST /guardian/children/{id}/delete · POST …/delete/cancel | Responsável pede (com a **própria** senha) ou cancela a exclusão da conta do menor | U responsável do menor | `password` | 202 / 204 | 401, 403, 404, 409, 429 | 3/dia · 10/h | users.status, audit | RF-030, RF-034 |
 | POST /guardian/links/confirm | Responsável confirma vínculo com menor | U (18+) | `token` | 204 | 400, 422 | 10/h | users.guardian_user_id, audit_log | RF-034 |
-| GET /guardian/children · PUT /guardian/children/{id}/settings | Ver e ajustar configurações do menor vinculado | U responsável do menor | `daily_minutes?, allow_open_matchmaking?, profile_public?, show_in_ranking?` | 200 | 403 (não é responsável), 422 | 30/h | user_preferences, audit_log | RF-034 |
+| GET /guardian/children · GET /guardian/children/{id} · PUT /guardian/children/{id}/settings | Ver e ajustar configurações do menor vinculado; a resposta traz `usage_today {used_seconds, limit_seconds, resets_at}` (dia de America/Sao_Paulo) | U responsável do menor | `daily_minutes_limit?` (15–600; `null` remove), `allow_open_matchmaking?, profile_public?, show_in_ranking?` | 200 | 403 (não é responsável), 404 (não vinculado = inexistente), 422 | 30/h | user_preferences, daily_usage, audit_log | RF-034 |
 | POST /reports | Denunciar | V | `target_type, target_id, reason, note?` | 201 | 422, 429 | 10/dia | reports | RF-031 |
 | GET /admin/reports · POST /admin/users/{id}/suspend | Moderação | M/A | — | 200 | 403 | — | **audit_log obrigatório** | RF-031 |
 | GET /health/live · /health/ready | Saúde | — (ready só na rede interna) | — | 200/503 | — | — | — | RNF-007 |
@@ -96,10 +96,11 @@ Respostas a comandos ecoam `reply_to: <id>`. Eventos difundidos têm `seq` monot
 | `pong` | — | — | — |
 
 ### 3.4 Eventos servidor → cliente
-`match_snapshot {state, ply, players, status, your_seat}` · `move_applied {ply, seat, move, state, next_seat}` · `match_ended {result, end_reason, rating_changes?}` (`rating_changes`: `[{seat, before, after}]`, só em partida ranqueada liquidada; `end_reason: annulled` com `result: null` na partida anulada) · `player_connection {seat, connected, grace_deadline}` · `draw_offered {by_seat}` · `match_started` · `error {code, message, reply_to, current_ply?}`.
+`match_snapshot {state, ply, players, status, your_seat}` · `move_applied {ply, seat, move, state, next_seat, san?}` (`san`: só no xadrez, SAN internacional do lance, para exibição — RF-007) · `match_ended {result, end_reason, rating_changes?}` (`rating_changes`: `[{seat, before, after}]`, só em partida ranqueada liquidada; `end_reason: annulled` com `result: null` na partida anulada) · `player_connection {seat, connected, grace_deadline}` · `draw_offered {by_seat}` · `match_started` · `error {code, message, reply_to, current_ply?, retry_after?}`.
 
 ### 3.5 Turnos, idempotência e sincronização
 - Turno e legalidade verificados no servidor sob bloqueio (doc 05 §4).
+- Limite diário de tempo (RF-034, DT-021): `POST /matches`, `POST /matches/join` e `POST /matchmaking/queue` (e a consulta da fila) respondem **429** `daily_limit_reached` com `Retry-After` (segundos até a meia-noite de Brasília). Com `DAILY_LIMIT_BLOCKS_MOVES=true` (P-23) o lance (HTTP e `submit_move`) recebe o mesmo erro; no WebSocket vira `error {code: daily_limit_reached, status: 429, retry_after}`.
 - `client_move_id` repetido ⇒ servidor retorna o mesmo `move_applied` sem reaplicar.
 - `expected_ply` diferente ⇒ `error: stale_state` com `current_ply`; cliente envia `join_match` para ressincronizar.
 - Cliente pode exibir lance otimista, mas **desfaz** se receber `error`.

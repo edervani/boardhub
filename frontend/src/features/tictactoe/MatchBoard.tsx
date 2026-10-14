@@ -2,6 +2,7 @@ import type { MatchView } from "../../services/types";
 import { Board } from "./Board";
 import { CheckersBoard } from "./CheckersBoard";
 import { ChessBoard } from "./ChessBoard";
+import { MoveList } from "./MoveList";
 
 interface Props {
   match: MatchView;
@@ -15,7 +16,12 @@ export function MatchBoard({ match, playable, onPlay }: Props) {
   const mySeat = match.seats.find((s) => s.is_you)?.seat ?? 1;
   const flipped = match.mode !== "local" && mySeat === 2;
   if (match.game_id === "chess") {
-    return <ChessBoard fen={match.state.fen ?? ""} playable={playable} flipped={flipped} onPlay={onPlay} />;
+    return (
+      <>
+        <ChessBoard fen={match.state.fen ?? ""} playable={playable} flipped={flipped} onPlay={onPlay} />
+        <MoveList match={match} />
+      </>
+    );
   }
   if (match.game_id === "checkers") {
     return <CheckersBoard squares={match.state.squares ?? []} playable={playable} flipped={flipped} onPlay={onPlay} />;

@@ -44,7 +44,7 @@ from app.schemas.academy import (
     ProgressOut,
     TrackOut,
 )
-from app.services import catalog_service
+from app.services import catalog_service, usage_service
 
 DAY = 86400.0
 
@@ -194,7 +194,8 @@ def reveal_hint(db: Session, user: User, exercise_id: str, level: int) -> HintOu
         else:
             row.level = level
         used = level
-        db.commit()
+    usage_service.touch(db, user)
+    db.commit()
     return HintOut(level=level, text=grading.hint_text(ref, level), hints_used=used)
 
 
@@ -253,6 +254,7 @@ def submit_attempt(db: Session, user: User, exercise_id: str, answer: str,
     _store(row, after, now)
     if graded.correct and hint_row is not None:
         db.delete(hint_row)  # as dicas valem para a tentativa que as usou
+    usage_service.touch(db, user, now)  # RF-034: o tempo na Academy também conta
     db.commit()
     return AttemptOut(
         correct=graded.correct, feedback=graded.feedback,
@@ -295,12 +297,15 @@ def placement_step(db: Session, user: User, game_id: str, declared: Declared,
     if nxt is not None:
         ref = content.find_exercise(nxt[0].id)
         assert ref is not None
+        usage_service.touch(db, user, now)
+        db.commit()
         return PlacementOut(done=False, answered=len(steps), total=total,
                             next_exercise=_exercise_out(ref, 0), result=None)
     limiter.hit(f"academy-placement:{user.id}:{game_id}", 5, DAY)  # doc 06: 5/dia
     initial = placement.concept_mastery(steps)
     level = placement.suggested_ai_level(steps)
     _save_placement(db, user, game_id, declared, initial, level, now)
+    usage_service.touch(db, user, now)
     db.commit()
     return PlacementOut(
         done=True, answered=len(steps), total=total, next_exercise=None,

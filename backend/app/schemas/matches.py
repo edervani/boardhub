@@ -71,6 +71,8 @@ class MatchOut(BaseModel):
     draw_offer_by_seat: int | None = None
     # Partida ranqueada encerrada e liquidada: rating de cada assento antes e depois (RF-019).
     rating_changes: list[RatingChangeOut] = []
+    # Xadrez: lances já jogados em SAN internacional (K, Q, R, B, N), só para exibição (RF-007).
+    san_moves: list[str] = []
 
 
 class MoveOut(BaseModel):

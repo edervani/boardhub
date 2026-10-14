@@ -11,6 +11,8 @@ from app.schemas.auth import DISPLAY_NAME_RE, Strict
 AVATARS = ("default", "torre", "cavalo", "bispo", "peao", "dama")
 GAME_IDS = ("tictactoe", "checkers", "chess")
 PieceStyle = Literal["infantil", "intermediario", "classico"]
+# RF-007: só exibição (xadrez). O servidor continua falando UCI (xadrez) e PDN (damas).
+MoveNotation = Literal["algebraic_pt", "san", "uci"]
 
 
 class ProfileOut(BaseModel):
@@ -49,6 +51,7 @@ class PreferencesModel(Strict):
     motion: Literal["full", "reduced", "none", "system"] = "system"
     sound: bool = True
     move_confirmation: bool = False
+    move_notation: MoveNotation = "algebraic_pt"
     piece_styles: dict[str, PieceStyle] = Field(default_factory=dict, max_length=3)
     locale: Literal["pt-BR"] = "pt-BR"
 
@@ -76,11 +79,20 @@ class ChildSettings(BaseModel):
     daily_minutes_limit: int | None
 
 
+class ChildUsage(BaseModel):
+    """Tempo de jogo de hoje (dia de America/Sao_Paulo) e quando o dia vira."""
+
+    used_seconds: int
+    limit_seconds: int | None
+    resets_at: datetime
+
+
 class ChildOut(BaseModel):
     id: uuid.UUID
     display_name: str
     age_band: str
     settings: ChildSettings
+    usage_today: ChildUsage
     deletion_scheduled_for: datetime | None = None
 
 
