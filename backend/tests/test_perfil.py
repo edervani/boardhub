@@ -101,6 +101,8 @@ def test_troca_de_nome_limitada_a_cada_30_dias(client: TestClient, mailer: Memor
     bloqueado = client.patch(f"{API}/me/profile", headers=h, json={"display_name": "outro_nome"})
     assert bloqueado.status_code == 422
     fake_clock.advance(days=31)
+    login(client)  # a sessão anterior expirou por inatividade (30 dias)
+    h = csrf(client)
     assert client.patch(f"{API}/me/profile", headers=h,
                         json={"display_name": "outro_nome"}).status_code == 200
 
