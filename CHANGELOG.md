@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 2c — partidas online entre humanos)
+- Backend: modo `online_casual` (não ranqueado), convite por código (HMAC, validade de 15 min, uso único), fila de pareamento por jogo (trava consultiva no PostgreSQL, sem rating), desistência, oferta/aceite/recusa de empate por acordo (`agreement`) e abandono por inatividade ou desconexão (`abandon`), com `GET /me/active-matches`.
+- WebSocket `/api/v1/ws` (cookie de sessão + verificação de Origin, mensagens Pydantic estritas, fan-out em memória por processo, ping/pong, limites de tamanho e taxa, retomada com `last_known_ply`).
+- Migração 0005 (colunas de convite em `matches`, `match_players.disconnected_at`, `draw_offers`, `matchmaking_queue`).
+- Frontend: lobby acessível (criar convite, entrar por código, fila, partidas em andamento), `useWebSocket` com reconexão exponencial, avisos `aria-live` de empate/desistência, reuso do tabuleiro; nginx e Vite com proxy de WebSocket.
+- Testes: pytest (REST e `websocket_connect`, concorrência, reconexão, IDOR, rate limit, ECA) e Vitest.
+- Fora desta entrega: ranking, limite de revanche, limite diário de minutos, chat, testes Playwright/axe.
+
 ### Adicionado (Fase 4 — xadrez, backend)
 - Motor `chess` (`chess-fide-1`) sobre python-chess (nova dependência `chess>=1.11`, GPL-3.0 — DT-005): estado = lances UCI desde a posição inicial, validado ao carregar (lances reexecutados e FEN conferido); fim por xeque-mate, afogamento, material insuficiente, quíntupla repetição e 75 lances; limite de 600 meios-lances.
 - IA em 5 níveis: 1 aleatório com preferência por capturas; 2–5 negamax com poda alfa-beta, aprofundamento iterativo com limite de tempo (0,3/1/2/3 s), tabelas de casas, ordenação MVV-LVA e quiescência de capturas. Stockfish/UCI fica para a Fase 5.

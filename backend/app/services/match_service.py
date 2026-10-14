@@ -9,20 +9,23 @@ import binascii
 import random
 import secrets
 import uuid
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import clock
+from app.core.config import get_settings
 from app.core.errors import ProblemError
 from app.core.logging import get_logger
 from app.core.ratelimit import limiter
 from app.game_engines.base import IllegalMove, InvalidState, state_hash
-from app.models import AuditLog, Match, MatchMove, MatchPlayer, User
+from app.models import AuditLog, DrawOffer, Match, MatchMove, MatchPlayer, User, UserProfile
 from app.models.base import new_id
-from app.schemas.matches import MatchOut, MatchPage, MatchSummary, SeatOut
+from app.schemas.matches import MatchOut, MatchPage, MatchSummary, PlayerOut, SeatOut
 from app.services import catalog_service
+from app.services.events import Event, match_ended
 from app.services.game_registry import KITS, GameKit
 
 log = get_logger(__name__)
@@ -52,7 +55,7 @@ def _players(db: Session, match_id: uuid.UUID) -> list[MatchPlayer]:
                            .order_by(MatchPlayer.seat)))
 
 
-def _load_for_participant(db: Session, user: User, match_id: uuid.UUID,
+def load_for_participant(db: Session, user: User, match_id: uuid.UUID,
                           lock: bool = False) -> tuple[Match, list[MatchPlayer]]:
     stmt = select(Match).where(Match.id == match_id)
     match = db.scalar(stmt.with_for_update() if lock else stmt)
@@ -64,12 +67,36 @@ def _load_for_participant(db: Session, user: User, match_id: uuid.UUID,
     return match, players
 
 
-def view(match: Match, players: list[MatchPlayer], user: User) -> MatchOut:
+def is_online(match: Match) -> bool:
+    return match.mode.startswith("online")
+
+
+def _players_out(db: Session, players: list[MatchPlayer]) -> list[PlayerOut]:
+    ids = [p.user_id for p in players if p.user_id is not None]
+    names = dict(db.execute(select(UserProfile.user_id, UserProfile.display_name)
+                            .where(UserProfile.user_id.in_(ids))).tuples().all()) if ids else {}
+    grace = timedelta(seconds=get_settings().online_grace_seconds)
+    return [PlayerOut(seat=p.seat, display_name=names.get(p.user_id) if p.user_id else None,
+                      connected=p.disconnected_at is None,
+                      grace_deadline=p.disconnected_at + grace if p.disconnected_at else None)
+            for p in players if not p.is_ai]
+
+
+def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
+         invite_code: str | None = None) -> MatchOut:
     kit = _kit(match)
     in_progress = match.status == "in_progress"
     state = kit.engine.deserialize(match.state) if in_progress else None
     legal = [str(m) for m in kit.engine.legal_moves(state)] if state is not None else []
+    online = is_online(match)
+    offer_seat = db.scalar(select(DrawOffer.by_seat).where(
+        DrawOffer.match_id == match.id, DrawOffer.status == "pending")) \
+        if online and in_progress else None
     return MatchOut(
+        players=_players_out(db, players) if online else [],
+        invite_code=invite_code,
+        invite_expires_at=match.invite_expires_at if match.status == "waiting" else None,
+        draw_offer_by_seat=offer_seat,
         id=match.id, game_id=match.game_id, mode=match.mode, status=match.status,
         ply=match.ply, state=match.state,
         to_move_seat=_seat_to_move(match.ply) if in_progress else None,
@@ -82,12 +109,12 @@ def view(match: Match, players: list[MatchPlayer], user: User) -> MatchOut:
 
 
 def get_match(db: Session, user: User, match_id: uuid.UUID) -> MatchOut:
-    match, players = _load_for_participant(db, user, match_id)
-    return view(match, players, user)
+    match, players = load_for_participant(db, user, match_id)
+    return view(db, match, players, user)
 
 
 def list_moves(db: Session, user: User, match_id: uuid.UUID, since_ply: int) -> list[MatchMove]:
-    match, _ = _load_for_participant(db, user, match_id)
+    match, _ = load_for_participant(db, user, match_id)
     return list(db.scalars(select(MatchMove).where(
         MatchMove.match_id == match.id, MatchMove.ply >= since_ply).order_by(MatchMove.ply)))
 
@@ -120,7 +147,7 @@ def create_match(db: Session, user: User, game_id: str, mode: str, ai_level: int
     db.flush()
     _play_ai_turn_if_due(db, match, players, kit)
     db.commit()
-    return view(match, players, user)
+    return view(db, match, players, user)
 
 
 # ---------- lances ----------
@@ -136,7 +163,7 @@ def _finish(match: Match, kit: GameKit, winner: str | None, reason: str) -> None
 
 
 def _record(db: Session, match: Match, kit: GameKit, move_raw: str,
-            client_move_id: uuid.UUID) -> None:
+            client_move_id: uuid.UUID) -> str:
     """Valida e aplica um lance. Levanta IllegalMove; aborta a partida se o estado for inválido."""
     try:
         state = kit.engine.deserialize(match.state)
@@ -153,12 +180,14 @@ def _record(db: Session, match: Match, kit: GameKit, move_raw: str,
     serialized = kit.engine.serialize(new_state)
     db.add(MatchMove(match_id=match.id, ply=match.ply, seat=_seat_to_move(match.ply),
                      move=str(move), client_move_id=client_move_id,
-                     state_after_hash=bytes.fromhex(state_hash(serialized))))
+                     state_after_hash=bytes.fromhex(state_hash(serialized)),
+                     created_at=clock.now()))
     match.state = serialized
     match.ply += 1
     if (outcome := kit.engine.outcome(new_state)) is not None:
         _finish(match, kit, outcome.winner, END_REASON_BY_OUTCOME.get(outcome.reason, "normal"))
     db.flush()
+    return str(move)
 
 
 def _play_ai_turn_if_due(db: Session, match: Match, players: list[MatchPlayer],
@@ -174,47 +203,123 @@ def _play_ai_turn_if_due(db: Session, match: Match, players: list[MatchPlayer],
     _record(db, match, kit, str(move), uuid.uuid4())
 
 
-def submit_move(db: Session, user: User, match_id: uuid.UUID, expected_ply: int,
-                move_raw: str, client_move_id: uuid.UUID) -> MatchOut:
+class StaleStateError(ProblemError):
+    """`expected_ply` antigo; carrega o lance atual para o cliente se ressincronizar."""
+
+    def __init__(self, current_ply: int) -> None:
+        super().__init__(409, "stale_state", "Estado desatualizado",
+                         f"A partida está no lance {current_ply}. Atualize e tente de novo.")
+        self.current_ply = current_ply
+
+
+@dataclass
+class MoveResult:
+    view: MatchOut
+    # Eventos novos a difundir para a sala da partida (vazio em reenvio idempotente).
+    events: list[Event]
+    # Em reenvio idempotente: o `move_applied` já gravado, só para quem reenviou.
+    duplicate: Event | None = None
+
+
+def move_applied(match: Match, seat: int, move: str) -> Event:
+    """Evento de lance aplicado; `ply` é o total de meio-lances após ele (= `seq`).
+
+    Leva também os lances legais de quem joga agora: o cliente não tem motor de regras.
+    """
+    in_progress = match.status == "in_progress"
+    kit = _kit(match)
+    legal = [str(m) for m in kit.engine.legal_moves(kit.engine.deserialize(match.state))] \
+        if in_progress else []
+    next_seat = _seat_to_move(match.ply) if in_progress else None
+    return Event("move_applied", {"match_id": str(match.id), "ply": match.ply, "seat": seat,
+                                  "move": move, "state": match.state, "next_seat": next_seat,
+                                  "legal_moves": legal},
+                 seq=match.ply, match_id=match.id)
+
+
+def _expire_draw_offers_on_move(db: Session, match: Match, mover_seat: int) -> list[Event]:
+    """Jogar é recusar a proposta de empate feita pelo adversário (RF-015)."""
+    offers = db.scalars(select(DrawOffer).where(
+        DrawOffer.match_id == match.id, DrawOffer.status == "pending",
+        DrawOffer.by_seat != mover_seat)).all()
+    for offer in offers:
+        offer.status = "expired"
+        offer.responded_at = clock.now()
+    if not offers:
+        return []
+    return [Event("draw_declined", {"match_id": str(match.id), "by_seat": mover_seat,
+                                    "reason": "moved"}, match_id=match.id)]
+
+
+def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_ply: int,
+                       move_raw: str, client_move_id: uuid.UUID) -> MoveResult:
     limiter.hit(f"move:{user.id}", 120, 60)
-    match, players = _load_for_participant(db, user, match_id, lock=True)
-    repeated = db.scalar(select(MatchMove.ply).where(
+    match, players = load_for_participant(db, user, match_id, lock=True)
+    repeated = db.scalar(select(MatchMove).where(
         MatchMove.match_id == match.id, MatchMove.client_move_id == client_move_id))
-    if repeated is not None:
-        return view(match, players, user)  # reenvio idempotente: nada é gravado de novo
+    if repeated is not None:  # reenvio idempotente: nada é gravado de novo
+        dup = move_applied(match, repeated.seat, repeated.move)
+        dup.payload["duplicate"] = True
+        return MoveResult(view(db, match, players, user), [], dup if is_online(match) else None)
+    if match.status == "waiting":
+        raise ProblemError(409, "match_not_started", "A partida ainda não começou")
     if match.status != "in_progress":
         raise ProblemError(409, "match_finished", "A partida já terminou")
     if expected_ply != match.ply:
-        raise ProblemError(409, "stale_state", "Estado desatualizado",
-                           f"A partida está no lance {match.ply}. Atualize e tente de novo.")
+        raise StaleStateError(match.ply)
     seat = _seat_to_move(match.ply)
     if not any(p.seat == seat and p.user_id == user.id for p in players):
         raise ProblemError(403, "not_your_turn", "Não é a sua vez")
     kit = _kit(match)
     try:
-        _record(db, match, kit, move_raw, client_move_id)
+        move_text = _record(db, match, kit, move_raw, client_move_id)
     except IllegalMove as exc:
         db.rollback()
         raise ProblemError(422, "illegal_move", "Jogada ilegal", str(exc)) from exc
+    events: list[Event] = []
+    if is_online(match):
+        events.append(move_applied(match, seat, move_text))
+        events.extend(_expire_draw_offers_on_move(db, match, seat))
+        if match.status == "finished":
+            events.append(match_ended(match.id, match.result, match.end_reason, match.ply))
     _play_ai_turn_if_due(db, match, players, kit)
     db.commit()
-    return view(match, players, user)
+    return MoveResult(view(db, match, players, user), events)
 
 
-def resign(db: Session, user: User, match_id: uuid.UUID) -> MatchOut:
-    match, players = _load_for_participant(db, user, match_id, lock=True)
+def submit_move(db: Session, user: User, match_id: uuid.UUID, expected_ply: int,
+                move_raw: str, client_move_id: uuid.UUID) -> MatchOut:
+    return submit_move_result(db, user, match_id, expected_ply, move_raw, client_move_id).view
+
+
+def finish_with_winner(match: Match, winner_seat: int | None, reason: str) -> None:
+    """Encerra uma partida por motivo externo ao motor (desistência, abandono, acordo)."""
+    match.status = "finished"
+    match.finished_at = clock.now()
+    match.end_reason = reason
+    match.result = "draw" if winner_seat is None else ("p1_win" if winner_seat == 1 else "p2_win")
+
+
+def resign_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOut, list[Event]]:
+    limiter.hit(f"online-cmd:{user.id}", 120, 60)
+    match, players = load_for_participant(db, user, match_id, lock=True)
+    if match.status == "waiting":
+        raise ProblemError(409, "match_not_started", "A partida ainda não começou")
     if match.status != "in_progress":
         raise ProblemError(409, "match_finished", "A partida já terminou")
     if match.mode == "local":
         loser = _seat_to_move(match.ply)
     else:
         loser = next(p.seat for p in players if p.user_id == user.id)
-    match.status = "finished"
-    match.finished_at = clock.now()
-    match.end_reason = "resign"
-    match.result = "p2_win" if loser == 1 else "p1_win"
+    finish_with_winner(match, 3 - loser, "resign")
+    events = [match_ended(match.id, match.result, match.end_reason, match.ply)] \
+        if is_online(match) else []
     db.commit()
-    return view(match, players, user)
+    return view(db, match, players, user), events
+
+
+def resign(db: Session, user: User, match_id: uuid.UUID) -> MatchOut:
+    return resign_result(db, user, match_id)[0]
 
 
 # ---------- histórico ----------
