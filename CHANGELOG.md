@@ -4,6 +4,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Documentação (conferência das regras de damas — P-07/P-16, registrado em P-26)
+- Regulamento Fenae 2025 consultado: confirma captura obrigatória, lei da maioria, 20 lances só com damas e prevê empate em 5 lances em finais (não implementado). Bloqueio, repetição tripla, perft e fontes CBJD/FBJD/FMJD não confirmados; motor (`checkers-br-1`) inalterado e ranking de damas segue desabilitado.
+
 ### Adicionado (reivindicação de empate no xadrez e agendador da rotina diária — fecha P-17, parte de P-22)
 - Xadrez: `POST /matches/{id}/claim-draw` e mensagem WebSocket `claim_draw`. Repetição tripla e regra dos 50 lances são reivindicadas por quem tem a vez e validadas no servidor com python-chess; fim `repetition`/`fifty_move`, resultado empate, rating liquidado e `match_ended` para a outra parte. 403 sem a vez, 404 para não participante, 409 sem base, idempotente. `can_claim_draw` na visão da partida e em `move_applied`. Sem migração (DT-024).
 - Frontend: botão "Reivindicar empate" (online, local e contra a IA) só quando o servidor indica, com aviso `aria-live`; textos de fim "repetição de posição" e "50/75 lances".

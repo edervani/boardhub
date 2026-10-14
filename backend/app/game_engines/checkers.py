@@ -1,13 +1,12 @@
 """Damas brasileiras (doc 07 §3, DT-006).
 
-Regras conferidas contra o regulamento de damas da Fenae (que remete à CBD/FMJD): 8×8, 12 peças,
-brancas começam, pedra anda para frente e captura para frente e para trás, captura obrigatória,
-lei da maioria, dama voadora, promoção só quando o lance TERMINA na última fileira, peças
-capturadas só saem ao fim do lance e não podem ser saltadas duas vezes.
+Conferido no regulamento de damas dos Jogos Fenae Mais 2025 (docs/16 P-26): 8×8, 12 peças,
+captura obrigatória, lei da maioria, dama voadora, promoção só quando o lance TERMINA na última
+fileira, peças capturadas só saem ao fim do lance, empate por acordo e após 20 lances só com damas.
 
-Não confirmado na fonte e mantido do doc 07 como proposta (pendência P-16): vitória por
-bloqueio, repetição tripla, limite de 20 lances de cada lado só com damas e ausência das regras
-de finais com poucas peças.
+Não confirmado na fonte (P-26): vitória por bloqueio, repetição tripla (o regulamento não a
+trata), se os 20 lances são por lado. Não implementado: empate em 5 lances nos finais de damas
+(art. 24 b–f do regulamento).
 
 Numeração PDN: 1–4 na fileira de fundo das pretas e 29–32 na das brancas; brancas sobem.
 """
