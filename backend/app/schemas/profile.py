@@ -27,6 +27,8 @@ class ProfilePatch(Strict):
     avatar_key: Literal["default", "torre", "cavalo", "bispo", "peao", "dama"] | None = None
     bio: str | None = Field(default=None, max_length=160)
     is_public: bool | None = None
+    # RF-019: escolher aparecer (ou não) no ranking público; exige perfil público.
+    show_in_ranking: bool | None = None
 
     @field_validator("display_name")
     @classmethod

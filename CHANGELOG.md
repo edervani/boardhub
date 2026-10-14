@@ -4,6 +4,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 5 — ranking Elo e estatísticas, RF-019, RF-021)
+- Elo puro (`game_engines/elo.py`): rating inicial 1200, K = 40 nas primeiras 30 partidas ranqueadas e 20 depois (por jogador), arredondamento meio afastando de zero, piso de 100; valores conferidos à mão em teste (DT-019).
+- Modo `online_ranked`: convite (`POST /matches` com `mode: online_ranked`) e fila ranqueada (`ranked: true`), só com contas verificadas e jogos com `ranked_enabled` (por ora só o xadrez; damas aguardam P-16/P-07 — **P-21**). O servidor liquida o rating na mesma transação que encerra a partida (lance final, desistência, abandono ou acordo de empate), de forma idempotente e com as linhas de `ratings` bloqueadas em ordem; contra a IA, local, casual e partidas anuladas nada muda. Desistência/abandono antes do 2º lance de cada lado anula a partida ranqueada. `rating_changes` vai em `MatchOut` e no evento `match_ended`.
+- Fila ranqueada separada da casual: janela de rating ±100, +50 a cada 10 s até ±400, candidato mais próximo, reavaliada a cada consulta da fila; no máximo 3 partidas ranqueadas por hora contra o mesmo oponente (fila e convite).
+- `GET /ranking/{game_id}` (público, paginado, 120/min por IP): só apelido, avatar, posição, rating e partidas de perfis públicos e ativos que escolheram aparecer, com ≥ 10 partidas; `PATCH /me/profile` aceita `show_in_ranking` (menores só pelo responsável). `GET /me/stats`: vitórias/derrotas/empates por jogo e por modo, sequência atual, rating e histórico de variações.
+- Migração 0007 (`ratings`, `rating_history`, `match_players.rating_before/after`, `matchmaking_queue.ranked`; xadrez com ranking).
+- Frontend: aba Ranking (tabela acessível paginada), estatísticas e rating no perfil, opções ranqueadas no lobby (convite e fila), variação de rating ao fim da partida.
+- Testes: Elo (29 casos), liquidação/idempotência/concorrência/atomicidade, fila e antiabuso, ranking (privacidade, paginação, ECA), estatísticas (500 partidas sintéticas, IDOR) e Vitest.
+- **Pendência P-21:** conflito entre RF-019 (Elo para damas) e doc 14/P-16 (regras de damas não conferidas); damas ficam fora do ranking até decisão humana.
+
 ### Adicionado (Fase 7 — direitos do titular, RF-029 e RF-030)
 - Exportação dos dados (`POST /me/export`, `GET /me/export`, `GET /me/export/{id}`): JSON com conta, perfil, preferências, sessões (sem hashes), partidas e lances, progresso da Academy e eventos de auditoria da própria conta; sem hash de senha, tokens nem nome, e-mail ou id de outras pessoas (o oponente aparece só como tipo). Um pedido por 24 h por titular (429 com `Retry-After`), link válido por 7 dias (410 depois), 404 para quem não pediu (IDOR).
 - Exclusão de conta (`POST /me/delete` com senha, `POST /me/delete/cancel`): carência de 14 dias; o pedido revoga todas as sessões, tira da fila, encerra por desistência as partidas online abertas e esconde o apelido do oponente. Em carência o login é restrito (só `/me`, exportação, cancelamento e logout). Limite de 3 pedidos por dia.
@@ -11,7 +21,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Responsável legal: `POST /guardian/children/{id}/export`, `…/delete` (com a senha do responsável) e `…/delete/cancel`; cada pedido só é cancelado por quem o fez; ao excluir o responsável, o menor volta ao padrão protetivo.
 - Migração 0008 (`data_export_requests`, `users.deletion_by_guardian`). Frontend: página Privacidade (pedir e baixar exportação, excluir com senha e confirmação, cancelar).
 - Testes: pytest (`test_privacidade.py`) e Vitest (`Privacy.test.tsx`).
-- **Pendência P-21:** conciliação entre "sessões revogadas" e cancelamento, fluxo do responsável sem tela, ranking a incluir ao mesclar a Fase 5, cadeia da migração e agendamento da rotina. Decisão DT-019 (proposta).
+- **Pendência P-22:** conciliação entre "sessões revogadas" e cancelamento, fluxo do responsável sem tela, ranking a incluir ao mesclar a Fase 5, cadeia da migração e agendamento da rotina. Decisão DT-020 (proposta).
 
 ### Adicionado (Fase 6 — Academy e Mentor, RF-022 a RF-025)
 - Conteúdo original em pt-BR como dados versionados (`backend/app/academy/content/*.json`, DT-018): trilhas de jogo da velha, damas brasileiras e xadrez, com lições, conceitos e exercícios; cada solução é conferida pelo motor em teste.

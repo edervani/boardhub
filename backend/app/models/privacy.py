@@ -14,7 +14,7 @@ EXPORT_STATUSES = ("ready",)
 
 
 class DataExportRequest(CreatedAt, Base):
-    """Pedido de exportação. O arquivo JSON fica em `payload` até `expires_at` (DT-019)."""
+    """Pedido de exportação. O arquivo JSON fica em `payload` até `expires_at` (DT-020)."""
 
     __tablename__ = "data_export_requests"
     __table_args__ = (

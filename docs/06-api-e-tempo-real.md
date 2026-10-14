@@ -32,11 +32,11 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | POST /auth/password/forgot | Pedir reset | — | `email` | 202 sempre | 429 | 3/h/IP e e-mail | auth_tokens | RF-005 |
 | POST /auth/password/reset | Redefinir | — | `token, new_password` | 204 | 400, 422 | 10/h/IP | users, sessões revogadas, audit | RF-005 |
 | GET /me | Dados da conta | U | — | 200 | — | — | — | RF-006 |
-| PATCH /me/profile | Editar perfil | U | `display_name?, bio?, avatar_key?, is_public?` | 200 | 422, 409, 429 (troca de nome) | — | user_profiles | RF-006 |
+| PATCH /me/profile | Editar perfil | U | `display_name?, bio?, avatar_key?, is_public?, show_in_ranking?` | 200 | 422 (`ranking_requires_public_profile`), 403 (menor: só o responsável), 409, 429 (troca de nome) | — | user_profiles | RF-006 |
 | GET /me/preferences · PUT | Preferências | U | objeto completo validado | 200 | 422 | — | user_preferences | RF-007 |
 | GET /users/{display_name} | Perfil público | — | — | 200 | 404 (inexistente **ou** privado) | — | — | RF-006 |
 | GET /games | Catálogo | — | — | 200 | — | — | — | RF-008 |
-| POST /matches | Criar partida (IA, convite, local salva) | U (V se ranqueada) | `game_id, mode, ai_level?, preferred_seat?, ranked?` | 201 partida + `invite_code` se convite (mostrado uma vez) | 422, 403, 409 (já tem partida ativa) | 20/h | matches, match_players | RF-009–011 |
+| POST /matches | Criar partida (IA, convite, local salva) | U (V se ranqueada) | `game_id, mode, ai_level?, preferred_seat?` (`mode`: `ai`, `local`, `online_casual`, `online_ranked`; DT-019 substitui o campo `ranked?` pelo valor de `mode`) | 201 partida + `invite_code` se convite (mostrado uma vez) | 422 (`ranked_not_available`: jogo sem ranking), 403 (`email_not_verified`), 409 (já tem partida ativa; `repeat_opponent_limit` ao entrar em sala ranqueada) | 20/h | matches, match_players | RF-009–011 |
 | POST /matches/join | Entrar por código | U | `invite_code` | 200 partida | 404, 409, 403 | 20/h | match_players, status | RF-011 |
 | GET /matches/{id} | Estado e metadados | U participante ou partida pública finalizada | — | 200 | 403/404 | — | — | RF-013/020 |
 | GET /matches/{id}/moves | Lances | idem | `?since_ply=` | 200 | 403/404 | — | — | RF-014/020 |
@@ -44,10 +44,10 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | POST /engines/{game_id}/apply | Validar lance de partida local de visitante (sem persistência — DT-007) | — | `state, move` (estado validado por desserialização estrita, tamanho ≤ 8 KB) | 200 `{state, outcome, legal}` | 422 | 120/min/IP | Nenhuma | RF-009 |
 | POST /matches/{id}/resign | Desistir | U participante | — | 200 | 409 finalizada | — | matches, ratings | RF-015 |
 | POST /matches/{id}/draw-offer · /draw-response | Empate | U participante | `accept: bool` | 200 | 409, 429 | — | matches | RF-015 |
-| POST /matchmaking/queue · DELETE | Entrar/sair da fila | V | `game_id` | 202 / 204 | 409 | 30/h | memória ou fila | RF-012 |
+| POST /matchmaking/queue · DELETE | Entrar/sair da fila | V | `game_id, ranked?` (padrão `false`) | 202 (`state: queued`, com `ranked` e `rating_window`) / 200 (`matched`) / 204 | 409, 422 (`ranked_not_available`) | 30/h | memória ou fila | RF-012 |
 | GET /me/matches | Histórico | U | `game_id, mode, result, cursor, limit` | 200 paginado | 422 | — | — | RF-020 |
-| GET /me/stats | Estatísticas | U | `game_id?` | 200 | — | — | — | RF-021 |
-| GET /ranking/{game_id} | Ranking | — | `cursor, limit` | 200 | 404 | — | — | RF-019 |
+| GET /me/stats | Estatísticas | U | `game_id?` | 200 `{games: [{game_id, played, wins, losses, draws, win_rate, by_mode[], streak, rating?}]}` | 404 | — | matches, ratings, rating_history | RF-021 |
+| GET /ranking/{game_id} | Ranking público (sem login) | — | `cursor?, limit` (1–100, padrão 20) | 200 `{items: [{rank, display_name, avatar_key, rating, games_played}], next_cursor}` | 404 (jogo sem ranking), 422 (cursor), 429 (120/min por IP) | 120/min/IP | ratings, user_profiles | RF-019 |
 | GET /academy/{game_id}/lessons | Lições | U | — | 200 | — | — | — | RF-023 |
 | GET /academy/exercises/{id} | Exercício (sem a resposta) | U | — | 200 | 404 | — | — | RF-023 |
 | POST /academy/exercises/{id}/attempts | Responder | U | `answer, duration_ms` (as dicas são contadas no servidor) | 200 `{correct, feedback, mastery}` | 422, 429 | 60/min | exercise_attempts, progress | RF-023/025 |
@@ -55,11 +55,11 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | GET /academy/tracks, GET /academy/progress | Trilhas e progresso por conceito | U | — | 200 | — | — | progress | RF-022/025 |
 | POST /academy/{game_id}/placement | Avaliação inicial | U | respostas | 200 próximo exercício ou nível estimado (o servidor reexecuta as respostas; sem estado no cliente) | 409 `placement_too_soon`, 422 | 5/dia | progress | RF-022 |
 | GET /matches/{id}/analysis | Análise pós-partida | U participante; partida finalizada e **não** em andamento | — | 200 (análise síncrona; 202 não implementado, P-20) | 403, 409 | 10/h | cache de análise | RF-024 |
-| POST /me/export | Pedir exportação (gerada na hora, DT-019; resposta `{id, status, created_at, expires_at}`) | U (inclusive em carência de exclusão) | — | 202 | 429 `export_rate_limited` com `Retry-After` | 1/24 h por titular | data_export_requests, audit | RF-029 |
+| POST /me/export | Pedir exportação (gerada na hora, DT-020; resposta `{id, status, created_at, expires_at}`) | U (inclusive em carência de exclusão) | — | 202 | 429 `export_rate_limited` com `Retry-After` | 1/24 h por titular | data_export_requests, audit | RF-029 |
 | GET /me/export | Exportações vigentes de quem pediu | U | — | 200 | — | — | — | RF-029 |
 | GET /me/export/{id} | Baixar (JSON com `Content-Disposition: attachment`) | U que pediu | — | 200 arquivo | 404 (inclusive de outra pessoa), 410 `export_expired` | — | — | RF-029 |
 | POST /me/delete | Pedir exclusão: revoga todas as sessões, tira da fila e encerra partidas online abertas; conclusão em 14 dias (`{scheduled_for}`) | U | `password` | 202 | 401, 409 `already_pending`, 429 | 3/dia | users.status, audit | RF-030 |
-| POST /me/delete/cancel | Cancelar (só em carência, só quem pediu) | U em carência (login restrito, DT-019) | — | 204 | 403 `cancel_not_allowed`, 409 `not_pending` | 10/h | users.status | RF-030 |
+| POST /me/delete/cancel | Cancelar (só em carência, só quem pediu) | U em carência (login restrito, DT-020) | — | 204 | 403 `cancel_not_allowed`, 409 `not_pending` | 10/h | users.status | RF-030 |
 | POST /guardian/children/{id}/export · GET …/export · GET …/export/{export_id} | Responsável exporta os dados do menor vinculado | U responsável do menor | — | 202 / 200 | 404 (não vinculado), 410, 429 | 1/24 h por titular | data_export_requests, audit | RF-029, RF-034 |
 | POST /guardian/children/{id}/delete · POST …/delete/cancel | Responsável pede (com a **própria** senha) ou cancela a exclusão da conta do menor | U responsável do menor | `password` | 202 / 204 | 401, 403, 404, 409, 429 | 3/dia · 10/h | users.status, audit | RF-030, RF-034 |
 | POST /guardian/links/confirm | Responsável confirma vínculo com menor | U (18+) | `token` | 204 | 400, 422 | 10/h | users.guardian_user_id, audit_log | RF-034 |
@@ -96,7 +96,7 @@ Respostas a comandos ecoam `reply_to: <id>`. Eventos difundidos têm `seq` monot
 | `pong` | — | — | — |
 
 ### 3.4 Eventos servidor → cliente
-`match_snapshot {state, ply, players, status, your_seat}` · `move_applied {ply, seat, move, state, next_seat}` · `match_ended {result, end_reason, rating_changes?}` · `player_connection {seat, connected, grace_deadline}` · `draw_offered {by_seat}` · `match_started` · `error {code, message, reply_to, current_ply?}`.
+`match_snapshot {state, ply, players, status, your_seat}` · `move_applied {ply, seat, move, state, next_seat}` · `match_ended {result, end_reason, rating_changes?}` (`rating_changes`: `[{seat, before, after}]`, só em partida ranqueada liquidada; `end_reason: annulled` com `result: null` na partida anulada) · `player_connection {seat, connected, grace_deadline}` · `draw_offered {by_seat}` · `match_started` · `error {code, message, reply_to, current_ply?}`.
 
 ### 3.5 Turnos, idempotência e sincronização
 - Turno e legalidade verificados no servidor sob bloqueio (doc 05 §4).

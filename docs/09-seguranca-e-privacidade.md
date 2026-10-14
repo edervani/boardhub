@@ -60,7 +60,7 @@ Acesso/portabilidade (RF-029), correção (RF-006), eliminação (RF-030), infor
 - Obrigações que **dependem de validação jurídica e organizacional** (não resolvidas por código): nomeação do encarregado; política de privacidade e termos; registro das operações de tratamento; contratos com operadores (hospedagem, e-mail); avaliação sobre relatório de impacto; procedimento de comunicação de incidentes.
 
 ## 9. Exclusão e exportação
-Ver doc 05 §7, RF-029/RF-030 e DT-019. A exportação nunca contém hash de senha, tokens, hashes de sessão nem nome, e-mail ou id de outras pessoas (testado). Exclusão e exportação gravam `audit_log` sem dados pessoais; o registro final `account_deleted` não tem autor.
+Ver doc 05 §7, RF-029/RF-030 e DT-020. A exportação nunca contém hash de senha, tokens, hashes de sessão nem nome, e-mail ou id de outras pessoas (testado). Exclusão e exportação gravam `audit_log` sem dados pessoais; o registro final `account_deleted` não tem autor.
 
 ## 10. Crianças e adolescentes
 

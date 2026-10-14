@@ -1,7 +1,7 @@
 """Direitos do titular: exportação de dados e exclusão de conta (Fase 7, RF-029/RF-030).
 
 Revision ID: 0008
-Revises: 0006
+Revises: 0007
 Create Date: 2026-10-14
 """
 
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 revision: str = "0008"
 # A 0007 (ranking) ainda não está em main; ao mesclá-la, trocar para "0007".
-down_revision: str | None = "0006"
+down_revision: str | None = "0007"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -92,6 +92,7 @@ def test_exportacao_traz_os_dados_do_titular_sem_segredos_nem_terceiros(
     assert on["opponent"] == "human" and len(on["your_seats"]) == 1
     assert dados["academy"]["attempts"][0]["exercise_id"] == "tt-win-1"
     assert dados["academy"]["skill_progress"]
+    assert dados["ratings"] == {"current": [], "history": []}  # sem partida ranqueada
     assert any(e["action"] == "account_created" for e in dados["audit_events"])
 
     # Nada de segredos nem de terceiros.

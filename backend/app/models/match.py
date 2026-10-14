@@ -94,6 +94,10 @@ class MatchPlayer(Base):
     removed_account: Mapped[bool] = mapped_column(Boolean, default=False)
     # Presença (RF-014): NULL = conectado; preenchido = desconectado desde esse instante.
     disconnected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Rating antes/depois da partida ranqueada (RF-019). Preenchidos uma única vez, na transação
+    # que encerra a partida; `rating_after` não nulo significa "rating já liquidado".
+    rating_before: Mapped[int | None] = mapped_column(Integer)
+    rating_after: Mapped[int | None] = mapped_column(Integer)
 
 
 class MatchMove(Base):
@@ -147,6 +151,8 @@ class QueueEntry(Base):
     )
     game_id: Mapped[str] = mapped_column(ForeignKey("games.id"))
     enqueued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # Fila ranqueada (pareia por proximidade de rating) ou casual; nunca se misturam.
+    ranked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     # Atualizado a cada consulta do cliente; entradas sem consulta recente são ignoradas.
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     # Preenchido quando outro jogador pareou com este; o cliente consome na próxima consulta.

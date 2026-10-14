@@ -1,6 +1,6 @@
 """Direitos do titular: exportação de dados (RF-029) e exclusão de conta (RF-030).
 
-Decisões em DT-019. A exportação reúne só dados do titular: nunca hash de senha, tokens,
+Decisões em DT-020. A exportação reúne só dados do titular: nunca hash de senha, tokens,
 e-mail ou apelido de outras pessoas. A exclusão tem carência de 14 dias; ao final, os dados
 pessoais são apagados e partidas com outro humano permanecem, com o jogador removido
 pseudonimizado (`removed_account`), para preservar o histórico do oponente.
@@ -29,6 +29,8 @@ from app.models import (
     MatchMove,
     MatchPlayer,
     PlacementResult,
+    Rating,
+    RatingHistory,
     QueueEntry,
     SkillProgress,
     User,
@@ -162,6 +164,19 @@ def _academy_section(db: Session, user: User) -> dict[str, Any]:
     }
 
 
+def _ratings_section(db: Session, user: User) -> dict[str, Any]:
+    ratings = db.scalars(select(Rating).where(Rating.user_id == user.id)
+                         .order_by(Rating.game_id))
+    history = db.scalars(select(RatingHistory).where(RatingHistory.user_id == user.id)
+                         .order_by(RatingHistory.created_at, RatingHistory.id))
+    return {
+        "current": [{"game_id": r.game_id, "rating": r.rating, "games_played": r.games_played,
+                     "updated_at": _iso(r.updated_at)} for r in ratings],
+        "history": [{"game_id": h.game_id, "match_id": str(h.match_id), "before": h.before,
+                     "after": h.after, "created_at": _iso(h.created_at)} for h in history],
+    }
+
+
 def _audit_section(db: Session, user: User) -> list[dict[str, Any]]:
     """Eventos sobre a própria conta; o autor de ações de terceiros não é revelado."""
     rows = db.scalars(select(AuditLog).where(
@@ -181,6 +196,7 @@ def build_export(db: Session, user: User) -> dict[str, Any]:
         "sessions": _sessions_section(db, user),
         "matches": _matches_section(db, user),
         "academy": _academy_section(db, user),
+        "ratings": _ratings_section(db, user),
         "audit_events": _audit_section(db, user),
     }
 

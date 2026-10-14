@@ -24,7 +24,8 @@ from app.game_engines.base import IllegalMove, InvalidState, state_hash
 from app.models import AuditLog, DrawOffer, Match, MatchMove, MatchPlayer, User, UserProfile
 from app.models.base import new_id
 from app.schemas.matches import MatchOut, MatchPage, MatchSummary, PlayerOut, SeatOut
-from app.services import catalog_service
+from app.schemas.ranking import RatingChangeOut
+from app.services import catalog_service, rating_service
 from app.services.events import Event, match_ended
 from app.services.game_registry import KITS, GameKit
 
@@ -108,6 +109,8 @@ def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
         ai_level=match.ai_level, rules_version=match.rules_version,
         seats=[SeatOut(seat=p.seat, is_ai=p.is_ai, is_you=p.user_id == user.id)
                for p in players],
+        rating_changes=[RatingChangeOut(seat=c.seat, before=c.before, after=c.after)
+                        for c in rating_service.changes_from_players(players)],
         created_at=match.created_at, finished_at=match.finished_at,
     )
 
@@ -285,7 +288,7 @@ def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_pl
         events.append(move_applied(match, seat, move_text))
         events.extend(_expire_draw_offers_on_move(db, match, seat))
         if match.status == "finished":
-            events.append(match_ended(match.id, match.result, match.end_reason, match.ply))
+            events.append(finish_event(db, match, players))
     _play_ai_turn_if_due(db, match, players, kit)
     db.commit()
     return MoveResult(view(db, match, players, user), events)
@@ -296,12 +299,34 @@ def submit_move(db: Session, user: User, match_id: uuid.UUID, expected_ply: int,
     return submit_move_result(db, user, match_id, expected_ply, move_raw, client_move_id).view
 
 
+# RF-015: desistência/abandono antes do 2º lance de cada lado (4 meios-lances) anula a partida
+# ranqueada (antiabuso); a partida anulada não altera rating.
+RANKED_MIN_PLIES = 4
+
+
 def finish_with_winner(match: Match, winner_seat: int | None, reason: str) -> None:
     """Encerra uma partida por motivo externo ao motor (desistência, abandono, acordo)."""
-    match.status = "finished"
     match.finished_at = clock.now()
+    if match.mode == "online_ranked" and reason in ("resign", "abandon") \
+            and match.ply < RANKED_MIN_PLIES:
+        match.status = "annulled"
+        match.end_reason = "annulled"
+        match.result = None
+        return
+    match.status = "finished"
     match.end_reason = reason
     match.result = "draw" if winner_seat is None else ("p1_win" if winner_seat == 1 else "p2_win")
+
+
+def finish_event(db: Session, match: Match, players: list[MatchPlayer]) -> Event:
+    """Liquida o rating (se a partida for ranqueada e válida) e descreve o fim da partida.
+
+    Deve ser chamado na mesma transação que encerrou a partida, antes do `commit`.
+    """
+    changes = rating_service.settle(db, match, players)
+    return match_ended(match.id, match.result, match.end_reason, match.ply,
+                       [{"seat": c.seat, "before": c.before, "after": c.after}
+                        for c in changes])
 
 
 def resign_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOut, list[Event]]:
@@ -316,8 +341,7 @@ def resign_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOu
     else:
         loser = next(p.seat for p in players if p.user_id == user.id)
     finish_with_winner(match, 3 - loser, "resign")
-    events = [match_ended(match.id, match.result, match.end_reason, match.ply)] \
-        if is_online(match) else []
+    events = [finish_event(db, match, players)] if is_online(match) else []
     db.commit()
     return view(db, match, players, user), events
 

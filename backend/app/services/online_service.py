@@ -1,6 +1,8 @@
 """Partidas online entre humanos: convite, fila, empate por acordo, abandono e presença.
 
-RF-011, RF-012, RF-014, RF-015. Modo `online_casual`: **não ranqueado** (ranking virá depois).
+RF-011, RF-012, RF-014, RF-015, RF-019. Modo `online_casual`: não ranqueado; `online_ranked`:
+exige contas verificadas e jogo com `ranked_enabled`, pareia por proximidade de rating e o
+rating é liquidado por `rating_service` na transação que encerra a partida.
 O servidor decide assentos, turnos e resultados; nada disso vem do cliente (SEC-05, SEC-06).
 Cada mudança de estado ocorre com a linha da partida bloqueada (doc 05 §4). Os serviços
 devolvem `Event`s; a entrega por WebSocket é responsabilidade de `realtime`.
@@ -15,18 +17,29 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select, text
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select, text
+from sqlalchemy.orm import Session, aliased
 
 from app.core import clock
 from app.core.config import get_settings
 from app.core.errors import ProblemError
 from app.core.ratelimit import limiter
-from app.models import DrawOffer, Match, MatchMove, MatchPlayer, QueueEntry, User, UserProfile
+from app.game_engines import elo
+from app.models import (
+    DrawOffer,
+    Game,
+    Match,
+    MatchMove,
+    MatchPlayer,
+    QueueEntry,
+    Rating,
+    User,
+    UserProfile,
+)
 from app.models.base import new_id
 from app.schemas.matches import ActiveMatchOut, MatchOut, QueueStatusOut
 from app.services import catalog_service, guardian_service, match_service
-from app.services.events import Event, match_ended, match_started
+from app.services.events import Event, match_started
 from app.services.game_registry import KITS
 
 HOUR = 3600.0
@@ -34,6 +47,13 @@ HOUR = 3600.0
 CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 CODE_LENGTH = 8
 ONLINE_MODES = ("online_casual", "online_ranked")
+RANKED = "online_ranked"
+# RF-012: janela inicial ±100, +50 a cada 10 s de espera, até ±400.
+WINDOW_BASE, WINDOW_STEP, WINDOW_STEP_SECONDS, WINDOW_MAX = 100, 50, 10, 400
+# RF-012 / SEC-13: no máximo 3 partidas ranqueadas contra o mesmo oponente por hora.
+MAX_REPEAT_OPPONENT = 3
+REPEAT_WINDOW = timedelta(hours=1)
+MAX_RANKED_CANDIDATES = 30
 ACTIVE_STATUSES = ("waiting", "in_progress")
 # RF-015: propostas de empate só nos jogos com empate por acordo (doc 02) e 1 a cada 10 lances.
 DRAW_AGREEMENT_GAMES = frozenset({"checkers", "chess"})
@@ -108,9 +128,31 @@ def _prepare_entry(db: Session, user: User, game_id: str) -> None:
                            "Termine ou cancele a partida atual antes de começar outra.")
 
 
-def _new_match(game_id: str, status: str, now: datetime) -> Match:
+def _require_ranked(db: Session, user: User, game_id: str) -> None:
+    """Partida ranqueada: conta verificada (RF-002) e jogo com ranking habilitado (DT-008)."""
+    if user.email_verified_at is None:
+        raise ProblemError(403, "email_not_verified", "Confirme seu e-mail para jogar ranqueado")
+    game = db.get(Game, game_id)
+    if game is None or not game.ranked_enabled:
+        raise ProblemError(422, "ranked_not_available", "Este jogo não tem partidas ranqueadas")
+
+
+def _repeat_limited(db: Session, a: uuid.UUID, b: uuid.UUID, game_id: str) -> bool:
+    """Já houve partidas ranqueadas demais entre os dois na última hora? (antiabuso, SEC-13)"""
+    mine, theirs = aliased(MatchPlayer), aliased(MatchPlayer)
+    count = db.scalar(
+        select(func.count()).select_from(Match)
+        .join(mine, mine.match_id == Match.id).join(theirs, theirs.match_id == Match.id)
+        .where(Match.mode == RANKED, Match.game_id == game_id,
+               Match.status.in_(("in_progress", "finished")),
+               Match.started_at > clock.now() - REPEAT_WINDOW,
+               mine.user_id == a, theirs.user_id == b))
+    return (count or 0) >= MAX_REPEAT_OPPONENT
+
+
+def _new_match(game_id: str, status: str, now: datetime, mode: str = "online_casual") -> Match:
     kit = KITS[game_id]
-    return Match(id=new_id(), game_id=game_id, mode="online_casual", status=status,
+    return Match(id=new_id(), game_id=game_id, mode=mode, status=status,
                  state=kit.engine.serialize(kit.engine.initial_state()), ply=0,
                  rules_version=kit.engine.rules_version,
                  started_at=now if status == "in_progress" else None)
@@ -118,14 +160,17 @@ def _new_match(game_id: str, status: str, now: datetime) -> Match:
 
 # ---------- convite (RF-011) ----------
 
-def create_invite(db: Session, user: User, game_id: str, preferred_seat: int | None) -> MatchOut:
+def create_invite(db: Session, user: User, game_id: str, preferred_seat: int | None,
+                  mode: str = "online_casual") -> MatchOut:
     limiter.hit(f"match-create:{user.id}", 20, HOUR)
     guardian_service.require_online_access(user)
     _require_game(db, user, game_id)
+    if mode == RANKED:
+        _require_ranked(db, user, game_id)
     _prepare_entry(db, user, game_id)
     code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
     now = clock.now()
-    match = _new_match(game_id, "waiting", now)
+    match = _new_match(game_id, "waiting", now, mode)
     match.invite_code_hash = _code_digest(code)
     match.invite_expires_at = now + timedelta(seconds=get_settings().invite_ttl_seconds)
     match.invite_creator_seat = preferred_seat
@@ -167,6 +212,12 @@ def join_invite(db: Session, user: User, raw_code: str) -> tuple[MatchOut, list[
     creator = players[0]
     assert creator.user_id is not None  # sala por convite sempre tem criador humano
     creator_id = creator.user_id
+    if match.mode == RANKED:
+        _require_ranked(db, user, match.game_id)
+        if _repeat_limited(db, creator_id, user.id, match.game_id):
+            raise ProblemError(409, "repeat_opponent_limit",
+                               "Limite de partidas contra o mesmo oponente",
+                               "Para proteger o ranking, jogue contra outra pessoa por um tempo.")
     _lock_users(db, [creator_id, user.id])
     _prepare_entry(db, user, match.game_id)
     creator_seat = match.invite_creator_seat or secrets.choice((1, 2))
@@ -205,17 +256,31 @@ def _queue_lock_key(game_id: str) -> int:
     return int.from_bytes(digest[:8], "big", signed=True)
 
 
+def _lock_queue(db: Session, game_id: str) -> None:
+    """Um jogo por vez: quem chega depois enxerga as entradas já confirmadas (sem perder pares)."""
+    db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": _queue_lock_key(game_id)})
+
+
+def rating_window(waited_seconds: float) -> int:
+    """Janela de rating do pareamento ranqueado após `waited_seconds` de espera (RF-012)."""
+    steps = int(max(0.0, waited_seconds) // WINDOW_STEP_SECONDS)
+    return min(WINDOW_MAX, WINDOW_BASE + WINDOW_STEP * steps)
+
+
 def _consume_matched(db: Session, entry: QueueEntry) -> QueueStatusOut:
-    out = QueueStatusOut(state="matched", game_id=entry.game_id, match_id=entry.matched_match_id)
+    out = QueueStatusOut(state="matched", game_id=entry.game_id, match_id=entry.matched_match_id,
+                         ranked=entry.ranked)
     db.delete(entry)
     db.commit()
     return out
 
 
-def _still_eligible(db: Session, candidate: User, game_id: str) -> bool:
+def _still_eligible(db: Session, candidate: User, game_id: str, ranked: bool = False) -> bool:
     if candidate.status != "active" or not candidate.preferences.allow_open_matchmaking:
         return False
     if candidate.age_band == "under_12" and candidate.guardian_user_id is None:
+        return False
+    if ranked and candidate.email_verified_at is None:
         return False
     visible = {g.id for g in catalog_service.visible_games(db, candidate.age_band)}
     busy = db.scalar(
@@ -225,68 +290,138 @@ def _still_eligible(db: Session, candidate: User, game_id: str) -> bool:
     return game_id in visible and busy is None
 
 
-def enter_queue(db: Session, user: User, game_id: str) -> tuple[QueueStatusOut, list[Event]]:
+def _fresh_candidates(db: Session, user: User, game_id: str, ranked: bool, now: datetime,
+                      limit: int) -> list[QueueEntry]:
+    cutoff = now - timedelta(seconds=get_settings().queue_stale_seconds)
+    return list(db.scalars(
+        select(QueueEntry).where(
+            QueueEntry.game_id == game_id, QueueEntry.user_id != user.id,
+            QueueEntry.ranked.is_(ranked),
+            QueueEntry.matched_match_id.is_(None), QueueEntry.last_seen_at > cutoff)
+        .order_by(QueueEntry.enqueued_at).limit(limit).with_for_update(skip_locked=True)))
+
+
+def _start_pair(db: Session, user: User, cand: QueueEntry, mine: QueueEntry | None,
+                game_id: str, mode: str, now: datetime) -> tuple[QueueStatusOut, list[Event]]:
+    """Cria a partida entre `user` e o candidato; o candidato consome na próxima consulta."""
+    first, second = secrets.SystemRandom().sample([user.id, cand.user_id], 2)
+    match = _new_match(game_id, "in_progress", now, mode)
+    db.add(match)
+    db.flush()
+    db.add_all([MatchPlayer(match_id=match.id, seat=1, user_id=first, is_ai=False,
+                            disconnected_at=now),
+                MatchPlayer(match_id=match.id, seat=2, user_id=second, is_ai=False,
+                            disconnected_at=now)])
+    cand.matched_match_id = match.id
+    if mine is not None:
+        db.delete(mine)
+    db.commit()
+    out = QueueStatusOut(state="matched", game_id=game_id, match_id=match.id,
+                         ranked=mode == RANKED)
+    return out, [match_started(match.id, game_id, (first, second))]
+
+
+def _pair_casual(db: Session, user: User, game_id: str,
+                 now: datetime) -> tuple[QueueStatusOut, list[Event]] | None:
+    for _ in range(5):
+        cands = _fresh_candidates(db, user, game_id, False, now, 1)
+        if not cands:
+            return None
+        cand = cands[0]
+        cand_user = db.get(User, cand.user_id)
+        if cand_user is None or not _still_eligible(db, cand_user, game_id):
+            db.delete(cand)
+            db.flush()
+            continue
+        return _start_pair(db, user, cand, None, game_id, "online_casual", now)
+    return None
+
+
+def _ratings_of(db: Session, ids: list[uuid.UUID], game_id: str) -> dict[uuid.UUID, int]:
+    rows = db.execute(select(Rating.user_id, Rating.rating).where(
+        Rating.game_id == game_id, Rating.user_id.in_(ids))).tuples().all()
+    found = dict(rows)
+    return {i: found.get(i, elo.INITIAL_RATING) for i in ids}
+
+
+def _pair_ranked(db: Session, user: User, mine: QueueEntry | None, game_id: str,
+                 now: datetime) -> tuple[QueueStatusOut, list[Event]] | None:
+    """Escolhe o candidato de rating mais próximo dentro da janela de qualquer um dos dois."""
+    cands = _fresh_candidates(db, user, game_id, True, now, MAX_RANKED_CANDIDATES)
+    if not cands:
+        return None
+    ratings = _ratings_of(db, [user.id, *(c.user_id for c in cands)], game_id)
+    my_wait = (now - mine.enqueued_at).total_seconds() if mine is not None else 0.0
+    best: tuple[tuple[int, datetime], QueueEntry] | None = None
+    for cand in cands:
+        cand_user = db.get(User, cand.user_id)
+        if cand_user is None or not _still_eligible(db, cand_user, game_id, True):
+            db.delete(cand)
+            continue
+        gap = abs(ratings[user.id] - ratings[cand.user_id])
+        window = max(rating_window(my_wait),
+                     rating_window((now - cand.enqueued_at).total_seconds()))
+        if gap > window or _repeat_limited(db, user.id, cand.user_id, game_id):
+            continue
+        key = (gap, cand.enqueued_at)
+        if best is None or key < best[0]:
+            best = (key, cand)
+    if best is None:
+        return None
+    return _start_pair(db, user, best[1], mine, game_id, RANKED, now)
+
+
+def enter_queue(db: Session, user: User, game_id: str,
+                ranked: bool = False) -> tuple[QueueStatusOut, list[Event]]:
     limiter.hit(f"queue:{user.id}", 30, HOUR)
     if not user.preferences.allow_open_matchmaking:
         raise ProblemError(403, "open_matchmaking_disabled", "Partidas abertas desativadas",
                            "O responsável por esta conta não liberou o pareamento aberto.")
     guardian_service.require_online_access(user)
     _require_game(db, user, game_id)
+    if ranked:
+        _require_ranked(db, user, game_id)
     _lock_users(db, [user.id])
     mine = db.scalar(select(QueueEntry).where(QueueEntry.user_id == user.id).with_for_update())
     if mine is not None and mine.matched_match_id is not None:
         return _consume_matched(db, mine), []
-    if mine is not None and mine.game_id == game_id:
+    if mine is not None and mine.game_id == game_id and mine.ranked == ranked:
         mine.last_seen_at = clock.now()
         db.commit()
-        return queue_status(db, user), []
-    _prepare_entry(db, user, game_id)  # sai da fila de outro jogo, confere DT-010
-    # Um jogo por vez: quem chega depois enxerga as entradas já confirmadas (sem perder pares).
-    db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": _queue_lock_key(game_id)})
+        return queue_status(db, user)
+    _prepare_entry(db, user, game_id)  # sai da fila de outro jogo/modo, confere DT-010
+    _lock_queue(db, game_id)
     now = clock.now()
-    cutoff = now - timedelta(seconds=get_settings().queue_stale_seconds)
-    for _ in range(5):
-        cand = db.scalar(
-            select(QueueEntry).where(
-                QueueEntry.game_id == game_id, QueueEntry.user_id != user.id,
-                QueueEntry.matched_match_id.is_(None), QueueEntry.last_seen_at > cutoff)
-            .order_by(QueueEntry.enqueued_at).limit(1).with_for_update(skip_locked=True))
-        if cand is None:
-            break
-        cand_user = db.get(User, cand.user_id)
-        if cand_user is None or not _still_eligible(db, cand_user, game_id):
-            db.delete(cand)
-            db.flush()
-            continue
-        first, second = secrets.SystemRandom().sample([user.id, cand.user_id], 2)
-        match = _new_match(game_id, "in_progress", now)
-        db.add(match)
-        db.flush()
-        db.add_all([MatchPlayer(match_id=match.id, seat=1, user_id=first, is_ai=False,
-                                disconnected_at=now),
-                    MatchPlayer(match_id=match.id, seat=2, user_id=second, is_ai=False,
-                                disconnected_at=now)])
-        cand.matched_match_id = match.id  # o outro jogador consome na próxima consulta
-        db.commit()
-        out = QueueStatusOut(state="matched", game_id=game_id, match_id=match.id)
-        return out, [match_started(match.id, game_id, (first, second))]
-    db.add(QueueEntry(user_id=user.id, game_id=game_id, enqueued_at=now, last_seen_at=now))
+    paired = _pair_ranked(db, user, None, game_id, now) if ranked \
+        else _pair_casual(db, user, game_id, now)
+    if paired is not None:
+        return paired
+    db.add(QueueEntry(user_id=user.id, game_id=game_id, enqueued_at=now, last_seen_at=now,
+                      ranked=ranked))
     db.commit()
-    return QueueStatusOut(state="queued", game_id=game_id), []
+    return QueueStatusOut(state="queued", game_id=game_id, ranked=ranked,
+                          rating_window=rating_window(0) if ranked else None), []
 
 
-def queue_status(db: Session, user: User) -> QueueStatusOut:
+def queue_status(db: Session, user: User) -> tuple[QueueStatusOut, list[Event]]:
+    """Consulta (e, na fila ranqueada, tenta parear: a janela de rating cresce com a espera)."""
     entry = db.scalar(select(QueueEntry).where(QueueEntry.user_id == user.id).with_for_update())
     if entry is None:
-        return QueueStatusOut(state="idle")
+        return QueueStatusOut(state="idle"), []
     if entry.matched_match_id is not None:
-        return _consume_matched(db, entry)
+        return _consume_matched(db, entry), []
     now = clock.now()
     entry.last_seen_at = now
+    if entry.ranked:
+        _lock_queue(db, entry.game_id)
+        paired = _pair_ranked(db, user, entry, entry.game_id, now)
+        if paired is not None:
+            return paired
     db.commit()
     waited = max(0, int((now - entry.enqueued_at).total_seconds()))
     return QueueStatusOut(state="queued", game_id=entry.game_id, waited_seconds=waited,
-                          offer_ai=waited >= OFFER_AI_AFTER_SECONDS)
+                          offer_ai=waited >= OFFER_AI_AFTER_SECONDS, ranked=entry.ranked,
+                          rating_window=rating_window(waited) if entry.ranked else None), []
 
 
 def leave_queue(db: Session, user: User) -> None:
@@ -353,7 +488,7 @@ def respond_draw(db: Session, user: User, match_id: uuid.UUID,
     if accept:
         offer.status = "accepted"
         match_service.finish_with_winner(match, None, "agreement")
-        events = [match_ended(match.id, match.result, match.end_reason, match.ply)]
+        events = [match_service.finish_event(db, match, players)]
     else:
         offer.status = "declined"
         events = [Event("draw_declined", {"match_id": str(match.id), "by_seat": seat,
@@ -393,8 +528,8 @@ def claim_abandon(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOu
         raise ProblemError(409, "too_early", "Ainda é cedo para reivindicar",
                            f"Aguarde mais {int(limit - elapsed) + 1} segundo(s).")
     match_service.finish_with_winner(match, seat, "abandon")
+    events = [match_service.finish_event(db, match, players)]
     db.commit()
-    events = [match_ended(match.id, match.result, match.end_reason, match.ply)]
     return match_service.view(db, match, players, user), events
 
 
