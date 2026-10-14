@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, errorMessage } from "../../services/api";
 import type { ServerMessage } from "../../services/realtime";
@@ -92,12 +92,15 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
 
   // Alternativa ao WebSocket: consulta a fila (também mantém a entrada viva no servidor).
   const queued = queue?.state === "queued";
+  // Sinal síncrono de "saí da fila": uma consulta já em voo não pode reabrir a fila depois do DELETE.
+  const queueActive = useRef(false);
+  useEffect(() => { queueActive.current = queued; }, [queued]);
   useEffect(() => {
     if (!queued) return;
     let vivo = true; // descarta respostas que chegam depois de sair da fila
     const timer = setInterval(() => {
       api<QueueStatus>("GET", "/matchmaking/queue").then((s) => {
-        if (!vivo) return;
+        if (!vivo || !queueActive.current) return;
         if (s.state === "matched" && s.match_id) { setQueue(null); setOpenId(s.match_id); }
         else setQueue(s.state === "idle" ? null : s);
       }, (e: unknown) => { if (vivo) setError(errorMessage(e)); });
@@ -138,7 +141,13 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
   });
 
   const leaveQueue = () => void run(async () => {
-    await api<void>("DELETE", "/matchmaking/queue");
+    queueActive.current = false;
+    try {
+      await api<void>("DELETE", "/matchmaking/queue");
+    } catch (e) {
+      queueActive.current = queued; // continua na fila: as consultas voltam a valer
+      throw e;
+    }
     setQueue(null);
   });
 
