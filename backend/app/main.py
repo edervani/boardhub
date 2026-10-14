@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.middleware import install_middleware
 from app.api.routes import academy, auth, health, matches, me, privacy, profile, ranking
+from app.api.static_frontend import install_frontend
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -32,6 +33,8 @@ def create_app() -> FastAPI:
     for router in (health.router, auth.router, me.router, profile.router, matches.router,
                    academy.router, privacy.router, ranking.router, realtime.router):
         app.include_router(router, prefix="/api/v1")
+    if settings.serve_frontend_dir:  # modo nativo de teste (DT-022); sempre depois da API
+        install_frontend(app, settings.serve_frontend_dir)
     return app
 
 

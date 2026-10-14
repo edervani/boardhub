@@ -1,8 +1,12 @@
 """Envio de e-mails transacionais (RF-002, RF-005, RF-034)."""
 
+import json
+import os
 import smtplib
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from email.message import EmailMessage
+from pathlib import Path
 from typing import Protocol
 
 from app.core.config import get_settings
@@ -43,5 +47,29 @@ class SmtpMailer:
             raise MailError from exc
 
 
+class FileMailer:
+    """Grava cada mensagem como uma linha JSON em MAIL_FILE_PATH (só testes locais, DT-022).
+
+    Substitui o Mailpit no modo nativo do Windows: o arquivo traz o link de verificação, por isso
+    a configuração só o aceita em development/test. O log registra apenas que houve gravação.
+    """
+
+    def send(self, mail: Mail) -> None:
+        path = Path(get_settings().mail_file_path)
+        record = {"ts": datetime.now(UTC).isoformat(), "to": mail.to,
+                  "subject": mail.subject, "body": mail.body}
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+            with os.fdopen(fd, "a", encoding="utf-8", newline="\n") as out:
+                out.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except OSError as exc:
+            log.warning("falha ao gravar e-mail de teste", extra={"error_type": type(exc).__name__})
+            raise MailError from exc
+        log.info("e-mail de teste gravado em arquivo")
+
+
 def get_mailer() -> Mailer:
+    if get_settings().mail_backend == "file":
+        return FileMailer()
     return SmtpMailer()

@@ -36,6 +36,23 @@ cd boardhub
 
 O CI executa o mesmo `docker compose` e um teste de fumaça ponta a ponta (`scripts/smoke_compose.py`).
 
+### Windows sem Docker (modo nativo, só para testes)
+
+Para Windows em que o Docker não instala (ex.: **Windows Server 2019 virtualizado**, sem WSL2/Docker Desktop; o Docker Engine do Server 2019 só roda contêineres Windows e as imagens do projeto são Linux). Não exige administrador, Hyper-V, WSL2 nem Node: tudo fica em `.native\` (apagar a pasta desfaz a instalação). **Somente para testes — nunca produção** ([DT-025](docs/16-decisoes-tecnicas.md)).
+
+1. Baixe o pacote do CI: aba **Actions** do repositório → execução mais recente da `main` → artefato **`boardhub-windows-nativo`** (baixa como `boardhub-windows-nativo.zip`; exige login no GitHub; guardado por 30 dias) e extraia. Ele traz `backend\`, `frontend\dist\` (já construído) e `scripts\`. *Alternativa:* `git clone` e, no passo 2, acrescente `-ConstruirFrontend`.
+2. `powershell -ExecutionPolicy Bypass -File .\scripts\windows\instalar-nativo.ps1` — instala `uv` (SHA-256 conferido), Python 3.13 e as dependências (`uv sync --locked`), PostgreSQL 17 portátil (zip da EDB), cria banco e usuário com **senhas aleatórias** em `.native\.env` (ignorado pelo git) e roda `alembic upgrade head`. Chaves: `-Mailpit` (caixa de e-mails com interface web), `-ConstruirFrontend` (baixa Node 24 portátil, SHA-256 conferido), `-SomenteVerificar` (só diagnostica), `-Porta`, `-PortaBanco`.
+3. `.\scripts\windows\iniciar-nativo.ps1` → site em <http://localhost:8080> (**sempre por `localhost`**: a origem única de CORS/WebSocket é `http://localhost:<porta>`). O próprio backend serve o frontend (`SERVE_FRONTEND_DIR`), na mesma origem de `/api`, sem nginx.
+4. E-mails de teste: `.\scripts\windows\emails-nativo.ps1` (arquivo `.native\data\emails.jsonl`, `MAIL_BACKEND=file`) ou <http://localhost:8025> com `-Mailpit`.
+5. Rotina diária: `.\scripts\windows\jobs-nativo.ps1 -RegistrarTarefa` (Agendador de Tarefas, 03:30, com a sessão conectada) ou `-Laco`; `jobs-nativo.ps1` sem opção roda uma vez.
+6. `.\scripts\windows\parar-nativo.ps1` (`-ApagarDados` remove banco e e-mails de teste).
+
+Limitações: o BoardHub para se a sessão do Windows for encerrada; o Visual C++ Redistributable x64 é necessário (o instalador avisa; `-InstalarRuntimeVC` o instala com elevação); não há TLS (cookies sem `Secure` em HTTP/localhost, como no modo Docker); o zip do PostgreSQL da EDB não tem hash publicado (o script mostra o SHA-256 e verifica a assinatura Authenticode; use `-PostgresSha256` para travar).
+
+**Alternativas offline** (máquina sem internet): leve para a pasta do projeto o zip do `uv` (`-UvZip`), o zip de binários do PostgreSQL 17 (`-PostgresZip`) ou um PostgreSQL 17 já instalado (`-UsarPostgresDe 'C:\Program Files\PostgreSQL\17\bin'`), um Python 3.13 instalado (o `uv` o encontra) e a pasta `.native\uv-cache` de outra instalação com `UV_OFFLINE=1`; Node (`-NodeZip`) e Mailpit (`-MailpitZip`) só se forem necessários.
+
+O CI prova esse modo no Windows (job `native-smoke`: instala, sobe e roda `scripts/smoke_compose.py` com `SMOKE_WEB`/`SMOKE_MAIL_FILE`; job `powershell`: sintaxe 5.1 + PSScriptAnalyzer). **Não foi testado em um Windows Server 2019 real.**
+
 ## Funcionalidades planejadas
 - **v1:** cadastro/login, perfil, preferências (tema, animações, estilo de peças), lobby, partidas locais, contra IA (5 níveis) e online (convite e fila), três jogos com validação no servidor, ranking Elo (damas, xadrez), histórico, Academy inicial, exportação e exclusão de conta.
 - **Posteriores:** conquistas, desafio diário, notificações ampliadas, amizades, personalização avançada.

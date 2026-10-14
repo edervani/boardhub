@@ -43,3 +43,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 # Migrações (backend/alembic/versions) e lockfiles DEVEM ser versionados.
+
+# Modo nativo do Windows (DT-025): ferramentas, banco, segredos e registros locais
+.native/
