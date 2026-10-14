@@ -4,12 +4,19 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+<<<<<<< HEAD
 ### Adicionado (Fase 4 — xadrez, backend)
 - Motor `chess` (`chess-fide-1`) sobre python-chess (nova dependência `chess>=1.11`, GPL-3.0 — DT-005): estado = lances UCI desde a posição inicial, validado ao carregar (lances reexecutados e FEN conferido); fim por xeque-mate, afogamento, material insuficiente, quíntupla repetição e 75 lances; limite de 600 meios-lances.
 - IA em 5 níveis: 1 aleatório com preferência por capturas; 2–5 negamax com poda alfa-beta, aprofundamento iterativo com limite de tempo (0,3/1/2/3 s), tabelas de casas, ordenação MVV-LVA e quiescência de capturas. Stockfish/UCI fica para a Fase 5.
 - Migração 0004 (xadrez habilitado); `stalemate` e `fifty_move` passam a ser gravados como motivo de fim.
 - Testes: perft 20/400/8902 e Kiwipete 48/2039, mate do pastor, afogamento, roque, en passant, promoção, material insuficiente, estados adulterados, IA×IA curta e partidas pela API com replay e hashes.
 - **Pendência P-17:** sem reivindicação de empate (3x/50 lances) nem acordo nesta fase. Frontend do xadrez não incluído.
+=======
+### Adicionado (Fase 4 — interface do xadrez)
+- Frontend: opção "Xadrez" no seletor, `ChessBoard` acessível (casas rotuladas como "e4: peão branco, jogável", lance por dois cliques sobre os lances UCI legais, seletor de promoção, setas do teclado, tabuleiro invertido para as pretas, glifos Unicode sem depender de cor), `fenToSquares` pura e textos de status (xeque-mate, afogamento, repetição quíntupla, 75 lances, desistência).
+- `MatchState.to_move` passa a opcional; `fen` e `moves` adicionados.
+- Testes Vitest em `frontend/tests/Chess.test.tsx`.
+>>>>>>> origin/main
 
 ### Adicionado (Fase 3 — damas brasileiras)
 - Motor `checkers` (regras brasileiras: captura obrigatória e pela maioria, dama voadora, promoção só ao terminar na última fileira, peças capturadas como obstáculo até o fim do lance), IA em 5 níveis (negamax com poda alfa-beta e profundidade iterativa; sem tabela de transposição) e migração 0003 (damas habilitadas, `kings_only`, lance até 64 caracteres).
