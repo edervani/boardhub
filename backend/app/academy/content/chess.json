@@ -80,7 +80,7 @@
          "explanation": "Levando a torre para a última fileira (a8), ela ataca o rei pela fileira, sem nada no caminho."},
         {"id": "ch-check-2", "type": "best_move", "goal": "give_check", "difficulty": 1,
          "prompt": "Você joga com as brancas. Qual lance do bispo dá xeque?",
-         "position": {"fen": "4k3/8/8/8/8/8/8/4KB2 w - - 0 1"},
+         "position": {"fen": "4k3/8/8/8/8/8/P7/4KB2 w - - 0 1"},
          "explanation": "O bispo vai a b5 e ataca o rei pela diagonal b5, c6, d7, e8, que está livre."}
       ]
     },

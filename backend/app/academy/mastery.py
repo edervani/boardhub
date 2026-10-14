@@ -1,6 +1,6 @@
 """Domínio de conceitos e revisão espaçada (RF-025, doc 08 §6). Funções puras, sem banco.
 
-Pendência P-18: o doc 08 propõe alfa = 0,25 "a calibrar", mas com 0,25 cinco acertos seguidos
+Pendência P-19: o doc 08 propõe alfa = 0,25 "a calibrar", mas com 0,25 cinco acertos seguidos
 dão apenas 0,763 e nunca chegariam a 0,8, o que contradiz CA-025 ("5 acertos em 3 exercícios
 em 2 dias concedem domínio"). Usa-se 0,30 (cinco acertos ⇒ 0,832) até o responsável decidir.
 """

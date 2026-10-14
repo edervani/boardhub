@@ -10,7 +10,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Mentor pós-partida determinístico (sem Stockfish): `GET /matches/{id}/analysis` reexecuta os lances do usuário, classifica pelos limiares do doc 08, cacheia e limita a 10/h; não participante recebe 404.
 - IA generativa só atrás de `LLMProvider` (padrão `NullProvider`, sem chamada externa); a reformulação é descartada se acrescentar lance ou casa.
 - Frontend: página Academy (trilhas, lição, exercício com os tabuleiros existentes, dicas, nivelamento) e revisão da partida a partir do histórico.
-- **Pendências:** P-18 (α provisório 0,30 por conflito com CA-025) e P-19 (revisão do conteúdo, sem provedor local, sem 202).
+- **Pendências:** P-19 (α provisório 0,30 por conflito com CA-025) e P-20 (revisão do conteúdo, sem provedor local, sem 202).
 
 ### Adicionado (Fase 4 — xadrez, backend)
 - Motor `chess` (`chess-fide-1`) sobre python-chess (nova dependência `chess>=1.11`, GPL-3.0 — DT-005): estado = lances UCI desde a posição inicial, validado ao carregar (lances reexecutados e FEN conferido); fim por xeque-mate, afogamento, material insuficiente, quíntupla repetição e 75 lances; limite de 600 meios-lances.

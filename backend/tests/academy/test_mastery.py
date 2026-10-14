@@ -30,7 +30,7 @@ def test_ganho_de_dominio_reduzido_por_dicas() -> None:
 
 
 def test_calibracao_cinco_acertos_sem_dica_alcancam_o_limiar() -> None:
-    """P-18: com alfa = 0,25 o resultado seria 0,763 e CA-025 nunca poderia ser atendido."""
+    """P-19: com alfa = 0,25 o resultado seria 0,763 e CA-025 nunca poderia ser atendido."""
     value = 0.0
     for _ in range(5):
         value = mastery.next_mastery(value, True, 0)

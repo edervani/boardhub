@@ -312,12 +312,15 @@ def test_sequencia_forjada_e_rejeitada(aluno: TestClient) -> None:
     assert passo(aluno, "tictactoe", "knows_rules", too_many).status_code == 422
 
 
-def test_so_pode_refazer_depois_de_30_dias(aluno: TestClient, fake_clock: FakeClock) -> None:
+def test_so_pode_refazer_depois_de_30_dias(aluno: TestClient, db: Session) -> None:
     avaliar(aluno, "tictactoe", "regular", True)
     again = passo(aluno, "tictactoe", "regular", [])
     assert again.status_code == 409 and again.json()["type"] == "placement_too_soon"
     assert passo(aluno, "checkers", "regular", []).status_code == 200  # outro jogo
-    fake_clock.advance(days=31)
+    # a sessão expira antes de 31 dias; por isso recua-se a avaliação gravada
+    db.execute(text("UPDATE academy_placements "
+                    "SET completed_at = completed_at - interval '31 days'"))
+    db.commit()
     assert passo(aluno, "tictactoe", "regular", []).status_code == 200
 
 

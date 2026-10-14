@@ -54,7 +54,7 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | POST /academy/exercises/{id}/hints | Pedir dica (nível 1–3, registrada no servidor) | U | `level` | 200 `{level, text, hints_used}` | 404, 409, 422 | — | exercise_hints | RF-023 |
 | GET /academy/tracks, GET /academy/progress | Trilhas e progresso por conceito | U | — | 200 | — | — | progress | RF-022/025 |
 | POST /academy/{game_id}/placement | Avaliação inicial | U | respostas | 200 próximo exercício ou nível estimado (o servidor reexecuta as respostas; sem estado no cliente) | 409 `placement_too_soon`, 422 | 5/dia | progress | RF-022 |
-| GET /matches/{id}/analysis | Análise pós-partida | U participante; partida finalizada e **não** em andamento | — | 200 (análise síncrona; 202 não implementado, P-19) | 403, 409 | 10/h | cache de análise | RF-024 |
+| GET /matches/{id}/analysis | Análise pós-partida | U participante; partida finalizada e **não** em andamento | — | 200 (análise síncrona; 202 não implementado, P-20) | 403, 409 | 10/h | cache de análise | RF-024 |
 | POST /me/export | Pedir exportação | U | — | 202 | 429 | 1/24 h | data_export_requests, audit | RF-029 |
 | GET /me/export/{id} | Baixar | U dono | — | 200 arquivo | 404, 410 | — | — | RF-029 |
 | POST /me/delete | Pedir exclusão | U | `password` | 202 | 401, 429 | 3/dia | users.status, audit | RF-030 |
