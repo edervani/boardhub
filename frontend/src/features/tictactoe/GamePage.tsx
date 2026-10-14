@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { Me } from "../../services/types";
 import { Board } from "./Board";
 import { CheckersBoard } from "./CheckersBoard";
+import { ChessBoard } from "./ChessBoard";
 import { LEVEL_LABELS, statusText } from "./status";
 import { useGuestLocalMatch, useServerMatch } from "./useGame";
 
@@ -23,9 +24,12 @@ function GuestGame() {
   );
 }
 
+type GameId = "tictactoe" | "checkers" | "chess";
+const TITLES: Record<string, string> = { tictactoe: "Jogo da velha", checkers: "Damas", chess: "Xadrez" };
+
 function SetupForm({ onStart }: { onStart: (body: Record<string, unknown>) => void }) {
   const [mode, setMode] = useState<"ai" | "local">("ai");
-  const [game, setGame] = useState<"tictactoe" | "checkers">("tictactoe");
+  const [game, setGame] = useState<GameId>("tictactoe");
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -37,9 +41,10 @@ function SetupForm({ onStart }: { onStart: (body: Record<string, unknown>) => vo
     <form onSubmit={submit} aria-labelledby="setup-title">
       <h2 id="setup-title">Nova partida</h2>
       <label htmlFor="game">Jogo</label>
-      <select id="game" value={game} onChange={(e) => setGame(e.target.value as "tictactoe" | "checkers")}>
+      <select id="game" value={game} onChange={(e) => setGame(e.target.value as GameId)}>
         <option value="tictactoe">Jogo da velha</option>
         <option value="checkers">Damas</option>
+        <option value="chess">Xadrez</option>
       </select>
       <label htmlFor="mode">Modo</label>
       <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as "ai" | "local")}>
@@ -54,8 +59,8 @@ function SetupForm({ onStart }: { onStart: (body: Record<string, unknown>) => vo
           </select>
           <label htmlFor="seat">Você joga</label>
           <select id="seat" name="seat" defaultValue="1">
-            <option value="1">Primeiro ({game === "checkers" ? "brancas" : "X"})</option>
-            <option value="2">Segundo ({game === "checkers" ? "pretas" : "O"})</option>
+            <option value="1">Primeiro ({game === "tictactoe" ? "X" : "brancas"})</option>
+            <option value="2">Segundo ({game === "tictactoe" ? "O" : "pretas"})</option>
           </select>
         </>
       )}
@@ -83,9 +88,12 @@ export function GamePage({ me }: { me: Me | null }) {
   const mySeat = match.seats.find((s) => s.is_you)?.seat ?? 1;
   return (
     <section aria-labelledby="game-title">
-      <h2 id="game-title">{checkers ? "Damas" : "Jogo da velha"}{match.ai_level ? ` — IA nível ${match.ai_level}` : ""}</h2>
+      <h2 id="game-title">{TITLES[match.game_id] ?? match.game_id}{match.ai_level ? ` — IA nível ${match.ai_level}` : ""}</h2>
       <p role="status" aria-live="polite">{statusText(match)}</p>
-      {checkers ? (
+      {match.game_id === "chess" ? (
+        <ChessBoard fen={match.state.fen ?? ""} playable={playable}
+          flipped={match.mode !== "local" && mySeat === 2} onPlay={(mv) => void m.play(mv)} />
+      ) : checkers ? (
         <CheckersBoard squares={match.state.squares ?? []} playable={playable}
           flipped={match.mode !== "local" && mySeat === 2} onPlay={(mv) => void m.play(mv)} />
       ) : (

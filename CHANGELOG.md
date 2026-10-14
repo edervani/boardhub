@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 4 — interface do xadrez)
+- Frontend: opção "Xadrez" no seletor, `ChessBoard` acessível (casas rotuladas como "e4: peão branco, jogável", lance por dois cliques sobre os lances UCI legais, seletor de promoção, setas do teclado, tabuleiro invertido para as pretas, glifos Unicode sem depender de cor), `fenToSquares` pura e textos de status (xeque-mate, afogamento, repetição quíntupla, 75 lances, desistência).
+- `MatchState.to_move` passa a opcional; `fen` e `moves` adicionados.
+- Testes Vitest em `frontend/tests/Chess.test.tsx`.
+
 ### Adicionado (Fase 3 — damas brasileiras)
 - Motor `checkers` (regras brasileiras: captura obrigatória e pela maioria, dama voadora, promoção só ao terminar na última fileira, peças capturadas como obstáculo até o fim do lance), IA em 5 níveis (negamax com poda alfa-beta e profundidade iterativa; sem tabela de transposição) e migração 0003 (damas habilitadas, `kings_only`, lance até 64 caracteres).
 - Frontend: seleção do jogo, tabuleiro de damas acessível (casas numeradas, lance por clique em cada casa do caminho, tabuleiro invertido para as pretas).
