@@ -27,6 +27,8 @@ from app.services.game_registry import KITS, GameKit
 
 log = get_logger(__name__)
 HOUR = 3600.0
+# Motivo do fim no banco para cada motivo do motor; os demais viram "normal".
+END_REASON_BY_OUTCOME = {"repetition": "repetition", "kings_only": "kings_only"}
 MAX_PAGE = 100
 
 
@@ -154,7 +156,7 @@ def _record(db: Session, match: Match, kit: GameKit, move_raw: str,
     match.state = serialized
     match.ply += 1
     if (outcome := kit.engine.outcome(new_state)) is not None:
-        _finish(match, kit, outcome.winner, "normal")
+        _finish(match, kit, outcome.winner, END_REASON_BY_OUTCOME.get(outcome.reason, "normal"))
     db.flush()
 
 

@@ -17,12 +17,12 @@ export function useServerMatch() {
     finally { setBusy(false); }
   }, []);
 
-  const play = useCallback(async (index: number) => {
+  const play = useCallback(async (move: string) => {
     if (!match || busy) return;
     setError(""); setBusy(true);
     try {
       setMatch(await api<MatchView>("POST", `/matches/${match.id}/moves`, {
-        expected_ply: match.ply, move: String(index), client_move_id: newId(),
+        expected_ply: match.ply, move, client_move_id: newId(),
       }));
     } catch (e) {
       setError(errorMessage(e));

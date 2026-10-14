@@ -26,7 +26,7 @@ class CreateMatchIn(Strict):
 
 class MoveIn(Strict):
     expected_ply: int = Field(ge=0, le=10_000)
-    move: str = Field(min_length=1, max_length=16)
+    move: str = Field(min_length=1, max_length=64)
     client_move_id: uuid.UUID
 
 
@@ -79,7 +79,7 @@ class MatchPage(BaseModel):
 
 class EngineApplyIn(Strict):
     state: dict[str, Any]
-    move: str = Field(min_length=1, max_length=16)
+    move: str = Field(min_length=1, max_length=64)
 
 
 class OutcomeOut(BaseModel):

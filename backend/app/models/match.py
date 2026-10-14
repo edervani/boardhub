@@ -26,7 +26,7 @@ STATUSES = ("waiting", "in_progress", "finished", "aborted", "annulled")
 RESULTS = ("p1_win", "p2_win", "draw")
 END_REASONS = (
     "normal", "resign", "abandon", "agreement", "repetition", "fifty_move", "stalemate",
-    "timeout", "annulled",
+    "timeout", "annulled", "kings_only",
 )
 
 
@@ -96,7 +96,7 @@ class MatchMove(Base):
     )
     ply: Mapped[int] = mapped_column(Integer, primary_key=True)
     seat: Mapped[int] = mapped_column(SmallInteger)
-    move: Mapped[str] = mapped_column(String(16))
+    move: Mapped[str] = mapped_column(String(64))
     client_move_id: Mapped[uuid.UUID] = mapped_column()
     state_after_hash: Mapped[bytes] = mapped_column(LargeBinary(32))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

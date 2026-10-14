@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 3 — damas brasileiras)
+- Motor `checkers` (regras brasileiras: captura obrigatória e pela maioria, dama voadora, promoção só ao terminar na última fileira, peças capturadas como obstáculo até o fim do lance), IA em 5 níveis (negamax com poda alfa-beta e profundidade iterativa; sem tabela de transposição) e migração 0003 (damas habilitadas, `kings_only`, lance até 64 caracteres).
+- Frontend: seleção do jogo, tabuleiro de damas acessível (casas numeradas, lance por clique em cada casa do caminho, tabuleiro invertido para as pretas).
+- Testes: invariantes do motor, perft 7/49/302/1469, partida local aleatória com replay e hashes.
+- **Não confirmado em fonte oficial** (P-16): vitória por bloqueio, empate por tripla repetição, contagem de 40 lances só com damas e empates de finais de 5 lances (não implementados).
+
 ### Adicionado (execução local no Windows — DT-016)
 - Dockerfiles do backend e do site (nginx com proxy `/api`), `docker-compose.yml` completo com Mailpit e scripts `scripts/windows/iniciar.ps1` e `parar.ps1`.
 - Teste de fumaça ponta a ponta (`scripts/smoke_compose.py`) e job `compose` no CI.
