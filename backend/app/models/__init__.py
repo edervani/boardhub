@@ -14,6 +14,7 @@ from app.models.identity import AuthSession, AuthToken, User, UserPreferences, U
 from app.models.match import DrawOffer, Match, MatchMove, MatchPlayer, QueueEntry
 from app.models.privacy import DataExportRequest
 from app.models.rating import Rating, RatingHistory
+from app.models.social import DirectInvitation, Friendship, Report, UserBlock
 from app.models.usage import DailyUsage
 
 __all__ = [
@@ -23,9 +24,11 @@ __all__ = [
     "Base",
     "DailyUsage",
     "DataExportRequest",
+    "DirectInvitation",
     "DrawOffer",
     "ExerciseAttempt",
     "ExerciseHint",
+    "Friendship",
     "Game",
     "Match",
     "MatchAnalysis",
@@ -35,8 +38,10 @@ __all__ = [
     "QueueEntry",
     "Rating",
     "RatingHistory",
+    "Report",
     "SkillProgress",
     "User",
+    "UserBlock",
     "UserPreferences",
     "UserProfile",
 ]
