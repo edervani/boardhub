@@ -35,3 +35,49 @@ export interface Preferences {
   piece_styles: Record<string, "infantil" | "intermediario" | "classico">;
   locale: "pt-BR";
 }
+
+export interface Seat {
+  seat: number;
+  is_ai: boolean;
+  is_you: boolean;
+}
+
+export interface MatchState {
+  schema_version: number;
+  board: string;
+  to_move: "X" | "O";
+}
+
+export interface MatchView {
+  id: string;
+  game_id: string;
+  mode: "ai" | "local" | string;
+  status: "in_progress" | "finished" | "aborted" | string;
+  ply: number;
+  state: MatchState;
+  to_move_seat: number | null;
+  legal_moves: string[];
+  result: "p1_win" | "p2_win" | "draw" | null;
+  end_reason: string | null;
+  ai_level: number | null;
+  seats: Seat[];
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface MatchSummary {
+  id: string;
+  game_id: string;
+  mode: string;
+  status: string;
+  result: string | null;
+  ply: number;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface EngineApply {
+  state: MatchState;
+  outcome: { winner: string | null; reason: string } | null;
+  legal_moves: string[];
+}

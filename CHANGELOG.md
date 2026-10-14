@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 2d — tabuleiro jogável)
+- Frontend: tabuleiro do jogo da velha acessível (rótulos por casa, setas do teclado, estado em texto com `aria-live`), partida contra a IA (níveis 1–5, escolha de assento), partida local de visitante validada pelo servidor, desistência e histórico paginado.
+- Lógica fora dos componentes visuais (`useGame.ts`, `status.ts`); ressincronização automática em `stale_state`.
+- Ainda ausentes: E2E Playwright e auditoria axe (RNF-014/015/016), lobby completo (RF-008), partidas online.
+
 ### Adicionado (Fase 2b — partidas contra a IA e locais)
 - Migração 0002: `matches`, `match_players`, `match_moves`; jogo da velha habilitado (classificação "Livre" a validar — P-04).
 - `POST /matches` (modos `ai` e `local`), `GET /matches/{id}`, `GET /matches/{id}/moves`, `POST /matches/{id}/moves` (idempotente por `client_move_id`, controle otimista por `expected_ply`, bloqueio de linha), `POST /matches/{id}/resign`, `GET /me/matches` (cursor) e `POST /engines/{game_id}/apply` (visitante, sem persistência, limite 8 KB).
