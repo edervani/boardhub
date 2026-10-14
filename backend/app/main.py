@@ -1,18 +1,35 @@
 """Ponto de entrada da aplicação FastAPI."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health
+from app.api.middleware import install_middleware
+from app.api.routes import auth, health, me
+from app.core.config import get_settings
+from app.core.errors import install_error_handlers
+from app.core.logging import configure_logging
 
 
 def create_app() -> FastAPI:
+    settings = get_settings()
+    configure_logging(settings.log_level)
     app = FastAPI(
         title="BoardHub API",
         version="0.1.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
     )
-    app.include_router(health.router, prefix="/api/v1")
+    install_error_handlers(app)
+    install_middleware(app)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[settings.frontend_origin],  # SEC-07: uma única origem, nunca "*"
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["Content-Type", "X-CSRF-Token"],
+    )
+    for router in (health.router, auth.router, me.router):
+        app.include_router(router, prefix="/api/v1")
     return app
 
 

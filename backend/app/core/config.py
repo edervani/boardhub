@@ -14,6 +14,16 @@ class Settings(BaseSettings):
     secret_key: str = Field(min_length=32)
     frontend_origin: str = "http://localhost:5173"
     log_level: str = "INFO"
+    cookie_secure: bool = True
+    session_idle_days: int = 30
+    session_absolute_days: int = 90
+    terms_version: str = "2026-10-13"
+
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_user: str = ""
+    smtp_password: str = ""
+    mail_from: str = "nao-responda@example.test"
 
     postgres_db: str
     postgres_user: str
