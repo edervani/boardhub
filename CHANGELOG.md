@@ -5,12 +5,19 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 ## [Não lançado]
 
 ### Adicionado (Fase 6 — Academy e Mentor, RF-022 a RF-025)
-- Conteúdo original em pt-BR como dados versionados (`backend/app/academy/content/*.json`, DT-017): trilhas de jogo da velha, damas brasileiras e xadrez, com lições, conceitos e exercícios; cada solução é conferida pelo motor em teste.
+- Conteúdo original em pt-BR como dados versionados (`backend/app/academy/content/*.json`, DT-018): trilhas de jogo da velha, damas brasileiras e xadrez, com lições, conceitos e exercícios; cada solução é conferida pelo motor em teste.
 - Backend: trilhas, lições, exercício sem solução, dicas contadas no servidor, resposta validada pelos motores, domínio por conceito com revisão espaçada (3/7/21/60 dias), nivelamento adaptativo sem estado no cliente e progresso. Migração 0006.
 - Mentor pós-partida determinístico (sem Stockfish): `GET /matches/{id}/analysis` reexecuta os lances do usuário, classifica pelos limiares do doc 08, cacheia e limita a 10/h; não participante recebe 404.
 - IA generativa só atrás de `LLMProvider` (padrão `NullProvider`, sem chamada externa); a reformulação é descartada se acrescentar lance ou casa.
 - Frontend: página Academy (trilhas, lição, exercício com os tabuleiros existentes, dicas, nivelamento) e revisão da partida a partir do histórico.
 - **Pendências:** P-19 (α provisório 0,30 por conflito com CA-025) e P-20 (revisão do conteúdo, sem provedor local, sem 202).
+### Adicionado (Fase 2c — partidas online entre humanos)
+- Backend: modo `online_casual` (não ranqueado), convite por código (HMAC, validade de 15 min, uso único), fila de pareamento por jogo (trava consultiva no PostgreSQL, sem rating), desistência, oferta/aceite/recusa de empate por acordo (`agreement`) e abandono por inatividade ou desconexão (`abandon`), com `GET /me/active-matches`.
+- WebSocket `/api/v1/ws` (cookie de sessão + verificação de Origin, mensagens Pydantic estritas, fan-out em memória por processo, ping/pong, limites de tamanho e taxa, retomada com `last_known_ply`).
+- Migração 0005 (colunas de convite em `matches`, `match_players.disconnected_at`, `draw_offers`, `matchmaking_queue`).
+- Frontend: lobby acessível (criar convite, entrar por código, fila, partidas em andamento), `useWebSocket` com reconexão exponencial, avisos `aria-live` de empate/desistência, reuso do tabuleiro; nginx e Vite com proxy de WebSocket.
+- Testes: pytest (REST e `websocket_connect`, concorrência, reconexão, IDOR, rate limit, ECA) e Vitest.
+- Fora desta entrega: ranking, limite de revanche, limite diário de minutos, chat, testes Playwright/axe.
 
 ### Adicionado (Fase 4 — xadrez, backend)
 - Motor `chess` (`chess-fide-1`) sobre python-chess (nova dependência `chess>=1.11`, GPL-3.0 — DT-005): estado = lances UCI desde a posição inicial, validado ao carregar (lances reexecutados e FEN conferido); fim por xeque-mate, afogamento, material insuficiente, quíntupla repetição e 75 lances; limite de 600 meios-lances.

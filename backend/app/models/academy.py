@@ -1,6 +1,6 @@
 """BoardHub Academy: tentativas, domínio por conceito, dicas, avaliação inicial e análises.
 
-O conteúdo (lições e exercícios) fica em arquivos versionados (DT-017); aqui só há dados da
+O conteúdo (lições e exercícios) fica em arquivos versionados (DT-018); aqui só há dados da
 pessoa. Todas as tabelas dependem de `users` com exclusão em cascata (RF-030).
 """
 

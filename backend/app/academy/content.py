@@ -1,4 +1,4 @@
-"""Conteúdo da Academy: trilhas, lições e exercícios como dados versionados (doc 08, DT-017).
+"""Conteúdo da Academy: trilhas, lições e exercícios como dados versionados (doc 08, DT-018).
 
 Os arquivos JSON em `content/` são a fonte do conteúdo e passam por revisão humana (P-08). Aqui
 só se carrega e valida a estrutura; a correção das respostas é sempre calculada pelo motor

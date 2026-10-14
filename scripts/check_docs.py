@@ -56,14 +56,14 @@ RF_MAP = {
     5: ("services/auth_service", "/auth/password/*"),
     6: ("services/user_service", "PATCH /me/profile; features/profile"),
     7: ("services/user_service", "/me/preferences; features/profile"),
-    8: ("frontend features/lobby", "GET /games; features/lobby"),
+    8: ("frontend features/lobby", "GET /games, /me/active-matches; features/lobby"),
     9: ("services/match_service", "POST /engines/{game}/apply; POST /matches"),
     10: ("services/match_service + ai/opponents", "POST /matches; WS submit_move"),
-    11: ("services/match_service", "POST /matches, /matches/join"),
-    12: ("services/matchmaking_service", "/matchmaking/queue"),
+    11: ("services/online_service", "POST /matches, /matches/join, /matches/{id}/cancel"),
+    12: ("services/online_service", "/matchmaking/queue"),
     13: ("services/match_service + realtime", "WS submit_move"),
-    14: ("realtime", "WS join_match"),
-    15: ("services/match_service", "/matches/{id}/resign, draw-*"),
+    14: ("realtime + services/online_service", "WS /api/v1/ws join_match; GET /matches/{id}"),
+    15: ("services/match_service + online_service", "/matches/{id}/resign, draw-offer, draw-response, claim-abandon"),
     16: ("game_engines/tictactoe", "features/tictactoe"),
     17: ("game_engines/checkers", "features/checkers"),
     18: ("game_engines/chess", "features/chess"),
@@ -180,7 +180,7 @@ def rnf_tests() -> dict[str, str]:
 PR1 = "[PR #1](https://github.com/edervani/boardhub/pull/1)"
 # Estado/evidência por requisito. `implementado` só com código mesclado (doc 00 §4).
 IMPLEMENTADOS = {1, 2, 3, 4, 5}
-PARCIAIS = {6, 7, 17, 18, 9, 10, 13, 15, 16, 20, 33, 34}  # código mesclado, aceite incompleto (P-15)
+PARCIAIS = {6, 7, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33, 34}  # código mesclado, aceite incompleto (P-15)
 
 
 ACADEMY = {22, 23, 24, 25}  # Academy e Mentor (fase 6)

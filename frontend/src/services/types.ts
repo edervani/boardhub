@@ -51,6 +51,13 @@ export interface MatchState {
   moves?: string[]; // xadrez: lances UCI já jogados
 }
 
+export interface Player {
+  seat: number;
+  display_name: string | null;
+  connected: boolean;
+  grace_deadline: string | null;
+}
+
 export interface MatchView {
   id: string;
   game_id: string;
@@ -66,6 +73,32 @@ export interface MatchView {
   seats: Seat[];
   created_at: string;
   finished_at: string | null;
+  // Partidas online (Fase 2c); ausentes nas respostas das partidas locais e contra a IA.
+  players?: Player[];
+  invite_code?: string | null;
+  invite_expires_at?: string | null;
+  draw_offer_by_seat?: number | null;
+}
+
+export interface ActiveMatch {
+  id: string;
+  game_id: string;
+  mode: string;
+  status: string;
+  ply: number;
+  your_seat: number | null;
+  your_turn: boolean;
+  opponent_name: string | null;
+  invite_expires_at: string | null;
+  created_at: string;
+}
+
+export interface QueueStatus {
+  state: "idle" | "queued" | "matched";
+  game_id: string | null;
+  waited_seconds: number;
+  offer_ai: boolean;
+  match_id: string | null;
 }
 
 export interface MatchSummary {

@@ -22,5 +22,7 @@ button { background: var(--accent); color: var(--bg); border: 0; border-radius: 
 button.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 [role="alert"] { color: var(--danger); font-weight: 600; }
+.code { font-family: ui-monospace, monospace; font-size: 1.5rem; letter-spacing: .15em; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .badge { border: 2px solid var(--text); border-radius: .25rem; padding: 0 .5rem; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

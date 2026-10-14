@@ -3,7 +3,7 @@ import { api, errorMessage } from "../../services/api";
 import type { MatchSummary } from "../../services/types";
 
 const RESULT: Record<string, string> = { p1_win: "Vitória do 1º jogador (X)", p2_win: "Vitória do 2º jogador (O)", draw: "Empate" };
-const MODE: Record<string, string> = { ai: "Contra a IA", local: "Local" };
+const MODE: Record<string, string> = { ai: "Contra a IA", local: "Local", online_casual: "Online (casual)" };
 
 export function History({ onReview }: { onReview?: (matchId: string) => void }) {
   const [items, setItems] = useState<MatchSummary[] | null>(null);

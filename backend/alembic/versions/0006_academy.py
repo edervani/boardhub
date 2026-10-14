@@ -1,10 +1,10 @@
 """BoardHub Academy: tentativas, domínio, dicas, avaliação inicial e cache de análises (Fase 6).
 
-O conteúdo das lições fica em arquivos versionados (DT-017); estas tabelas guardam só dados da
+O conteúdo das lições fica em arquivos versionados (DT-018); estas tabelas guardam só dados da
 pessoa e são apagadas em cascata com a conta.
 
 Revision ID: 0006
-Revises: 0004
+Revises: 0005
 Create Date: 2026-10-14
 """
 
@@ -16,7 +16,7 @@ from sqlalchemy.dialects import postgresql
 
 revision: str = "0006"
 # Se a migração 0005 (partidas online) for mesclada antes, trocar para "0005" ao rebasear.
-down_revision: str | None = "0004"
+down_revision: str | None = "0005"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

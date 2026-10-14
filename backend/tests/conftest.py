@@ -22,6 +22,7 @@ from app.core import clock  # noqa: E402
 from app.core.ratelimit import limiter  # noqa: E402
 from app.db.session import get_engine  # noqa: E402
 from app.main import create_app  # noqa: E402
+from app.realtime.hub import hub  # noqa: E402
 from app.services.mailer import Mail, get_mailer  # noqa: E402
 
 ALEMBIC_INI = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
@@ -39,8 +40,10 @@ def migrated_db() -> None:
 @pytest.fixture(autouse=True)
 def clean_tables() -> Iterator[None]:
     limiter.reset()
+    hub.clear()
     yield
     limiter.reset()
+    hub.clear()
     with get_engine().begin() as conn:
         conn.execute(text("TRUNCATE users, matches, audit_log RESTART IDENTITY CASCADE"))
 

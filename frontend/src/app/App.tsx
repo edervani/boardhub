@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { LoginForm, RegisterForm } from "../features/auth/AuthForms";
 import { GameList } from "../features/catalog/GameList";
+import { LobbyPage } from "../features/lobby/LobbyPage";
 import { GamePage } from "../features/tictactoe/GamePage";
 import { History } from "../features/tictactoe/History";
 import { AcademyPage } from "../features/academy/AcademyPage";
 import { ReviewPage } from "../features/academy/ReviewPage";
+import { MatchBoard } from "../features/tictactoe/MatchBoard";
 import { ProfilePage } from "../features/profile/ProfilePage";
 import { ApiError, api } from "../services/api";
 import type { Me } from "../services/types";
 
-type View = "jogos" | "jogar" | "historico" | "academy" | "revisao" | "perfil" | "entrar" | "cadastro";
+type View = "jogos" | "jogar" | "online" | "historico" | "academy" | "revisao" | "perfil" | "entrar" | "cadastro";
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -38,6 +40,7 @@ export function App() {
           <button className="secondary" onClick={() => setView("jogar")}>Jogar</button>
           {me ? (
             <>
+              <button className="secondary" onClick={() => setView("online")}>Online</button>
               <button className="secondary" onClick={() => setView("historico")}>Histórico</button>
               <button className="secondary" onClick={() => setView("academy")}>Academy</button>
               <button className="secondary" onClick={() => setView("perfil")}>Perfil</button>
@@ -57,7 +60,10 @@ export function App() {
           <>
             {view === "jogos" && <GameList />}
             {view === "jogar" && <GamePage me={me} />}
-            {view === "historico" && me && <History onReview={(id) => { setReviewId(id); setView("revisao"); }} />}
+            {view === "online" && me && (
+              <LobbyPage me={me} renderBoard={(p) => <MatchBoard {...p} />} />
+            )}
+                        {view === "historico" && me && <History onReview={(id) => { setReviewId(id); setView("revisao"); }} />}
             {view === "academy" && me && <AcademyPage />}
             {view === "revisao" && me && <ReviewPage matchId={reviewId} onBack={() => setView("historico")} />}
             {view === "perfil" && me && <ProfilePage me={me} />}
