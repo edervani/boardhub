@@ -64,7 +64,7 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-015 | doc 02 | services/match_service | /matches/{id}/resign, draw-* | T-015 | CA-015 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-016 | doc 02 | game_engines/tictactoe | features/tictactoe | T-016 | CA-016 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-017 | doc 02 | game_engines/checkers | features/checkers | T-017 | CA-017 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
-| RF-018 | doc 02 | game_engines/chess | features/chess | T-018 | CA-018 | aprovado | — |
+| RF-018 | doc 02 | game_engines/chess | features/chess | T-018 | CA-018 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-019 | doc 02 | services/rating_service | GET /ranking/{game_id} | T-019 | CA-019 | aprovado | — |
 | RF-020 | doc 02 | services/match_service | GET /me/matches; /matches/{id}/moves | T-020 | CA-020 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-021 | doc 02 | services/stats_service | GET /me/stats | T-021 | CA-021 | aprovado | — |

@@ -28,7 +28,8 @@ from app.services.game_registry import KITS, GameKit
 log = get_logger(__name__)
 HOUR = 3600.0
 # Motivo do fim no banco para cada motivo do motor; os demais viram "normal".
-END_REASON_BY_OUTCOME = {"repetition": "repetition", "kings_only": "kings_only"}
+END_REASON_BY_OUTCOME = {"repetition": "repetition", "kings_only": "kings_only",
+                         "stalemate": "stalemate", "fifty_move": "fifty_move"}
 MAX_PAGE = 100
 
 

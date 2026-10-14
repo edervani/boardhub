@@ -71,6 +71,7 @@
   | 4 | Motor UCI nível médio, 500 ms |
   | 5 | Motor UCI nível alto, 2 s |
 - **Análise para o Mentor:** motor UCI avalia cada posição da partida finalizada (profundidade limitada); diferença de avaliação classifica lances (imprecisão/erro/erro grave — limiares no doc 08).
+- **Implementação na Fase 4:** `chess-fide-1`; IA própria (python-chess + alfa-beta) nos 5 níveis, sem Stockfish (Fase 5); só empates automáticos (quíntupla repetição, 75 lances, afogamento, material insuficiente) — reivindicação e acordo em P-17; partidas de 600 meios-lances terminam empatadas.
 - **Testes:** perft da posição inicial e de posições conhecidas (validam integração), casos de roque/en passant/promoção/afogamento, fim por material insuficiente, partidas IA×IA.
 
 ## 5. Serialização e versão das regras
