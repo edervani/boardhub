@@ -24,6 +24,20 @@ def pt_san(san: str) -> str:
     return san.translate(_PT_LETTERS)
 
 
+def chess_san_moves(uci_moves: list[str]) -> list[str]:
+    """Lances UCI de uma partida de xadrez em SAN internacional, repetindo-os desde o início."""
+    board = chess.Board()
+    out: list[str] = []
+    try:
+        for raw in uci_moves:
+            move = chess.Move.from_uci(raw)
+            out.append(board.san(move))
+            board.push(move)
+    except ValueError:  # lance inválido ou ilegal: não inventa texto
+        return []
+    return out
+
+
 def display_move(game_id: str, state: Any, move_str: str) -> str:
     """Jogo da velha: linha e coluna; damas: notação PDN; xadrez: notação algébrica em português."""
     if game_id == "tictactoe":

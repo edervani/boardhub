@@ -180,12 +180,13 @@ def rnf_tests() -> dict[str, str]:
 PR1 = "[PR #1](https://github.com/edervani/boardhub/pull/1)"
 # Estado/evidência por requisito. `implementado` só com código mesclado (doc 00 §4).
 IMPLEMENTADOS = {1, 2, 3, 4, 5}
-PARCIAIS = {6, 7, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33, 34}  # código mesclado, aceite incompleto (P-15)
+PARCIAIS = {6, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33}  # código mesclado, aceite incompleto (P-15)
 
 
 ACADEMY = {22, 23, 24, 25}  # Academy e Mentor (fase 6)
 RANKING = {19, 21}  # ranking Elo e estatísticas (fase 5); damas fora do ranking: P-21
 PRIVACIDADE = {29, 30}  # direitos do titular (fase 7)
+SUPERVISAO = {7, 34}  # limite diário, notação e painel do responsável (fecha parte de P-15)
 
 
 def state_evidence(n: int) -> tuple[str, str]:
@@ -197,6 +198,9 @@ def state_evidence(n: int) -> tuple[str, str]:
         return "aprovado", "código na branch `feat/fase-5-ranking` (PR aberto; `implementado` só após merge; damas: P-21)"
     if n in ACADEMY:
         return "aprovado", "código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge)"
+    if n in SUPERVISAO:
+        return "aprovado", ("código na branch `feat/guardian-limite-diario` (PR aberto; `implementado` "
+                            "só após merge); lacunas restantes em P-15 e P-23")
     if n in PRIVACIDADE:
         return "aprovado", ("código na branch `feat/fase-7-privacidade` (PR aberto; `implementado` "
                             "só após merge); lacunas em P-21")

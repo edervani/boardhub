@@ -61,7 +61,7 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-004 | doc 02 | services/auth_service | /auth/logout, /auth/sessions | T-004 | CA-004 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
 | RF-005 | doc 02 | services/auth_service | /auth/password/* | T-005 | CA-005 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
 | RF-006 | doc 02 | services/user_service | PATCH /me/profile; features/profile | T-006 | CA-006 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
-| RF-007 | doc 02 | services/user_service | /me/preferences; features/profile | T-007 | CA-007 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-007 | doc 02 | services/user_service | /me/preferences; features/profile | T-007 | CA-007 | aprovado | código na branch `feat/guardian-limite-diario` (PR aberto; `implementado` só após merge); lacunas restantes em P-15 e P-23 |
 | RF-008 | doc 02 | frontend features/lobby | GET /games, /me/active-matches; features/lobby | T-008 | CA-008 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-009 | doc 02 | services/match_service | POST /engines/{game}/apply; POST /matches | T-009 | CA-009 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-010 | doc 02 | services/match_service + ai/opponents | POST /matches; WS submit_move | T-010 | CA-010 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
@@ -88,7 +88,7 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-031 | doc 02 | services/moderation_service | /reports, /admin/* | T-031 | CA-031 | aprovado | — |
 | RF-032 | doc 02 | services/social_service | (fase 6) | T-032 | CA-032 | aprovado | — |
 | RF-033 | doc 02 | services/catalog_service | GET /games; features/lobby | T-033 | CA-033 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
-| RF-034 | doc 02 | services/guardian_service | /guardian/*; features/guardian | T-034 | CA-034 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-034 | doc 02 | services/guardian_service | /guardian/*; features/guardian | T-034 | CA-034 | aprovado | código na branch `feat/guardian-limite-diario` (PR aberto; `implementado` só após merge); lacunas restantes em P-15 e P-23 |
 | RNF-001 | doc 03 | transversal | — | T-101 | CA-101 | aprovado | — |
 | RNF-002 | doc 03 | transversal | — | T-102 | CA-102 | aprovado | — |
 | RNF-003 | doc 03 | transversal | — | T-103 | CA-103 | aprovado | — |

@@ -122,8 +122,10 @@ class _Handler:
             await self._dispatch(msg)
         except ProblemError as exc:
             current = exc.current_ply if isinstance(exc, match_service.StaleStateError) else None
+            retry = exc.headers.get("Retry-After")
             self.conn.send(error_message(exc.type, exc.title, reply_to=reply_to, status=exc.status,
-                                         detail=exc.detail, current_ply=current))
+                                         detail=exc.detail, current_ply=current,
+                                         retry_after=int(retry) if retry else None))
         except Exception as exc:
             log.error("erro inesperado no WebSocket", extra={"error_type": type(exc).__name__})
             self.conn.send(error_message("internal_error", "Erro interno", reply_to=reply_to,

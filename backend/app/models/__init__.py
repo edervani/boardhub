@@ -14,12 +14,14 @@ from app.models.identity import AuthSession, AuthToken, User, UserPreferences, U
 from app.models.match import DrawOffer, Match, MatchMove, MatchPlayer, QueueEntry
 from app.models.privacy import DataExportRequest
 from app.models.rating import Rating, RatingHistory
+from app.models.usage import DailyUsage
 
 __all__ = [
     "AuditLog",
     "AuthSession",
     "AuthToken",
     "Base",
+    "DailyUsage",
     "DataExportRequest",
     "DrawOffer",
     "ExerciseAttempt",

@@ -23,6 +23,8 @@ from app.models.base import Base, CreatedAt, new_id, utcnow
 ROLES = ("user", "moderator", "admin")
 STATUSES = ("active", "suspended", "pending_deletion")
 AGE_BANDS = ("under_12", "12_15", "16_17", "18_plus")
+# RF-007: só exibição; o servidor segue usando UCI (xadrez) e PDN (damas).
+MOVE_NOTATIONS = ("algebraic_pt", "san", "uci")
 
 
 def _in(column: str, values: tuple[str, ...]) -> str:
@@ -92,6 +94,7 @@ class UserPreferences(Base):
             "daily_minutes_limit IS NULL OR daily_minutes_limit BETWEEN 15 AND 600",
             name="daily_minutes_limit",
         ),
+        CheckConstraint(_in("move_notation", MOVE_NOTATIONS), name="move_notation"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -101,6 +104,7 @@ class UserPreferences(Base):
     motion: Mapped[str] = mapped_column(String(8), default="system")
     sound: Mapped[bool] = mapped_column(Boolean, default=True)
     move_confirmation: Mapped[bool] = mapped_column(Boolean, default=False)
+    move_notation: Mapped[str] = mapped_column(String(16), default="algebraic_pt")
     piece_styles: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     locale: Mapped[str] = mapped_column(String(8), default="pt-BR")
     # Controles de supervisão (RF-034). Só o responsável altera em contas de menores.

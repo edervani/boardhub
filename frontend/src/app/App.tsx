@@ -7,13 +7,14 @@ import { History } from "../features/tictactoe/History";
 import { AcademyPage } from "../features/academy/AcademyPage";
 import { ReviewPage } from "../features/academy/ReviewPage";
 import { MatchBoard } from "../features/tictactoe/MatchBoard";
+import { GuardianPage } from "../features/guardian/GuardianPage";
 import { PrivacyPage } from "../features/profile/PrivacyPage";
 import { ProfilePage } from "../features/profile/ProfilePage";
 import { RankingPage } from "../features/ranking/RankingPage";
 import { ApiError, api, errorMessage } from "../services/api";
 import type { Me } from "../services/types";
 
-type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "revisao" | "perfil" | "privacidade" | "entrar" | "cadastro";
+type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "revisao" | "perfil" | "responsavel" | "privacidade" | "entrar" | "cadastro";
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -23,6 +24,8 @@ export function App() {
   const [notice, setNotice] = useState("");
   // Conta em período de arrependimento (RF-030): o servidor só aceita /me e o cancelamento.
   const pending = Boolean(me?.deletion_scheduled_for);
+  // Painel do responsável (RF-034): contas 18+ com e-mail confirmado.
+  const guardian = Boolean(me && me.age_band === "18_plus" && me.email_verified);
 
   useEffect(() => {
     api<Me>("GET", "/me")
@@ -70,6 +73,7 @@ export function App() {
               <button className="secondary" onClick={() => setView("historico")}>Histórico</button>
               <button className="secondary" onClick={() => setView("academy")}>Academy</button>
               <button className="secondary" onClick={() => setView("perfil")}>Perfil</button>
+              {guardian && <button className="secondary" onClick={() => setView("responsavel")}>Responsável</button>}
               <button className="secondary" onClick={() => setView("privacidade")}>Privacidade</button>
               <button className="secondary" onClick={() => void logout()}>Sair</button>
             </>
@@ -99,6 +103,7 @@ export function App() {
             {view === "academy" && me && <AcademyPage />}
             {view === "revisao" && me && <ReviewPage matchId={reviewId} onBack={() => setView("historico")} />}
             {view === "perfil" && me && <ProfilePage me={me} />}
+            {view === "responsavel" && me && guardian && <GuardianPage />}
             {view === "privacidade" && me && (
               <PrivacyPage me={me} onDeletionScheduled={deletionScheduled}
                 onDeletionCancelled={() => void deletionCancelled()} />

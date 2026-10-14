@@ -116,6 +116,7 @@ def test_menor_nao_se_torna_publico_sozinho(client: TestClient, mailer: MemoryMa
 def test_preferencias_persistem_entre_sessoes(client: TestClient, mailer: MemoryMailer) -> None:
     conta_logada(client, mailer)
     prefs = {"theme": "dark", "motion": "reduced", "sound": False, "move_confirmation": True,
+             "move_notation": "san",
              "piece_styles": {"chess": "classico", "checkers": "infantil"}, "locale": "pt-BR"}
     assert client.put(f"{API}/me/preferences", headers=csrf(client), json=prefs).status_code == 200
     outra = novo_cliente(client)

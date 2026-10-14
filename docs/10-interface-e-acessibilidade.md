@@ -56,6 +56,12 @@ ConnectionBanner persistente: "Conexão perdida. Tentando reconectar… (tentati
 ## 11. Personalização das peças
 Três estilos por jogo (infantil — formas arredondadas e cores vivas; intermediário; clássico — Staunton para xadrez). Todos precisam manter peças distinguíveis por **forma**, não apenas cor. Prévia antes de aplicar. Independente da dificuldade (doc 08 §11). Ativos visuais devem ser originais ou de licença compatível documentada (P-11).
 
+## 11-A. Lista de lances e notação (RF-007)
+No xadrez, a lista de lances (`<ol>` com brancas e pretas por linha) segue a preferência `move_notation`: algébrica em português (padrão), SAN internacional ou UCI. A preferência muda só a exibição; o seletor fica no perfil, com explicação textual.
+
+## 11-B. Painel do responsável (RF-034)
+Aba "Responsável" (contas 18+ com e-mail confirmado). Cada menor vinculado é um cartão com: tempo de hoje em texto ("Hoje: 12 min de 60 min.") e `<progress>` com nome acessível, aviso em texto quando o limite foi atingido, formulário de limite diário (campo numérico rotulado, ajuda 15–600, vazio = sem limite) e das demais configurações, exportação (links `download`) e exclusão (senha do responsável + ciência do prazo de 14 dias, com cancelamento). Botões e campos levam o nome do menor no rótulo para leitores de tela; erros em `role="alert"` e confirmações em `role="status"`; nenhum estado depende só de cor.
+
 ## 12. Experiência de aprendizagem
 Lições curtas (≤ 3 min), um conceito por vez; tabuleiro interativo na própria lição; barra de progresso por conceito com rótulo textual ("Em prática — 3 de 5 acertos"); dicas por botão explícito; sem penalização visual humilhante por erro.
 

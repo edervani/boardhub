@@ -98,6 +98,7 @@ def update_preferences(db: Session, user: User, data: PreferencesModel) -> UserP
     prefs.motion = data.motion
     prefs.sound = data.sound
     prefs.move_confirmation = data.move_confirmation
+    prefs.move_notation = data.move_notation
     prefs.piece_styles = dict(data.piece_styles)  # novo dict: JSONB não detecta mutação
     prefs.locale = data.locale
     db.commit()

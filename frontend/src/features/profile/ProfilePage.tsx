@@ -88,6 +88,15 @@ export function ProfilePage({ me }: { me: Me }) {
           onChange={(e) => setPrefs({ ...prefs, move_confirmation: e.target.checked })} />{" "}
         Confirmar jogada antes de enviar
       </label>
+      <label htmlFor="notation">Notação dos lances do xadrez</label>
+      <select id="notation" value={prefs.move_notation}
+        aria-describedby="notation-hint"
+        onChange={(e) => setPrefs({ ...prefs, move_notation: e.target.value as Preferences["move_notation"] })}>
+        <option value="algebraic_pt">Algébrica em português (Cf3, Dd1)</option>
+        <option value="san">Algébrica internacional — SAN (Nf3, Qd1)</option>
+        <option value="uci">Coordenadas — UCI (g1f3)</option>
+      </select>
+      <p id="notation-hint">Muda só como os lances aparecem na lista; o jogo continua o mesmo.</p>
       {error && <p role="alert">{error}</p>}
       {msg && <p role="status">{msg}</p>}
       <p><button type="submit">Salvar</button></p>

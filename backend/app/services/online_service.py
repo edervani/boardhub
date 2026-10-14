@@ -38,7 +38,7 @@ from app.models import (
 )
 from app.models.base import new_id
 from app.schemas.matches import ActiveMatchOut, MatchOut, QueueStatusOut
-from app.services import catalog_service, guardian_service, match_service
+from app.services import catalog_service, guardian_service, match_service, usage_service
 from app.services.events import Event, match_started
 from app.services.game_registry import KITS
 
@@ -164,6 +164,7 @@ def create_invite(db: Session, user: User, game_id: str, preferred_seat: int | N
                   mode: str = "online_casual") -> MatchOut:
     limiter.hit(f"match-create:{user.id}", 20, HOUR)
     guardian_service.require_online_access(user)
+    usage_service.require_within_limit(db, user)  # RF-034
     _require_game(db, user, game_id)
     if mode == RANKED:
         _require_ranked(db, user, game_id)
@@ -186,6 +187,7 @@ def create_invite(db: Session, user: User, game_id: str, preferred_seat: int | N
 def join_invite(db: Session, user: User, raw_code: str) -> tuple[MatchOut, list[Event]]:
     limiter.hit(f"invite-join:{user.id}", 20, HOUR)
     guardian_service.require_online_access(user)
+    usage_service.require_within_limit(db, user)  # RF-034
     code = normalize_code(raw_code)
     match = db.scalar(select(Match).where(Match.invite_code_hash == _code_digest(code))
                       .with_for_update()) if code else None
@@ -279,6 +281,8 @@ def _still_eligible(db: Session, candidate: User, game_id: str, ranked: bool = F
     if candidate.status != "active" or not candidate.preferences.allow_open_matchmaking:
         return False
     if candidate.age_band == "under_12" and candidate.guardian_user_id is None:
+        return False
+    if usage_service.is_exhausted(db, candidate):  # RF-034: limite diário esgotado
         return False
     if ranked and candidate.email_verified_at is None:
         return False
@@ -378,6 +382,7 @@ def enter_queue(db: Session, user: User, game_id: str,
         raise ProblemError(403, "open_matchmaking_disabled", "Partidas abertas desativadas",
                            "O responsável por esta conta não liberou o pareamento aberto.")
     guardian_service.require_online_access(user)
+    usage_service.require_within_limit(db, user)  # RF-034
     _require_game(db, user, game_id)
     if ranked:
         _require_ranked(db, user, game_id)
@@ -410,6 +415,12 @@ def queue_status(db: Session, user: User) -> tuple[QueueStatusOut, list[Event]]:
         return QueueStatusOut(state="idle"), []
     if entry.matched_match_id is not None:
         return _consume_matched(db, entry), []
+    try:
+        usage_service.require_within_limit(db, user)
+    except ProblemError:  # o limite acabou enquanto esperava: sai da fila e avisa
+        db.delete(entry)
+        db.commit()
+        raise
     now = clock.now()
     entry.last_seen_at = now
     if entry.ranked:

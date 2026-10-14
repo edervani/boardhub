@@ -26,6 +26,7 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 | friendships, invitations | **Adiar** (fase 6) | RF-032; convites de partida usam `matches.invite_code` |
 | reports, audit_log | **Criar** (`audit_log` fase 1; `reports` fase 6/7) | RF-031, SEC-11 |
 | data_export_requests | **Criar** | RF-029 |
+| daily_usage | **Criar** (DT-021) | RF-034: segundos de atividade por menor e dia (America/Sao_Paulo) |
 
 ## 2. Entidades (v1)
 
@@ -51,7 +52,10 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 `user_id` PK/FK→users ON DELETE CASCADE; `display_name` citext UNIQUE NOT NULL; `avatar_key` text (lista fechada); `bio` varchar(160); `is_public` bool default true; `display_name_changed_at`.
 
 ### user_preferences
-`user_id` PK/FK CASCADE; `theme` (`light|dark|system`); `motion` (`full|reduced|none|system`); `sound` bool; `move_confirmation` bool; `piece_styles` jsonb (`{"chess":"classic",…}`, validado por esquema); `locale` default `pt-BR`.
+`user_id` PK/FK CASCADE; `theme` (`light|dark|system`); `motion` (`full|reduced|none|system`); `sound` bool; `move_confirmation` bool; `move_notation` (`algebraic_pt|san|uci`, padrão `algebraic_pt`; só exibição, RF-007); `piece_styles` jsonb (`{"chess":"classic",…}`, validado por esquema); `locale` default `pt-BR`.
+
+### daily_usage
+`user_id` FK CASCADE + `day` date (PK composta; dia civil de America/Sao_Paulo); `seconds` int ≥ 0; `last_activity_at` timestamptz. Só existe para contas de menores (minimização de dados); some com a conta (CASCADE). Regra de contagem em DT-021.
 
 ### sessions
 `id` uuid PK; `user_id` FK CASCADE; `token_hash` bytea UNIQUE (SHA-256 do token opaco); `created_at`; `last_seen_at`; `expires_at`; `revoked_at`; `user_agent_summary` varchar(80) (ex.: "Firefox / Linux" — sem string completa); **sem IP armazenado em claro** (opcional: prefixo /24 truncado para detecção de abuso — DT-013).

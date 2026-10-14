@@ -105,7 +105,8 @@ def to_message(event: Event, reply_to: str | None = None) -> dict[str, Any]:
 
 
 def error_message(code: str, title: str, *, reply_to: str | None = None, status: int | None = None,
-                  detail: str | None = None, current_ply: int | None = None) -> dict[str, Any]:
+                  detail: str | None = None, current_ply: int | None = None,
+                  retry_after: int | None = None) -> dict[str, Any]:
     payload: dict[str, Any] = {"code": code, "message": title}
     if detail:
         payload["detail"] = detail
@@ -113,6 +114,8 @@ def error_message(code: str, title: str, *, reply_to: str | None = None, status:
         payload["status"] = status
     if current_ply is not None:
         payload["current_ply"] = current_ply
+    if retry_after is not None:
+        payload["retry_after"] = retry_after
     message: dict[str, Any] = {"type": "error", "payload": payload}
     if reply_to is not None:
         message["reply_to"] = reply_to
