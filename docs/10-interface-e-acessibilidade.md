@@ -1,6 +1,6 @@
 # 10 — Interface e Acessibilidade
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · Meta: WCAG 2.2 nível AA (RNF-014)
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · Meta: WCAG 2.2 nível AA (RNF-014)
 
 ## 1. Princípios visuais
 Clareza do tabuleiro acima de tudo; hierarquia simples; uma ação primária por tela; feedback imediato; ornamentos opcionais. Sem padrões enganosos: nada de contagens regressivas falsas, botões de "comprar" disfarçados ou confirmações culpabilizantes.

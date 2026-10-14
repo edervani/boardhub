@@ -1,6 +1,6 @@
 # 09 — Segurança e Privacidade
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · **Este documento não constitui parecer jurídico nem certifica conformidade com a LGPD.**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · **Este documento não constitui parecer jurídico nem certifica conformidade com a LGPD.**
 
 ## 1. Ativos
 Credenciais e sessões; dados pessoais (e-mail, nome de exibição); integridade de partidas e ratings; conteúdo da Academy; segredos de infraestrutura; disponibilidade do serviço.
@@ -63,7 +63,20 @@ Acesso/portabilidade (RF-029), correção (RF-006), eliminação (RF-030), infor
 Ver doc 05 §7 e RF-029/RF-030.
 
 ## 10. Crianças e adolescentes
-Decisão pendente (P-03): permitir ou não contas de menores de 18 anos.
-- **Se não permitir na v1 (recomendado até análise jurídica):** termos exigem 18+ ou uso sob conta de responsável; não coletar data de nascimento além de autodeclaração "tenho 18 anos ou mais"; uso escolar via conta do educador em modo local.
-- **Se permitir:** exigir análise jurídica do art. 14 da LGPD (melhor interesse; consentimento específico de pelo menos um dos pais/responsável para menores de 12 anos) e de normas posteriores aplicáveis a ambientes digitais para crianças e adolescentes (verificar legislação vigente na data da decisão); perfil privado por padrão, sem chat, sem ranking público, sem comunicação com desconhecidos; linguagem e ilustrações adequadas; mecanismo de verificação de consentimento parental.
-Em nenhum caso a idade altera dificuldade ou nível (doc 01 §2).
+
+**Decisão (DT-015, 2026-10-13):** a plataforma aceita usuários de todas as idades, com classificação indicativa por jogo. A idade **nunca** define dificuldade, nível ou matchmaking (doc 01 §2).
+
+Normas aplicáveis: art. 14 da LGPD e o ECA Digital (Lei 15.211/2025), em vigor desde 2026-03-17. Os pontos abaixo resumem a leitura técnica e **não substituem parecer jurídico** (P-04).
+
+| Obrigação (fonte) | Como o BoardHub atende |
+|---|---|
+| Configuração padrão mais protetiva (ECA Digital, art. 7º) | Conta de menor nasce com perfil privado, fora do ranking público, sem fila aberta com desconhecidos, sem notificações por e-mail além das transacionais |
+| Classificação indicativa ostensiva no acesso (art. 8º) | RF-033: selo de classificação em cada jogo, no lobby e antes de iniciar partida. Velha, damas e xadrez sem conteúdo impróprio — proposta "Livre", a validar contra o guia de classificação indicativa vigente |
+| Verificação de idade confiável para conteúdo impróprio (art. 9º) | Não há conteúdo impróprio nos jogos. Se algum dia houver, autodeclaração não basta e a verificação precisa ser redesenhada |
+| Proibição de caixas de recompensa (art. 20) | Já proibidas para todos (doc 01 §6) |
+| Supervisão parental (arts. 17 e 18) | RF-034: conta do responsável vinculada, limite de tempo diário, liberação de partidas online com desconhecidos |
+| Sem perfilamento para publicidade (art. 22) | Não há publicidade nem perfilamento |
+| Riscos de contato com adultos (art. 6º) | Sem chat livre; convites só por código ou entre amigos aprovados pelo responsável |
+| Consentimento parental para menores de 12 anos (LGPD, art. 14) | Cadastro de menor de 12 só concluído após confirmação do responsável por e-mail; mecanismo final depende de P-04 |
+
+Faixa etária coletada: autodeclarada em faixas (`<12`, `12–15`, `16–17`, `18+`), sem data de nascimento. Pontos a confirmar com o jurídico: se a lei exige vínculo obrigatório de contas até determinada idade, qual método de confirmação parental é aceitável e se a autodeclaração basta para aplicar as configurações protetivas.

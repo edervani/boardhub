@@ -1,6 +1,6 @@
 # 05 — Modelagem de Dados
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · SGBD: PostgreSQL (versão a confirmar — P-02)
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · SGBD: PostgreSQL (versão a confirmar — P-02)
 
 Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se disponível — DT-011); timestamps `timestamptz` em UTC; nomes em `snake_case`; toda tabela tem `created_at`; exclusões lógicas apenas onde indicado.
 
@@ -39,6 +39,8 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 | role | text | NOT NULL, CHECK in (`user`,`moderator`,`admin`), default `user` |
 | status | text | CHECK in (`active`,`suspended`,`pending_deletion`), default `active` |
 | deletion_requested_at | timestamptz | NULL |
+| age_band | text | NOT NULL, CHECK in (`under_12`,`12_15`,`16_17`,`18_plus`) — DT-015 |
+| guardian_user_id | uuid | NULL, FK→users ON DELETE SET NULL (RF-034) |
 | terms_version | text | NOT NULL |
 | last_login_at | timestamptz | NULL |
 | created_at, updated_at | timestamptz | NOT NULL |
@@ -58,7 +60,7 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 `id`; `user_id` FK CASCADE; `purpose` (`verify_email|reset_password`); `token_hash` UNIQUE; `expires_at`; `used_at`. Limpeza diária de expirados.
 
 ### games
-`id` text PK (`tictactoe`,`checkers`,`chess`); `name`; `enabled` bool; `rules_version` text; `ranked_enabled` bool.
+`id` text PK (`tictactoe`,`checkers`,`chess`); `name`; `enabled` bool; `rules_version` text; `ranked_enabled` bool; `age_rating` text NOT NULL (RF-033).
 
 ### matches
 | Coluna | Tipo | Notas |

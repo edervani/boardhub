@@ -1,6 +1,6 @@
 # 08 — IA e BoardHub Academy
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13)
 
 ## 1. Separação formal de responsabilidades
 

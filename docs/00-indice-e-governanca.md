@@ -1,10 +1,10 @@
 # 00 — Índice e Governança da Documentação
 
-> Versão do documento: 0.1.0 · Data: 2026-10-13 · Estado: **proposto** (aguarda aprovação do responsável pelo produto)
+> Versão do documento: 0.2.0 · Data: 2026-10-13 · Estado: **aprovado** em 2026-10-13 pelo responsável pelo produto
 
 ## 1. Situação do projeto
 
-Em 2026-10-13 o repositório foi criado do zero, a pedido do responsável pelo produto. **Não existe código de aplicação.** Todo comportamento descrito nesta pasta é **especificação** (estado `proposto`), salvo indicação em contrário. Nenhuma funcionalidade está implementada.
+Em 2026-10-13 o repositório foi criado do zero, a pedido do responsável pelo produto. **Não existe código de aplicação.** Todo comportamento descrito nesta pasta é **especificação** (estado `aprovado` desde 2026-10-13), salvo indicação em contrário. Nenhuma funcionalidade está implementada.
 
 ## 2. Índice
 
@@ -57,13 +57,13 @@ Conflito detectado ⇒ registrar em [16-decisoes-tecnicas.md §Pendências](16-d
 | `validado` | Critérios de aceite comprovados com evidência | QA/revisor, com evidência |
 | `obsoleto` | Substituído ou removido; ID nunca reutilizado | Responsável humano |
 
-**Nenhum requisito é aprovado por ter sido sugerido por uma IA.** Toda a documentação desta versão está em `proposto`.
+**Nenhum requisito é aprovado por ter sido sugerido por uma IA.** A documentação foi aprovada pelo responsável pelo produto em 2026-10-13 (v0.2.0).
 
 ## 5. Responsabilidades
 
 | Papel | Responsabilidade |
 |-------|------------------|
-| Responsável pelo produto (a definir — P-01) | Aprovar requisitos, ADRs e fases |
+| Responsável pelo produto (@edervani) | Aprovar requisitos, ADRs e fases |
 | Mantenedor técnico (a definir) | Coerência de 04–07, 11–13 |
 | Encarregado de dados/jurídico (a definir — P-04) | Validar doc 09 §LGPD |
 | Agentes de IA | Seguir [AGENTS.md](../AGENTS.md); propor, nunca aprovar |
@@ -83,6 +83,7 @@ Conflito detectado ⇒ registrar em [16-decisoes-tecnicas.md §Pendências](16-d
 | 2026-10-13 | Iniciar repositório novo (não havia código prévio) | Diagnóstico no relatório da Fase 0 |
 | 2026-10-13 | Arquitetura de referência proposta | [ADR-0001](adr/ADR-0001-arquitetura-inicial.md) |
 | 2026-10-13 | Versões de dependências não fixadas por falta de verificação | DT-012, P-02 |
+| 2026-10-13 | Documentação v0.2.0 aprovada; runtimes; abertura a menores com classificação por jogo | DT-014, DT-015 |
 
 ## 8. Rastreabilidade
 

@@ -1,6 +1,6 @@
 # 12 — Infraestrutura e Deploy
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · Nada foi implantado. O `docker-compose.yml` atual sobe apenas o PostgreSQL (único serviço cujo código já existe: nenhum).
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · Nada foi implantado. O `docker-compose.yml` atual sobe apenas o PostgreSQL (único serviço cujo código já existe: nenhum).
 
 ## 1. Ambientes
 

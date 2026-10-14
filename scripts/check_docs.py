@@ -81,6 +81,8 @@ RF_MAP = {
     30: ("services/privacy_service", "/me/delete"),
     31: ("services/moderation_service", "/reports, /admin/*"),
     32: ("services/social_service", "(fase 6)"),
+    33: ("services/catalog_service", "GET /games; features/lobby"),
+    34: ("services/guardian_service", "/guardian/*; features/guardian"),
 }
 MATRIX_START, MATRIX_END = "<!-- MATRIZ:INICIO -->", "<!-- MATRIZ:FIM -->"
 
@@ -183,13 +185,13 @@ def build_matrix(defined: dict[str, set[str]]) -> str:
     for rf in sorted(defined["RF"]):
         n = int(rf[3:])
         mod, ep = RF_MAP.get(n, ("?", "?"))
-        rows.append(f"| {rf} | doc 02 | {mod} | {ep} | T-{n:03d} | CA-{n:03d} | proposto | — |")
+        rows.append(f"| {rf} | doc 02 | {mod} | {ep} | T-{n:03d} | CA-{n:03d} | aprovado | — |")
     tests = rnf_tests()
     for rnf in sorted(defined["RNF"]):
         n = int(rnf[4:])
         t = tests.get(rnf, "?")
         ca = f"CA-{100 + n:03d}"
-        rows.append(f"| {rnf} | doc 03 | transversal | — | {t} | {ca} | proposto | — |")
+        rows.append(f"| {rnf} | doc 03 | transversal | — | {t} | {ca} | aprovado | — |")
     return "\n".join(rows)
 
 

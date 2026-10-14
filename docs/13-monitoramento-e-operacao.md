@@ -1,6 +1,6 @@
 # 13 — Monitoramento e Operação
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13)
 
 ## 1. Logs
 - JSON estruturado em stdout: `timestamp`, `level`, `logger`, `request_id`, `event`, `user_ref` (hash truncado do ID, não e-mail), `match_id` quando relevante, `duration_ms`, `status`.

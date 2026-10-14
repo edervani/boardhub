@@ -1,6 +1,6 @@
 # 06 — API REST e Tempo Real
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · Nenhum endpoint implementado.
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · Nenhum endpoint implementado.
 
 ## 1. Convenções gerais
 - Base: `/api/v1`. Versionamento na URL; mudanças incompatíveis ⇒ `/api/v2`, com período de convivência.
@@ -57,6 +57,8 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | GET /me/export/{id} | Baixar | U dono | — | 200 arquivo | 404, 410 | — | — | RF-029 |
 | POST /me/delete | Pedir exclusão | U | `password` | 202 | 401, 429 | 3/dia | users.status, audit | RF-030 |
 | POST /me/delete/cancel | Cancelar | U | — | 204 | 409 | — | users.status | RF-030 |
+| POST /guardian/links/confirm | Responsável confirma vínculo com menor | U (18+) | `token` | 204 | 400, 422 | 10/h | users.guardian_user_id, audit_log | RF-034 |
+| GET /guardian/children · PUT /guardian/children/{id}/settings | Ver e ajustar configurações do menor vinculado | U responsável do menor | `daily_minutes?, allow_open_matchmaking?, profile_public?, show_in_ranking?` | 200 | 403 (não é responsável), 422 | 30/h | user_preferences, audit_log | RF-034 |
 | POST /reports | Denunciar | V | `target_type, target_id, reason, note?` | 201 | 422, 429 | 10/dia | reports | RF-031 |
 | GET /admin/reports · POST /admin/users/{id}/suspend | Moderação | M/A | — | 200 | 403 | — | **audit_log obrigatório** | RF-031 |
 | GET /health/live · /health/ready | Saúde | — (ready só na rede interna) | — | 200/503 | — | — | — | RNF-007 |

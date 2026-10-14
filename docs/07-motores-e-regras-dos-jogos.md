@@ -1,6 +1,6 @@
 # 07 — Motores e Regras dos Jogos
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · Interface comum: [doc 04 §7](04-arquitetura-tecnica.md#7-interface-comum-dos-motores)
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · Interface comum: [doc 04 §7](04-arquitetura-tecnica.md#7-interface-comum-dos-motores)
 
 ## 1. Princípios comuns
 - Motores são **determinísticos e puros**: mesma entrada ⇒ mesma saída. Aleatoriedade (ex.: variação da IA) é injetada por semente.

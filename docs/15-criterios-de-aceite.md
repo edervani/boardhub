@@ -1,6 +1,6 @@
 # 15 — Critérios de Aceite
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13)
 
 Regra geral: uma funcionalidade **não** é aceita porque a tela existe ou o código compila. Aceite exige: testes automatizados indicados passando no CI, verificação descrita executada e evidência anexada ao PR (log do CI, captura, relatório). Formato: **Dado / Quando / Então**.
 
@@ -40,6 +40,8 @@ Regra geral: uma funcionalidade **não** é aceita porque a tela existe ou o có
 | CA-030 | RF-030 | Senha errada ⇒ 401; após 14 dias (relógio simulado) não há linha em users; partidas do oponente permanecem com "Conta removida"; sessões revogadas imediatamente. | T-030 | pytest |
 | CA-031 | RF-031 | Usuário comum ⇒ 403 em `/admin/*`; suspensão gera linha em `audit_log`; suspenso não consegue login. | T-031 | pytest |
 | CA-032 | RF-032 | Usuário bloqueado não consegue convidar quem o bloqueou. | T-032 | pytest |
+| CA-033 | RF-033 | Os três jogos exibem selo com texto no lobby e antes da partida; jogo com `age_rating` nulo não pode ser habilitado; usuário abaixo da classificação não vê o jogo. | T-033 | Playwright + pytest |
+| CA-034 | RF-034 | Conta `12–15` nasce privada e fora do ranking; menor de 12 sem confirmação não acessa partidas online e é removido após 7 dias (relógio simulado); responsável altera limite de tempo e a mudança vai para `audit_log`; limite atingido bloqueia nova partida. | T-034 | pytest |
 
 ## 2. Critérios por requisito não funcional
 Para cada RNF-0nn (doc 03) existe o critério **CA-1nn**: *a meta proposta é atingida no cenário descrito, medida pelo teste T-1nn; evidência = relatório da execução com data, ambiente e versão.* Metas não atingidas exigem decisão registrada (ajustar meta com justificativa ou corrigir). CA-126 (custo) é verificado por planilha aprovada pelo responsável (P-06).

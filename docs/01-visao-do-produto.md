@@ -1,6 +1,6 @@
 # 01 — Visão do Produto
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13)
 
 ## 1. Visão, missão e objetivos
 
@@ -18,7 +18,7 @@
 - Iniciantes absolutos (nunca jogaram damas ou xadrez).
 - Jogadores casuais que querem partidas rápidas.
 - Jogadores intermediários/experientes que querem ranking e oponentes de nível compatível.
-- Educadores e famílias que usam jogos como ferramenta de raciocínio (uso por menores depende da análise P-03; ver doc 09 §10).
+- Crianças, adolescentes, educadores e famílias. Menores usam contas com configuração protetiva e supervisão parental, com classificação indicativa por jogo (DT-015, doc 09 §10).
 
 **A idade não determina habilidade.** Se coletada, a faixa etária pode influenciar apenas linguagem e ilustrações, nunca dificuldade ou nível.
 

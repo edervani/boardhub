@@ -1,8 +1,8 @@
 # ADR-0001 — Arquitetura inicial do BoardHub
 
 - **Data:** 2026-10-13
-- **Estado:** proposto (aguarda aprovação — P-01)
-- **Decisores:** responsável pelo produto (a definir)
+- **Estado:** aceito (2026-10-13)
+- **Decisores:** responsável pelo produto (@edervani)
 
 ## Contexto
 Repositório novo, sem código prévio. Produto com três jogos, IA adversária, partidas online em tempo real, Academy e requisitos fortes de segurança, privacidade e operação sem APIs pagas. Equipe presumidamente pequena e orçamento a definir (P-06).

@@ -1,6 +1,6 @@
 # 17 — Riscos e Mitigações
 
-> Versão 0.1.0 · 2026-10-13 · Escala: probabilidade/impacto 1 (baixo) a 3 (alto); criticidade = P × I. Responsáveis a definir (P-01) — coluna indica o **papel**.
+> Versão 0.2.0 · 2026-10-13 · Escala: probabilidade/impacto 1 (baixo) a 3 (alto); criticidade = P × I. Responsável pelo produto: @edervani. A coluna indica o **papel**.
 
 | ID | Categoria | Descrição | P | I | Crit. | Mitigação | Responsável | Risco residual |
 |----|-----------|-----------|---|---|-------|-----------|-------------|----------------|
@@ -18,4 +18,5 @@
 | R-012 | Abuso/privacidade | Recursos sociais (chat, amizades) expõem usuários a assédio, sobretudo menores | 2 | 3 | 6 | Sem chat livre na v1; bloqueio; denúncia; decisão P-03 | Produto | Baixo |
 | R-013 | Privacidade | Dados pessoais vazam em logs ou ferramentas de observabilidade | 2 | 3 | 6 | SEC-12, teste RNF-013, ferramentas auto-hospedadas | Ops | Baixo |
 | R-014 | Qualidade IA | LLM produz explicação com fato falso | 3 | 2 | 6 | LLM só reformula; verificação de saída; fallback a template (doc 08 §8) | IA | Baixo |
+| R-016 | Jurídico | Descumprimento do ECA Digital com menores na plataforma | 2 | 3 | 6 | Padrões protetivos (RF-034), classificação (RF-033), parecer jurídico antes de beta (P-04) | Produto/jurídico | Médio |
 | R-015 | Manutenção | Documentação diverge do código | 3 | 2 | 6 | AGENTS.md exige atualização no mesmo PR; `check_docs.py` no CI | Todos | Médio |

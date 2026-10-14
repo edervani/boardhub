@@ -5,7 +5,7 @@
 name = "boardhub"
 version = "0.0.0"
 description = "Plataforma recreativa e educacional de jogos de tabuleiro (especificação)."
-requires-python = ">=3.12"   # a confirmar (P-02)
+requires-python = ">=3.13,<3.14"   # DT-014
 dependencies = []
 
 # Dependências propostas (não verificadas): fastapi, uvicorn, sqlalchemy, alembic,

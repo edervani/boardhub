@@ -1,13 +1,13 @@
 # 14 — Plano de Implementação
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · Fase atual: **0 (em revisão)**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · Fase atual: **1 (pronta para iniciar)** — Fase 0 concluída em 2026-10-13
 
 Regra: nenhuma fase começa com dependência crítica não resolvida. Cada fase termina com CHANGELOG, matriz de rastreabilidade atualizada e CA validados (doc 15 §3).
 
 | Fase | Objetivo | Escopo (RF/RNF) | Dependências | Entregáveis | Testes | Riscos | Início | Conclusão |
 |------|----------|-----------------|--------------|-------------|--------|--------|--------|-----------|
-| **0** Requisitos e documentação | Especificação aprovada | Todos os documentos | — | `docs/`, arquivos raiz, `check_docs.py` | `check_docs.py` | R-001 | 2026-10-13 | Responsável aprova docs; pendências P-01, P-02, P-03, P-06 decididas |
-| **1** Base técnica | Esqueleto funcional seguro | RF-001–007, RNF-010–013, 018, 019, 023, 028 | Fase 0; versões verificadas (P-02) | Backend FastAPI, frontend Vite, banco + migrações, auth completa, CI, compose | T-001–007, T-110–113, 118, 119, 128 | R-002, R-005 | Fase 0 concluída | CA-001–007 validados; CI verde |
+| **0** Requisitos e documentação | Especificação aprovada | Todos os documentos | — | `docs/`, arquivos raiz, `check_docs.py` | `check_docs.py` | R-001 | 2026-10-13 | **Concluída 2026-10-13:** docs aprovados; P-01, P-03, P-08, P-14 resolvidas; runtimes definidos (DT-014) |
+| **1** Base técnica | Esqueleto funcional seguro | RF-001–007, RF-033, RF-034, RNF-010–013, 018, 019, 023, 028 | Fase 0; primeira tarefa: verificar versões das bibliotecas e gerar lockfiles (P-02) | Backend FastAPI, frontend Vite, banco + migrações, auth completa, CI, compose | T-001–007, T-110–113, 118, 119, 128 | R-002, R-005 | Fase 0 concluída | CA-001–007, CA-033, CA-034 validados; CI verde (GitHub Actions) |
 | **2** Jogo da velha completo | Primeiro jogo ponta a ponta, inclusive online | RF-008–016, 019 (estrutura), 020, 021, RNF-001, 009, 014–017, 022 | Fase 1 | Motor + IA velha, lobby, partidas local/IA/convite/fila, WS, histórico | T-008–016, 020, 021, 101, 109, 114–117, 122 | R-003, R-004 | Fase 1 | CA-008–016, 020, 021 validados |
 | **3** Academy inicial | Aprendizagem com velha | RF-022, 023, 025 (velha) | Fase 2; revisor de conteúdo (P-08) | Conceitos, exercícios, domínio, revisão espaçada | T-022, 023, 025 | R-007 | Fase 2 | CA-022, 023, 025 validados |
 | **4** Damas | Segundo jogo + ranking | RF-017, 019, Academy damas, RF-024 (damas) | Fase 3; variante aprovada e regras conferidas (DT-006, P-07) | Motor damas BR, IA alfa-beta, Elo, lições | T-017, 019, 024, 102 | R-006 | Fase 3 + P-07 | CA-017, 019 validados; perft confere |

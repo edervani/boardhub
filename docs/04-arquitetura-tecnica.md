@@ -1,6 +1,6 @@
 # 04 — Arquitetura Técnica
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto** · Decisão de base: [ADR-0001](adr/ADR-0001-arquitetura-inicial.md)
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13) · Decisão de base: [ADR-0001](adr/ADR-0001-arquitetura-inicial.md)
 
 ## 1. Visão geral
 

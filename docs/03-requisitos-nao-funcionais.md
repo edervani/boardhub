@@ -1,6 +1,6 @@
 # 03 — Requisitos Não Funcionais
 
-> Versão 0.1.0 · 2026-10-13 · Estado: **proposto**
+> Versão 0.2.0 · 2026-10-13 · Estado: **aprovado** (2026-10-13)
 
 **Todas as metas numéricas abaixo são propostas a validar.** Não há medição real; os valores partem de premissas de uma instalação pequena (1 servidor de aplicação, ≤ 500 usuários simultâneos) e devem ser revistos após o teste de carga da Fase 7.
 

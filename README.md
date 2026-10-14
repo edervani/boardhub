@@ -6,11 +6,11 @@ Plataforma pública, **recreativa e educacional**, de jogos de tabuleiro — jog
 
 ## Estado atual do desenvolvimento
 
-**Fase 0 — especificação (em revisão).** Em 2026-10-13:
+**Fase 0 concluída — especificação aprovada em 2026-10-13.** Próxima: Fase 1 (base técnica).
 
 | Item | Estado |
 |------|--------|
-| Documentação técnica (`docs/`) | Redigida, **aguardando aprovação** |
+| Documentação técnica (`docs/`) | **Aprovada** (v0.2.0) |
 | Backend, frontend, jogos, IA, Academy | **Não implementados** (apenas planejados) |
 | `docker-compose.yml` | Sobe somente PostgreSQL para a Fase 1 |
 | Testes | Apenas verificação automática da documentação (`scripts/check_docs.py`) |
@@ -28,7 +28,7 @@ React + TypeScript + Vite · Python + FastAPI · REST + WebSocket · PostgreSQL 
 **Versões ainda não verificadas** (ver [DT-012](docs/16-decisoes-tecnicas.md)).
 
 ## Requisitos mínimos (para a Fase 1 em diante)
-Git; Docker com Docker Compose v2; Python 3 e Node.js em versões a confirmar (P-02). Para rodar as verificações da documentação hoje: apenas Python 3.
+Git; Docker com Docker Compose v2; Python 3.13; Node.js 24 LTS; PostgreSQL 17 (via Compose). Ver DT-014. Para rodar as verificações da documentação hoje: apenas Python 3.
 
 ## Instalação e configuração
 ```bash
