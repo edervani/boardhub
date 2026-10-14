@@ -104,3 +104,23 @@ jobs:
         run: $RUN "frontend-build" npm run build
       - name: Auditoria de dependências
         run: $RUN "frontend-npm audit" npm audit --audit-level=high
+
+  # Sobe o ambiente local completo (o mesmo que o responsável usa no Windows) e testa de ponta a ponta.
+  compose:
+    runs-on: ubuntu-24.04
+    env:
+      SECRET_KEY: chave-somente-para-ci-0123456789abcdef0123456789
+      POSTGRES_DB: boardhub
+      POSTGRES_USER: boardhub_app
+      POSTGRES_PASSWORD: senha-somente-para-ci
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.13" }
+      - name: Subir ambiente
+        run: scripts/ci/run.sh compose-up docker compose up -d --build --wait
+      - name: Teste de fumaca
+        run: scripts/ci/run.sh compose-fumaca python3 scripts/smoke_compose.py
+      - name: Derrubar ambiente
+        if: always()
+        run: docker compose down --volumes
