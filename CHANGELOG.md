@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 2a — motor do jogo da velha)
+- `game_engines`: contrato comum (`IllegalMove`, `InvalidState`, `Outcome`, hash canônico do estado) e motor do jogo da velha com serialização validada (RF-016).
+- `ai/opponents`: IA do jogo da velha em 5 níveis com semente injetada (doc 07 §2).
+- Testes: as 5.478 posições alcançáveis, invariantes, 8 linhas, estados inconsistentes, nível 5 sem derrotas em 1.000 partidas e tempo de resposta (CA-016, RNF-002).
+- Sem partidas persistidas, endpoints ou frontend de jogo ainda (Fases 2b a 2d).
+
 ### Adicionado (Fase 1 — base técnica)
 - Backend FastAPI (monólito modular): configuração, logs sanitizados, erros RFC 9457, limitador de taxa, cabeçalhos de segurança, CSRF por duplo envio, migração Alembic 0001 (identidade, catálogo, auditoria).
 - Autenticação (RF-001 a RF-005): cadastro com Argon2id, verificação de e-mail, login com cookies `HttpOnly`/`Secure`, sessões revogáveis, redefinição de senha, antienumeração.
