@@ -317,6 +317,33 @@ test("sair da fila volta ao seletor", async () => {
   expect(fn.mock.calls.some(([url, init]) => url === "/api/v1/matchmaking/queue" && init?.method === "DELETE")).toBe(true);
 });
 
+test("resposta atrasada da consulta da fila não recoloca o usuário na fila depois de sair", async () => {
+  const fn = abrirLobby({
+    "POST /matchmaking/queue": { status: 202, body: { state: "queued", game_id: "chess", waited_seconds: 0, offer_ai: false, match_id: null } },
+    "GET /matchmaking/queue": { body: { state: "queued", game_id: "chess", waited_seconds: 1, offer_ai: false, match_id: null } },
+    "DELETE /matchmaking/queue": { status: 204 },
+  });
+  const inner = fn.getMockImplementation() as (url: string, init?: RequestInit) => Promise<Response>;
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  let held = false;
+  // A primeira consulta periódica fica retida até depois do DELETE (resposta "atrasada").
+  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/matchmaking/queue") && (init?.method ?? "GET") === "GET" && !held) {
+      held = true;
+      await gate;
+    }
+    return inner(url, init);
+  }));
+  await userEvent.click(screen.getByRole("button", { name: "Entrar na fila" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Sair da fila" }));
+  expect(await screen.findByRole("button", { name: "Entrar na fila" })).toBeInTheDocument();
+  release();
+  await act(async () => { await new Promise((r) => setTimeout(r, 100)); });
+  expect(screen.getByRole("button", { name: "Entrar na fila" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Sair da fila" })).not.toBeInTheDocument();
+});
+
 test("conta sem e-mail verificado vê o aviso e não entra na fila", () => {
   abrirLobby({}, { ...me, email_verified: false });
   expect(screen.getByText(/Confirme seu e-mail para entrar na fila/)).toBeInTheDocument();

@@ -64,8 +64,8 @@ export function CheckersBoard({ squares, playable, flipped, onPlay }: CheckersBo
             onClick={() => { if (canClick) click(n); }}
             style={{ aspectRatio: "1", fontSize: "1.6rem", padding: 0, borderRadius: 0,
               outline: selected ? "3px solid currentColor" : undefined,
-              border: canClick ? "2px dashed currentColor" : "1px solid #888",
-              opacity: canClick || piece !== "." ? 1 : 0.7 }}>
+              // Sem `opacity`: ela reduziria o contraste do número da casa abaixo de 4,5:1 (RNF-014).
+              border: canClick ? "2px dashed currentColor" : "1px solid #888" }}>
             {GLYPH[piece]}
             <span style={{ display: "block", fontSize: ".6rem" }} aria-hidden="true">{n}</span>
           </button>

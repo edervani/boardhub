@@ -4,6 +4,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (testes ponta a ponta e axe, RNF-014/015/016)
+- Pacote `e2e/` (Playwright + `@axe-core/playwright`) e job `e2e` no CI: sobe o `docker compose`, cria uma conta sintética verificada pelo Mailpit e audita com axe as telas principais (cadastro/login, jogos, partidas, histórico/revisão, lobby, ranking, perfil, privacidade, Academy, tema escuro); serious/critical reprovam. Jogo da velha completo contra a IA e um lance de damas e xadrez só pelo teclado. Relatório e traces como artefato em falha. O push em `test/**` passa a disparar o CI e o job `lockfiles` cobre `e2e/package-lock.json`.
+- CA-006 (bio com `<script>` permanece texto na tela do próprio perfil) e CA-033 (selos de classificação em texto na lista de jogos) verificados em E2E; demais lacunas de P-15 seguem abertas.
+- **Limites:** só Chromium roda no CI (Firefox/WebKit declarados, não executados); checklist manual WCAG, 320 px, zoom e reduced-motion pendentes.
+
+### Corrigido
+- Lobby: resposta atrasada da consulta periódica da fila podia recolocar o usuário na fila logo após "Sair da fila" (causa do teste instável "sair da fila volta ao seletor"); teste de regressão adicionado.
+- Damas: removida a `opacity` das casas vazias não jogáveis, que reduzia o contraste do número da casa (correção preventiva, calculada à mão; o axe não chegou a reprovar a versão anterior porque a suíte já nasceu com a correção).
+- E2E: lockfile `e2e/package-lock.json` gerado pelo job `lockfiles` e versionado.
+
 ### Adicionado (Fase 5 — ranking Elo e estatísticas, RF-019, RF-021)
 - Elo puro (`game_engines/elo.py`): rating inicial 1200, K = 40 nas primeiras 30 partidas ranqueadas e 20 depois (por jogador), arredondamento meio afastando de zero, piso de 100; valores conferidos à mão em teste (DT-019).
 - Modo `online_ranked`: convite (`POST /matches` com `mode: online_ranked`) e fila ranqueada (`ranked: true`), só com contas verificadas e jogos com `ranked_enabled` (por ora só o xadrez; damas aguardam P-16/P-07 — **P-21**). O servidor liquida o rating na mesma transação que encerra a partida (lance final, desistência, abandono ou acordo de empate), de forma idempotente e com as linhas de `ratings` bloqueadas em ordem; contra a IA, local, casual e partidas anuladas nada muda. Desistência/abandono antes do 2º lance de cada lado anula a partida ranqueada. `rating_changes` vai em `MatchOut` e no evento `match_ended`.
