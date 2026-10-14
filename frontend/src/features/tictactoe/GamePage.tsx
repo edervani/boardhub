@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Me } from "../../services/types";
 import { Board } from "./Board";
+import { CheckersBoard } from "./CheckersBoard";
 import { LEVEL_LABELS, statusText } from "./status";
 import { useGuestLocalMatch, useServerMatch } from "./useGame";
 
@@ -15,7 +16,7 @@ function GuestGame() {
       <h2 id="guest-title">Jogo da velha — dois jogadores</h2>
       <p>Sem conta, a partida fica só neste navegador e não conta para estatísticas.</p>
       <p role="status" aria-live="polite">{text}</p>
-      <Board board={g.state.board} playable={over ? [] : g.legal} onPlay={(i) => void g.play(i)} />
+      <Board board={(g.state.board ?? "")} playable={over ? [] : g.legal} onPlay={(i) => void g.play(i)} />
       {g.error && <p role="alert">{g.error}</p>}
       <p><button type="button" onClick={g.reset}>Nova partida</button></p>
     </section>
@@ -24,16 +25,22 @@ function GuestGame() {
 
 function SetupForm({ onStart }: { onStart: (body: Record<string, unknown>) => void }) {
   const [mode, setMode] = useState<"ai" | "local">("ai");
+  const [game, setGame] = useState<"tictactoe" | "checkers">("tictactoe");
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     onStart(mode === "ai"
-      ? { game_id: "tictactoe", mode, ai_level: Number(f.get("level")), preferred_seat: Number(f.get("seat")) }
-      : { game_id: "tictactoe", mode });
+      ? { game_id: game, mode, ai_level: Number(f.get("level")), preferred_seat: Number(f.get("seat")) }
+      : { game_id: game, mode });
   }
   return (
     <form onSubmit={submit} aria-labelledby="setup-title">
       <h2 id="setup-title">Nova partida</h2>
+      <label htmlFor="game">Jogo</label>
+      <select id="game" value={game} onChange={(e) => setGame(e.target.value as "tictactoe" | "checkers")}>
+        <option value="tictactoe">Jogo da velha</option>
+        <option value="checkers">Damas</option>
+      </select>
       <label htmlFor="mode">Modo</label>
       <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as "ai" | "local")}>
         <option value="ai">Contra a IA</option>
@@ -47,8 +54,8 @@ function SetupForm({ onStart }: { onStart: (body: Record<string, unknown>) => vo
           </select>
           <label htmlFor="seat">Você joga</label>
           <select id="seat" name="seat" defaultValue="1">
-            <option value="1">Primeiro (X)</option>
-            <option value="2">Segundo (O)</option>
+            <option value="1">Primeiro ({game === "checkers" ? "brancas" : "X"})</option>
+            <option value="2">Segundo ({game === "checkers" ? "pretas" : "O"})</option>
           </select>
         </>
       )}
@@ -72,11 +79,18 @@ export function GamePage({ me }: { me: Me | null }) {
   const playable = match.status === "in_progress" && !m.busy &&
     (match.mode === "local" || match.seats.find((s) => s.seat === match.to_move_seat)?.is_you)
     ? match.legal_moves : [];
+  const checkers = match.game_id === "checkers";
+  const mySeat = match.seats.find((s) => s.is_you)?.seat ?? 1;
   return (
     <section aria-labelledby="game-title">
-      <h2 id="game-title">Jogo da velha{match.ai_level ? ` — IA nível ${match.ai_level}` : ""}</h2>
+      <h2 id="game-title">{checkers ? "Damas" : "Jogo da velha"}{match.ai_level ? ` — IA nível ${match.ai_level}` : ""}</h2>
       <p role="status" aria-live="polite">{statusText(match)}</p>
-      <Board board={match.state.board} playable={playable} onPlay={(i) => void m.play(i)} />
+      {checkers ? (
+        <CheckersBoard squares={match.state.squares ?? []} playable={playable}
+          flipped={match.mode !== "local" && mySeat === 2} onPlay={(mv) => void m.play(mv)} />
+      ) : (
+        <Board board={match.state.board ?? ""} playable={playable} onPlay={(i) => void m.play(String(i))} />
+      )}
       {m.error && <p role="alert">{m.error}</p>}
       <p>
         {match.status === "in_progress" && (

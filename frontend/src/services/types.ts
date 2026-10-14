@@ -44,8 +44,9 @@ export interface Seat {
 
 export interface MatchState {
   schema_version: number;
-  board: string;
-  to_move: "X" | "O";
+  board?: string; // jogo da velha
+  squares?: string[]; // damas
+  to_move: "X" | "O" | "w" | "b";
 }
 
 export interface MatchView {
