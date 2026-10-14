@@ -175,7 +175,7 @@ def test_academy_tambem_conta(client: TestClient, mailer: MemoryMailer,
     c, resp, child_id = _vincular(client, mailer)
     url = f"{API}/academy/exercises/tt-win-1/attempts"
     # Resposta legal, mas errada (a certa é "2"): tentativa válida do mesmo jeito.
-    assert c.post(url, headers=csrf(c), json={"answer": "5"}).status_code == 200
+    assert c.post(url, headers=csrf(c), json={"answer": "4"}).status_code == 200
     relogio.avancar(seconds=90)
     assert c.post(url, headers=csrf(c), json={"answer": "2"}).status_code == 200
     assert _usado(resp, child_id)["used_seconds"] == 90
