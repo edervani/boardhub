@@ -11,7 +11,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ### Corrigido
 - Lobby: resposta atrasada da consulta periódica da fila podia recolocar o usuário na fila logo após "Sair da fila" (causa do teste instável "sair da fila volta ao seletor"); teste de regressão adicionado.
-- Damas: removida a `opacity` das casas, que reduzia o contraste do número da casa abaixo de 4,5:1.
+- Damas: removida a `opacity` das casas vazias não jogáveis, que reduzia o contraste do número da casa (correção preventiva, calculada à mão; o axe não chegou a reprovar a versão anterior porque a suíte já nasceu com a correção).
+- E2E: lockfile `e2e/package-lock.json` gerado pelo job `lockfiles` e versionado.
 
 ### Adicionado (Fase 5 — ranking Elo e estatísticas, RF-019, RF-021)
 - Elo puro (`game_engines/elo.py`): rating inicial 1200, K = 40 nas primeiras 30 partidas ranqueadas e 20 depois (por jogador), arredondamento meio afastando de zero, piso de 100; valores conferidos à mão em teste (DT-019).
