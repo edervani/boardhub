@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.db.session import get_engine
-from app.services import guardian_service, privacy_service
+from app.services import guardian_service, notification_service, privacy_service
 
 log = get_logger(__name__)
 
@@ -21,10 +21,11 @@ def run_daily(db: Session) -> int:
     """Executa as tarefas e devolve a quantidade de falhas."""
     removed_exports = privacy_service.purge_expired_exports(db)
     unconfirmed = guardian_service.purge_unconfirmed_under_12(db)
+    old_notices = notification_service.purge_old(db)
     deleted, failed = privacy_service.purge_due_deletions(db)
     log.info("rotina diária concluída", extra={
         "exports_removidos": removed_exports, "menores_sem_confirmacao": unconfirmed,
-        "contas_excluidas": deleted, "falhas": failed})
+        "avisos_removidos": old_notices, "contas_excluidas": deleted, "falhas": failed})
     return failed
 
 

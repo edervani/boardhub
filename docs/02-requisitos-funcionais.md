@@ -164,13 +164,13 @@ Mostra domínio por conceito (não iniciado / em prática / dominado / em revis�
 ## Engajamento (fases posteriores)
 
 ### RF-026 — Conquistas
-Distintivos por marcos verificáveis no servidor (ex.: "primeira vitória em damas"). Sem valor monetário. Concessão idempotente. **Prioridade:** C · **Aceite:** CA-026 · **Testes:** T-026 · **Estado:** aprovado.
+Distintivos por marcos verificáveis no servidor (ex.: "primeira vitória em damas"). Sem valor monetário. Concessão idempotente. **Prioridade:** C · **Aceite:** CA-026 · **Testes:** T-026 · **Estado:** aprovado. *Implementação (DT-023): definições versionadas em `backend/app/engagement/content/achievements.json` (critérios fechados medidos pelo servidor: partidas, vitórias, ranking, Academy, desafio diário); concessão idempotente por `user_achievements` (PK usuário+conquista); só distintivos, sem valor, troca ou vantagem; vitrine na aba "Conquistas" e no perfil público (`GET /users/{nome}`, só de perfis públicos).*
 
 ### RF-027 — Desafio diário
-Um exercício por jogo por dia (fuso America/Sao_Paulo), mesmo para todos, uma tentativa válida registrada. **Prioridade:** C · **Aceite:** CA-027 · **Testes:** T-027 · **Estado:** aprovado.
+Um exercício por jogo por dia (fuso America/Sao_Paulo), mesmo para todos, uma tentativa válida registrada. **Prioridade:** C · **Aceite:** CA-027 · **Testes:** T-027 · **Estado:** aprovado. *Implementação (DT-023): exercício da Academy escolhido por hash determinístico de (data civil de São Paulo, jogo); uma tentativa válida por jogo e dia em `daily_challenge_results`; resposta inválida não gasta a tentativa; sem sequência (streak), sem perda por faltar, só total acumulado; não altera domínio da Academy nem rating.*
 
 ### RF-028 — Notificações
-In-app (v1): convite recebido, vez de jogar, partida encerrada, oponente desconectou. E-mail apenas transacional (verificação, senha, alerta de segurança). Sem marketing sem consentimento explícito. **Prioridade:** S · **Aceite:** CA-028 · **Testes:** T-028 · **Estado:** aprovado.
+In-app (v1): convite recebido, vez de jogar, partida encerrada, oponente desconectou. E-mail apenas transacional (verificação, senha, alerta de segurança). Sem marketing sem consentimento explícito. **Prioridade:** S · **Aceite:** CA-028 · **Testes:** T-028 · **Estado:** aprovado. *Implementação (DT-023, P-25): tipos `your_turn`, `match_ended`, `opponent_disconnected` e `achievement_earned`; lista, marcar como lida e preferências por tipo (todos ativos por padrão e desativáveis); entrega por WebSocket (`notification`) e sino com consulta periódica; nenhum e-mail nem push; `invite_received` depende de RF-032 (P-25).*
 
 ## Privacidade e administração
 

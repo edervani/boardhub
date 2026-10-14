@@ -21,6 +21,7 @@ from app.core.security import verify_password
 from app.models import (
     AuditLog,
     AuthSession,
+    DailyChallengeResult,
     DailyUsage,
     DataExportRequest,
     ExerciseAttempt,
@@ -29,12 +30,15 @@ from app.models import (
     MatchAnalysis,
     MatchMove,
     MatchPlayer,
+    Notification,
+    NotificationPreference,
     PlacementResult,
     QueueEntry,
     Rating,
     RatingHistory,
     SkillProgress,
     User,
+    UserAchievement,
 )
 from app.services import auth_service, match_service
 from app.services.events import Event, match_ended
@@ -172,6 +176,30 @@ def _academy_section(db: Session, user: User) -> dict[str, Any]:
     }
 
 
+def _engagement_section(db: Session, user: User) -> dict[str, Any]:
+    """Conquistas, desafios diários, avisos in-app e preferências de aviso (RF-026–028)."""
+    ach = db.scalars(select(UserAchievement).where(UserAchievement.user_id == user.id)
+                     .order_by(UserAchievement.earned_at, UserAchievement.achievement_key))
+    daily = db.scalars(select(DailyChallengeResult).where(DailyChallengeResult.user_id == user.id)
+                       .order_by(DailyChallengeResult.day, DailyChallengeResult.game_id))
+    notes = db.scalars(select(Notification).where(Notification.user_id == user.id)
+                       .order_by(Notification.created_at, Notification.id))
+    prefs = db.scalars(select(NotificationPreference)
+                       .where(NotificationPreference.user_id == user.id)
+                       .order_by(NotificationPreference.kind))
+    return {
+        "achievements": [{"key": a.achievement_key, "definition_version": a.definition_version,
+                          "earned_at": _iso(a.earned_at)} for a in ach],
+        "daily_challenges": [{
+            "game_id": d.game_id, "day": d.day.isoformat(), "exercise_id": d.exercise_id,
+            "content_version": d.content_version, "answer": d.answer, "correct": d.correct,
+            "completed_at": _iso(d.completed_at)} for d in daily],
+        "notifications": [{"kind": n.kind, "payload": n.payload, "created_at": _iso(n.created_at),
+                           "read_at": _iso(n.read_at)} for n in notes],
+        "notification_preferences": [{"kind": p.kind, "enabled": p.enabled} for p in prefs],
+    }
+
+
 def _ratings_section(db: Session, user: User) -> dict[str, Any]:
     ratings = db.scalars(select(Rating).where(Rating.user_id == user.id)
                          .order_by(Rating.game_id))
@@ -206,6 +234,7 @@ def build_export(db: Session, user: User) -> dict[str, Any]:
         "matches": _matches_section(db, user),
         "academy": _academy_section(db, user),
         "ratings": _ratings_section(db, user),
+        "engagement": _engagement_section(db, user),
         "audit_events": _audit_section(db, user),
     }
 

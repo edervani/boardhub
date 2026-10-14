@@ -8,6 +8,9 @@ import { AcademyPage } from "../features/academy/AcademyPage";
 import { ReviewPage } from "../features/academy/ReviewPage";
 import { MatchBoard } from "../features/tictactoe/MatchBoard";
 import { GuardianPage } from "../features/guardian/GuardianPage";
+import { AchievementsPage } from "../features/engagement/AchievementsPage";
+import { DailyPage } from "../features/engagement/DailyPage";
+import { NotificationBell } from "../features/engagement/NotificationBell";
 import { FriendsPage } from "../features/social/FriendsPage";
 import { ModerationPage } from "../features/moderation/ModerationPage";
 import { PrivacyPage } from "../features/profile/PrivacyPage";
@@ -16,7 +19,7 @@ import { RankingPage } from "../features/ranking/RankingPage";
 import { ApiError, api, errorMessage } from "../services/api";
 import type { Me } from "../services/types";
 
-type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "revisao" | "perfil" | "responsavel" | "amigos" | "moderacao" | "privacidade" | "entrar" | "cadastro";
+type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "desafio" | "conquistas" | "revisao" | "perfil" | "responsavel" | "amigos" | "moderacao" | "privacidade" | "entrar" | "cadastro";
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -78,11 +81,14 @@ export function App() {
               <button className="secondary" onClick={() => setView("online")}>Online</button>
               <button className="secondary" onClick={() => setView("historico")}>Histórico</button>
               <button className="secondary" onClick={() => setView("academy")}>Academy</button>
+              <button className="secondary" onClick={() => setView("desafio")}>Desafio</button>
+              <button className="secondary" onClick={() => setView("conquistas")}>Conquistas</button>
               <button className="secondary" onClick={() => setView("perfil")}>Perfil</button>
               {social && <button className="secondary" onClick={() => setView("amigos")}>Amigos</button>}
               {staff && <button className="secondary" onClick={() => setView("moderacao")}>Moderação</button>}
               {guardian && <button className="secondary" onClick={() => setView("responsavel")}>Responsável</button>}
               <button className="secondary" onClick={() => setView("privacidade")}>Privacidade</button>
+              <NotificationBell />
               <button className="secondary" onClick={() => void logout()}>Sair</button>
             </>
           ) : (
@@ -109,6 +115,8 @@ export function App() {
                         {view === "historico" && me && <History onReview={(id) => { setReviewId(id); setView("revisao"); }} />}
             {view === "ranking" && <RankingPage me={me} />}
             {view === "academy" && me && <AcademyPage />}
+            {view === "desafio" && me && <DailyPage />}
+            {view === "conquistas" && me && <AchievementsPage />}
             {view === "revisao" && me && <ReviewPage matchId={reviewId} onBack={() => setView("historico")} />}
             {view === "perfil" && me && <ProfilePage me={me} />}
             {view === "amigos" && me && social && <FriendsPage onMatchStarted={() => setView("online")} />}

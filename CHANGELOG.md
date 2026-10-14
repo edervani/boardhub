@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (engajamento ético — RF-026 conquistas, RF-027 desafio diário, RF-028 notificações; DT-023, P-25)
+- Módulo de eventos de domínio (`services/domain_events.py`): fim de partida, lance online, desconexão, tentativa da Academy e desafio respondido; consumidores em savepoint (falha de engajamento nunca derruba o jogo).
+- Conquistas: 16 definições versionadas em `achievements.json`, concessão idempotente pelo servidor, progresso em `GET /me/achievements`, vitrine na aba "Conquistas" e em `GET /users/{nome}` (perfis públicos). Só distintivos: sem valor monetário, troca ou vantagem.
+- Desafio diário: `GET /daily-challenge` e `POST /daily-challenge/{jogo}/attempt`; exercício determinístico por (dia de America/Sao_Paulo, jogo) com o conteúdo da Academy; uma tentativa válida por jogo e dia; sem sequência nem perda por faltar.
+- Notificações in-app: `GET /me/notifications`, marcar como lida (uma/todas), preferências por tipo; evento WS `notification`; sino acessível (`aria-live="polite"`). Sem e-mail, push nem avisos de retorno.
+- Migração 0011 (`user_achievements`, `daily_challenge_results`, `notifications`, `notification_preferences`); exportação de dados ganhou a seção `engagement`; exclusão por CASCADE; rotina diária remove avisos antigos.
+- Testes: pytest (`test_engajamento.py`), Vitest (`Engagement.test.tsx`) e E2E/axe das novas telas.
+
 ### Adicionado (social e moderação — RF-031, RF-032; DT-022, P-24)
 - Amizades por apelido público (pedir, aceitar, recusar com espera de 7 dias para repetir, remover), bloqueio de usuários (remove a amizade e cancela convites) e convites diretos entre amigos que reaproveitam a sala por convite de RF-011 (`join_direct`), sem expor o código. Sem chat livre. Menores só usam o social com responsável vinculado que liberou o contato e só entre menores (P-24); conta alheia, bloqueio e regra de menores respondem 404; sem e-mail ou id de conta alheia em nenhuma resposta; rate limits por conta.
 - Denúncia de perfil (apelido) ou partida (`POST /reports`): motivo fechado, texto livre sanitizado, 10 por dia, uma aberta por alvo e motivo; o denunciante nunca é exposto. Fila `GET /admin/reports` e `POST /admin/reports/{id}/resolve` (advertir, suspender, arquivar, ocultar conteúdo) para `moderator`/`admin`, mais `POST /admin/users/{id}/suspend|reinstate`, tudo em `audit_log`. Suspensão revoga sessões, tira da fila, encerra partidas abertas, cancela convites e impede o login. Hierarquia de papéis no servidor.

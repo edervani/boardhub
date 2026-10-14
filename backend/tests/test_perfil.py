@@ -59,7 +59,7 @@ def test_bio_acima_de_160_caracteres_e_recusada(client: TestClient, mailer: Memo
 def test_perfil_publico_nao_expoe_email_nem_ids(client: TestClient, mailer: MemoryMailer) -> None:
     conta_logada(client, mailer)
     corpo = novo_cliente(client).get(f"{API}/users/JOGADOR_TESTE_01").json()
-    assert set(corpo) == {"display_name", "avatar_key", "bio"}
+    assert set(corpo) == {"display_name", "avatar_key", "bio", "achievements"}
     assert "example.test" not in str(corpo)
 
 

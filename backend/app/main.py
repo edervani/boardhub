@@ -8,6 +8,7 @@ from app.api.routes import (
     academy,
     admin,
     auth,
+    engagement,
     health,
     matches,
     me,
@@ -20,6 +21,8 @@ from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.realtime import endpoint as realtime
+from app.realtime import notify
+from app.services import engagement as engagement_wiring
 
 
 def create_app() -> FastAPI:
@@ -40,8 +43,11 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Content-Type", "X-CSRF-Token"],
     )
+    engagement_wiring.register()
+    notify.install()
     for router in (health.router, auth.router, me.router, profile.router, matches.router,
-                   academy.router, privacy.router, ranking.router, social.router, admin.router,
+                   academy.router, privacy.router, ranking.router, engagement.router,
+                   social.router, admin.router,
                    realtime.router):
         app.include_router(router, prefix="/api/v1")
     return app

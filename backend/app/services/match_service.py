@@ -27,7 +27,7 @@ from app.models import AuditLog, DrawOffer, Match, MatchMove, MatchPlayer, User,
 from app.models.base import new_id
 from app.schemas.matches import MatchOut, MatchPage, MatchSummary, PlayerOut, SeatOut
 from app.schemas.ranking import RatingChangeOut
-from app.services import catalog_service, rating_service, usage_service
+from app.services import catalog_service, domain_events, rating_service, usage_service
 from app.services.events import Event, match_ended
 from app.services.game_registry import KITS, GameKit
 
@@ -273,6 +273,14 @@ def _expire_draw_offers_on_move(db: Session, match: Match, mover_seat: int) -> l
                                     "reason": "moved"}, match_id=match.id)]
 
 
+def _announce_move(db: Session, match: Match, players: list[MatchPlayer], mover: User) -> None:
+    """Partida online com outra pessoa: avisa que ela tem a vez (RF-028)."""
+    other = next((p.user_id for p in players if p.user_id not in (None, mover.id)), None)
+    if other is not None:
+        domain_events.emit_new(db, domain_events.MOVE_PLAYED, mover.id, match_id=str(match.id),
+                               game_id=match.game_id, opponent_user_id=other)
+
+
 def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_ply: int,
                        move_raw: str, client_move_id: uuid.UUID) -> MoveResult:
     limiter.hit(f"move:{user.id}", 120, 60)
@@ -304,8 +312,12 @@ def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_pl
         events.append(move_applied(match, seat, move_text))
         events.extend(_expire_draw_offers_on_move(db, match, seat))
         if match.status == "finished":
-            events.append(finish_event(db, match, players))
+            events.append(finish_event(db, match, players, user))
+        else:
+            _announce_move(db, match, players, user)
     _play_ai_turn_if_due(db, match, players, kit)
+    if match.mode == "ai" and match.status == "finished":
+        announce_finish(db, match, players, user)
     usage_service.touch(db, user)
     db.commit()
     return MoveResult(view(db, match, players, user), events)
@@ -335,12 +347,41 @@ def finish_with_winner(match: Match, winner_seat: int | None, reason: str) -> No
     match.result = "draw" if winner_seat is None else ("p1_win" if winner_seat == 1 else "p2_win")
 
 
-def finish_event(db: Session, match: Match, players: list[MatchPlayer]) -> Event:
+def _outcome_for(match: Match, seat: int) -> str:
+    if match.result == "draw":
+        return "draw"
+    return "win" if (match.result == "p1_win") == (seat == 1) else "loss"
+
+
+def announce_finish(db: Session, match: Match, players: list[MatchPlayer],
+                    actor: User | None) -> None:
+    """Avisa os consumidores (conquistas, notificações) que a partida terminou (RF-026/028).
+
+    Um fato por pessoa humana; partidas locais, anuladas e abortadas não contam. Na mesma
+    transação, depois de o rating ser liquidado e antes do `commit`.
+    """
+    if match.status != "finished" or match.mode == "local" or match.result is None:
+        return
+    humans = [p for p in players if p.user_id is not None and not p.is_ai]
+    for p in humans:
+        if p.user_id is None:
+            continue
+        other = next((q.user_id for q in humans if q.user_id != p.user_id), None)
+        domain_events.emit_new(
+            db, domain_events.MATCH_FINISHED, p.user_id, match_id=str(match.id),
+            game_id=match.game_id, mode=match.mode, ranked=match.mode == "online_ranked",
+            online=is_online(match), outcome=_outcome_for(match, p.seat),
+            actor_user_id=actor.id if actor else None, opponent_user_id=other)
+
+
+def finish_event(db: Session, match: Match, players: list[MatchPlayer],
+                 actor: User | None = None) -> Event:
     """Liquida o rating (se a partida for ranqueada e válida) e descreve o fim da partida.
 
     Deve ser chamado na mesma transação que encerrou a partida, antes do `commit`.
     """
     changes = rating_service.settle(db, match, players)
+    announce_finish(db, match, players, actor)
     return match_ended(match.id, match.result, match.end_reason, match.ply,
                        [{"seat": c.seat, "before": c.before, "after": c.after}
                         for c in changes])
@@ -358,7 +399,9 @@ def resign_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOu
     else:
         loser = next(p.seat for p in players if p.user_id == user.id)
     finish_with_winner(match, 3 - loser, "resign")
-    events = [finish_event(db, match, players)] if is_online(match) else []
+    events = [finish_event(db, match, players, user)] if is_online(match) else []
+    if match.mode == "ai":
+        announce_finish(db, match, players, user)
     db.commit()
     return view(db, match, players, user), events
 

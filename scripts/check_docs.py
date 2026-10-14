@@ -74,9 +74,9 @@ RF_MAP = {
     23: ("services/academy_service", "/academy/exercises/*"),
     24: ("ai/mentor + ai/llm", "GET /matches/{id}/analysis"),
     25: ("services/academy_service", "features/academy"),
-    26: ("services/achievement_service", "(fase 6)"),
-    27: ("services/academy_service", "(fase 6)"),
-    28: ("services/notification_service", "WS eventos"),
+    26: ("services/achievement_service", "GET /me/achievements; domain_events"),
+    27: ("services/daily_challenge_service", "GET /daily-challenge; POST /daily-challenge/{game}/attempt"),
+    28: ("services/notification_service", "/me/notifications*; WS `notification`"),
     29: ("services/privacy_service", "/me/export, /guardian/children/{id}/export"),
     30: ("services/privacy_service", "/me/delete, /guardian/children/{id}/delete"),
     31: ("services/moderation_service", "/reports, /admin/*"),
@@ -186,6 +186,7 @@ PARCIAIS = {6, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33}  # código mesc
 ACADEMY = {22, 23, 24, 25}  # Academy e Mentor (fase 6)
 RANKING = {19, 21}  # ranking Elo e estatísticas (fase 5); damas fora do ranking: P-21
 PRIVACIDADE = {29, 30}  # direitos do titular (fase 7)
+ENGAJAMENTO = {26, 27, 28}  # conquistas, desafio diário e notificações in-app (DT-023)
 SOCIAL = {31, 32}  # denúncia/moderação e amizades (DT-022)
 SUPERVISAO = {7, 34}  # limite diário, notação e painel do responsável (fecha parte de P-15)
 
@@ -202,6 +203,9 @@ def state_evidence(n: int) -> tuple[str, str]:
     if n in SUPERVISAO:
         return "aprovado", ("código na branch `feat/guardian-limite-diario` (PR aberto; `implementado` "
                             "só após merge); lacunas restantes em P-15 e P-23")
+    if n in ENGAJAMENTO:
+        return "aprovado", ("código na branch `feat/engajamento` (PR aberto; `implementado` só "
+                            "após merge); decisões em DT-023 e P-25")
     if n in SOCIAL:
         return "aprovado", ("código na branch `feat/social-moderacao` (PR aberto; `implementado` só após "
                             "merge); decisões em DT-022 e P-24")
