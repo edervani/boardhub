@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 6 — Academy e Mentor, RF-022 a RF-025)
+- Conteúdo original em pt-BR como dados versionados (`backend/app/academy/content/*.json`, DT-017): trilhas de jogo da velha, damas brasileiras e xadrez, com lições, conceitos e exercícios; cada solução é conferida pelo motor em teste.
+- Backend: trilhas, lições, exercício sem solução, dicas contadas no servidor, resposta validada pelos motores, domínio por conceito com revisão espaçada (3/7/21/60 dias), nivelamento adaptativo sem estado no cliente e progresso. Migração 0006.
+- Mentor pós-partida determinístico (sem Stockfish): `GET /matches/{id}/analysis` reexecuta os lances do usuário, classifica pelos limiares do doc 08, cacheia e limita a 10/h; não participante recebe 404.
+- IA generativa só atrás de `LLMProvider` (padrão `NullProvider`, sem chamada externa); a reformulação é descartada se acrescentar lance ou casa.
+- Frontend: página Academy (trilhas, lição, exercício com os tabuleiros existentes, dicas, nivelamento) e revisão da partida a partir do histórico.
+- **Pendências:** P-18 (α provisório 0,30 por conflito com CA-025) e P-19 (revisão do conteúdo, sem provedor local, sem 202).
+
 ### Adicionado (Fase 4 — xadrez, backend)
 - Motor `chess` (`chess-fide-1`) sobre python-chess (nova dependência `chess>=1.11`, GPL-3.0 — DT-005): estado = lances UCI desde a posição inicial, validado ao carregar (lances reexecutados e FEN conferido); fim por xeque-mate, afogamento, material insuficiente, quíntupla repetição e 75 lances; limite de 600 meios-lances.
 - IA em 5 níveis: 1 aleatório com preferência por capturas; 2–5 negamax com poda alfa-beta, aprofundamento iterativo com limite de tempo (0,3/1/2/3 s), tabelas de casas, ordenação MVV-LVA e quiescência de capturas. Stockfish/UCI fica para a Fase 5.

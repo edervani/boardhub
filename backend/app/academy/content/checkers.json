@@ -1,0 +1,173 @@
+{
+  "content_version": "2026-10-14.1",
+  "game_id": "checkers",
+  "track": {
+    "title": "Damas brasileiras: movimento, captura e dama",
+    "description": "Aprenda como as peças andam, por que a captura é obrigatória, a lei da maioria, a promoção a dama e como evitar deixar peças soltas."
+  },
+  "concepts": [
+    {"key": "ck.movement", "title": "Movimento das peças", "prerequisites": [],
+     "summary": "Nas damas brasileiras joga-se nas 32 casas escuras. Uma pedra anda uma casa na diagonal, sempre para frente, para uma casa vazia."},
+    {"key": "ck.mandatory_capture", "title": "Captura obrigatória", "prerequisites": ["ck.movement"],
+     "summary": "Pular uma peça do adversário que tenha uma casa vazia logo atrás é capturá-la. Quando existe uma captura possível, você é obrigado a capturar; não vale fazer outro lance."},
+    {"key": "ck.majority_rule", "title": "Lei da maioria", "prerequisites": ["ck.mandatory_capture"],
+     "summary": "Se há mais de uma captura possível, você deve escolher a sequência que captura o maior número de peças. Sequências menores não são permitidas."},
+    {"key": "ck.promotion", "title": "Promoção a dama", "prerequisites": ["ck.movement"],
+     "summary": "Uma pedra que termina o lance na última fileira do adversário vira dama. A dama anda quantas casas quiser na diagonal, para frente ou para trás."},
+    {"key": "ck.exchanges", "title": "Peças soltas e trocas", "prerequisites": ["ck.mandatory_capture"],
+     "summary": "Antes de mover, imagine a resposta do adversário. Como a captura é obrigatória, um lance que deixa uma peça ao alcance de uma captura pode custar material. Prefira lances que não entregam peças."}
+  ],
+  "lessons": [
+    {
+      "id": "ck-l1", "concept": "ck.movement", "title": "Como as peças andam",
+      "summary": "O tabuleiro, as casas escuras e o passo da pedra.",
+      "body": [
+        "As damas brasileiras são jogadas num tabuleiro de oito por oito, mas só as 32 casas escuras são usadas. Neste site elas são numeradas de 1 a 32. Cada jogador começa com 12 pedras e as brancas jogam primeiro.",
+        "Uma pedra comum anda uma casa na diagonal, sempre para frente, e só pode ir para uma casa vazia. Para as brancas, frente significa em direção às casas de número menor."
+      ],
+      "exercises": [
+        {"id": "ck-move-q1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Quando não há captura, como uma pedra comum (não dama) se move?",
+         "options": [
+           {"id": "a", "text": "Uma casa na diagonal, para frente"},
+           {"id": "b", "text": "Quantas casas quiser na diagonal"},
+           {"id": "c", "text": "Uma casa em qualquer direção"},
+           {"id": "d", "text": "Uma casa na horizontal"}],
+         "correct_option": "a",
+         "explanation": "A pedra dá um passo curto na diagonal e só para frente. Mover várias casas é coisa da dama."},
+        {"id": "ck-move-q2", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Em quais casas as peças se movem?",
+         "options": [
+           {"id": "a", "text": "Em todas as 64 casas"},
+           {"id": "b", "text": "Somente nas casas escuras, que são 32"},
+           {"id": "c", "text": "Somente nas casas claras"},
+           {"id": "d", "text": "Nas casas da borda"}],
+         "correct_option": "b",
+         "explanation": "Como o movimento é sempre na diagonal, a peça nunca sai da cor da casa onde começou. Por isso o jogo usa só as 32 casas escuras."},
+        {"id": "ck-move-1", "type": "best_move", "goal": "listed", "verify": "legal", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Mova a pedra da casa 23 para a casa 19.",
+         "position": {"squares": "....b..b..............w..w......", "to_move": "w"},
+         "accepted": ["23-19"],
+         "explanation": "A casa 19 fica na diagonal da casa 23, uma fileira à frente e vazia."}
+      ]
+    },
+    {
+      "id": "ck-l2", "concept": "ck.mandatory_capture", "title": "A captura é obrigatória",
+      "summary": "Como capturar e por que não dá para escolher outro lance.",
+      "body": [
+        "Para capturar, a sua peça pula sobre uma peça do adversário que esteja na diagonal, caindo na casa vazia logo depois dela. A peça pulada sai do tabuleiro. A pedra pode capturar para frente e também para trás.",
+        "Quando existe qualquer captura possível, você precisa capturar. Se houver várias peças que podem capturar, você escolhe entre elas, mas não pode fazer um lance comum."
+      ],
+      "exercises": [
+        {"id": "ck-cap-q1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Uma das suas peças pode capturar uma peça do adversário, mas você preferia mover outra peça sem capturar. O que a regra diz?",
+         "options": [
+           {"id": "a", "text": "Você pode escolher livremente"},
+           {"id": "b", "text": "Você é obrigado a capturar"},
+           {"id": "c", "text": "Você perde a vez"},
+           {"id": "d", "text": "Você só captura se o adversário deixar"}],
+         "correct_option": "b",
+         "explanation": "Nas damas brasileiras a captura é obrigatória: existindo uma captura, ela deve ser feita."},
+        {"id": "ck-cap-1", "type": "best_move", "goal": "listed", "verify": "legal", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Há uma peça preta ao alcance da sua pedra. Faça a captura clicando na casa de origem e depois na casa onde a pedra vai cair.",
+         "position": {"squares": "b................b...w..w.......", "to_move": "w"},
+         "accepted": ["22x15"],
+         "explanation": "A pedra da casa 22 pula a peça preta da casa 18 e cai na casa vazia 15. Como há captura, ela é o único lance permitido."},
+        {"id": "ck-cap-2", "type": "best_move", "goal": "win_now", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Capture a última peça do adversário e vença a partida.",
+         "position": {"squares": ".................b...w......w...", "to_move": "w"},
+         "explanation": "Sem peças, o adversário não tem como jogar. Capturar a última peça preta termina a partida a seu favor."}
+      ]
+    },
+    {
+      "id": "ck-l3", "concept": "ck.majority_rule", "title": "A lei da maioria",
+      "summary": "Entre as capturas possíveis, vale a que pega mais peças.",
+      "body": [
+        "Às vezes uma peça pode capturar de mais de um jeito. A lei da maioria diz que você deve escolher a sequência que captura o maior número de peças. Se uma captura pega uma peça e outra pega duas, só a segunda é permitida.",
+        "Numa sequência, a mesma peça continua capturando sem parar até não haver mais nada para pular. No tabuleiro, clique na casa de origem e depois em cada casa de pouso, na ordem."
+      ],
+      "exercises": [
+        {"id": "ck-major-q1", "type": "rule_quiz", "difficulty": 2,
+         "prompt": "Você pode capturar uma peça por um caminho ou duas peças por outro. Qual caminho você deve seguir?",
+         "options": [
+           {"id": "a", "text": "O que captura uma peça"},
+           {"id": "b", "text": "Qualquer um dos dois"},
+           {"id": "c", "text": "O que captura mais peças"},
+           {"id": "d", "text": "O mais curto"}],
+         "correct_option": "c",
+         "explanation": "Pela lei da maioria, a sequência com mais capturas é a única permitida."},
+        {"id": "ck-major-1", "type": "best_move", "goal": "listed", "verify": "legal", "difficulty": 2,
+         "prompt": "Você joga com as brancas. A pedra da casa 22 pode capturar uma peça ou duas. Faça a captura que a regra exige.",
+         "position": {"squares": "..........b.....bb...w..........", "to_move": "w"},
+         "accepted": ["22x15x8"],
+         "explanation": "Capturar só a peça da casa 17 não é permitido. A sequência 22, 15, 8 pula duas peças e é a que a lei da maioria exige."},
+        {"id": "ck-major-2", "type": "best_move", "goal": "listed", "verify": "legal", "difficulty": 3,
+         "prompt": "Você joga com as brancas. Existe uma sequência que captura três peças com uma única pedra. Encontre-a e jogue clicando em cada casa do caminho.",
+         "position": {"squares": ".............bbbw....b..........", "to_move": "w"},
+         "accepted": ["17x10x19x12"],
+         "explanation": "A pedra pula as peças das casas 14, 15 e 16, uma por vez, passando pelas casas 10 e 19 até cair na 12. A captura da peça da casa 22 pegaria só uma, então não é permitida."}
+      ]
+    },
+    {
+      "id": "ck-l4", "concept": "ck.promotion", "title": "Promoção a dama",
+      "summary": "Quando a pedra vira dama e o que a dama pode fazer.",
+      "body": [
+        "Quando uma pedra termina o lance na última fileira do adversário, ela é promovida a dama. Para as brancas, a última fileira são as casas 1 a 4.",
+        "A dama é mais forte: ela anda quantas casas quiser na diagonal, para frente ou para trás, enquanto o caminho estiver livre. Se uma pedra chega à última fileira no meio de uma captura e ainda pode continuar capturando, ela segue capturando como pedra e só vira dama se o lance terminar ali."
+      ],
+      "exercises": [
+        {"id": "ck-promo-q1", "type": "rule_quiz", "difficulty": 2,
+         "prompt": "Quando uma pedra vira dama?",
+         "options": [
+           {"id": "a", "text": "Assim que captura a primeira peça"},
+           {"id": "b", "text": "Quando o lance termina na última fileira do adversário"},
+           {"id": "c", "text": "Quando chega ao centro do tabuleiro"},
+           {"id": "d", "text": "Quando o adversário perde 6 peças"}],
+         "correct_option": "b",
+         "explanation": "A promoção acontece quando a pedra termina o lance na última fileira do adversário."},
+        {"id": "ck-promo-q2", "type": "rule_quiz", "difficulty": 3,
+         "prompt": "Uma pedra chega à última fileira no meio de uma captura e ainda pode capturar mais uma peça. O que acontece?",
+         "options": [
+           {"id": "a", "text": "Ela vira dama na hora e a captura acaba"},
+           {"id": "b", "text": "Ela continua capturando como pedra e só vira dama se o lance terminar na última fileira"},
+           {"id": "c", "text": "Ela volta para a casa de origem"},
+           {"id": "d", "text": "O lance é anulado"}],
+         "correct_option": "b",
+         "explanation": "A promoção só vale se o lance termina na última fileira; antes disso a peça continua sendo pedra."},
+        {"id": "ck-promo-1", "type": "best_move", "goal": "promote", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Faça um lance que promova uma pedra a dama.",
+         "position": {"squares": ".....w............bb....w.......", "to_move": "w"},
+         "explanation": "A pedra da casa 6 está a um passo da última fileira. Qualquer lance dela para a casa 1 ou 2 a transforma em dama."},
+        {"id": "ck-promo-2", "type": "best_move", "goal": "promote", "difficulty": 2,
+         "prompt": "Você joga com as brancas. Qual lance promove uma pedra?",
+         "position": {"squares": "..b...w......w.....b............", "to_move": "w"},
+         "explanation": "A casa 3 está ocupada por uma peça preta, então o caminho para a promoção é pela casa 2: o lance 7-2."}
+      ]
+    },
+    {
+      "id": "ck-l5", "concept": "ck.exchanges", "title": "Não deixe peças soltas",
+      "summary": "Antes de mover, imagine a captura do adversário.",
+      "body": [
+        "Como a captura é obrigatória, o adversário muitas vezes é forçado a capturar. Isso é uma ferramenta, mas também um perigo: um lance que coloca uma peça ao alcance de uma captura pode perder material.",
+        "Antes de mover, procure a resposta do adversário. Em cada exercício abaixo, apenas um lance mantém o material equilibrado nos próximos lances; os outros entregam pelo menos uma peça."
+      ],
+      "exercises": [
+        {"id": "ck-safe-1", "type": "best_move", "goal": "listed", "verify": "best", "difficulty": 2,
+         "prompt": "Você joga com as brancas. Só um lance não entrega material nos próximos lances. Qual é?",
+         "position": {"squares": "........w..........wb..b.wb.....", "to_move": "w"},
+         "accepted": ["26-23"],
+         "explanation": "Os outros lances deixam uma peça branca ao alcance de uma captura sem que você recupere o material. A análise do motor confirma que só 26-23 mantém o equilíbrio."},
+        {"id": "ck-safe-2", "type": "best_move", "goal": "listed", "verify": "best", "difficulty": 2,
+         "prompt": "Você joga com as brancas. Qual lance evita perder uma peça?",
+         "position": {"squares": "..........bwwbb..........w......", "to_move": "w"},
+         "accepted": ["26-23"],
+         "explanation": "Os demais lances custam uma peça nos lances seguintes, segundo a análise do motor. Só 26-23 mantém o material."},
+        {"id": "ck-safe-3", "type": "best_move", "goal": "listed", "verify": "best", "difficulty": 3,
+         "prompt": "Você joga com as brancas. Um dos lances perde uma peça de forma quase imediata. Encontre o único que mantém o equilíbrio.",
+         "position": {"squares": "........bw..b.w..w..b...........", "to_move": "w"},
+         "accepted": ["10-7"],
+         "explanation": "Os outros lances perdem material nos lances seguintes. O motor mostra que apenas 10-7 mantém o equilíbrio."}
+      ]
+    }
+  ]
+}

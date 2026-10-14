@@ -5,7 +5,7 @@ import type { MatchSummary } from "../../services/types";
 const RESULT: Record<string, string> = { p1_win: "Vitória do 1º jogador (X)", p2_win: "Vitória do 2º jogador (O)", draw: "Empate" };
 const MODE: Record<string, string> = { ai: "Contra a IA", local: "Local" };
 
-export function History() {
+export function History({ onReview }: { onReview?: (matchId: string) => void }) {
   const [items, setItems] = useState<MatchSummary[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -31,6 +31,9 @@ export function History() {
           <li key={m.id} className="card">
             {MODE[m.mode] ?? m.mode} · {new Date(m.created_at).toLocaleString("pt-BR")} ·{" "}
             {m.status === "finished" ? (m.result ? RESULT[m.result] : "Encerrada") : "Em andamento"}
+            {m.status === "finished" && onReview && (
+              <> <button type="button" className="secondary" onClick={() => onReview(m.id)}>Revisar partida</button></>
+            )}
           </li>
         ))}
       </ul>

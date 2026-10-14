@@ -92,6 +92,8 @@ PK (`match_id`,`ply`); `seat`; `move` text (notação do jogo: índice 0–8, PD
 `rating_history`: `id`; `user_id`; `game_id`; `match_id` UNIQUE com `user_id`; `before`; `after`; `created_at`.
 
 ### Academy (fase 3)
+> **DT-017:** `lessons` e `exercises` não são tabelas; o conteúdo vive em `backend/app/academy/content/*.json`. Tabelas criadas na migração 0006: `exercise_attempts`, `user_skill_progress`, `exercise_hints`, `academy_placements`, `match_analyses`.
+
 - `lessons`: `id`, `game_id`, `concept_key`, `title`, `content` jsonb, `version`, `order_index`, `published`.
 - `exercises`: `id`, `lesson_id`, `concept_key`, `difficulty` (1–5), `initial_state` jsonb, `objective` jsonb (ex.: `{"type":"best_move","accept":["e2e4"]}` ou `{"type":"mate_in","n":1}`), `hints` jsonb, `version`.
 - `exercise_attempts`: `id`, `user_id` CASCADE, `exercise_id`, `correct` bool, `hints_used`, `duration_ms`, `created_at`.

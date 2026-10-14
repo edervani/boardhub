@@ -1,0 +1,174 @@
+{
+  "content_version": "2026-10-14.1",
+  "game_id": "chess",
+  "track": {
+    "title": "Xadrez: peças, xeque, mate e táticas simples",
+    "description": "Aprenda como cada peça se move, o que é xeque, como dar mate em um lance, como não deixar peças soltas e como usar o garfo do cavalo."
+  },
+  "concepts": [
+    {"key": "ch.piece_moves", "title": "Movimento das peças", "prerequisites": [],
+     "summary": "A torre anda em linha reta, o bispo na diagonal, a dama como torre e bispo juntos, o rei uma casa em qualquer direção, o cavalo em L pulando outras peças e o peão para frente, capturando na diagonal."},
+    {"key": "ch.check", "title": "Xeque", "prerequisites": ["ch.piece_moves"],
+     "summary": "Há xeque quando uma peça ataca o rei adversário. Quem está em xeque precisa sair dele no mesmo lance: mover o rei, capturar a peça que dá o xeque ou colocar uma peça no meio do caminho."},
+    {"key": "ch.mate_in_one", "title": "Mate em um lance", "prerequisites": ["ch.check"],
+     "summary": "Xeque-mate é um xeque do qual não há saída: o rei não pode fugir, a peça que ataca não pode ser capturada e não dá para interpor. Antes de jogar, procure os xeques; se um deles não tem defesa, é mate. Também olhe se o adversário ameaça mate."},
+    {"key": "ch.hanging_pieces", "title": "Peças soltas", "prerequisites": ["ch.piece_moves"],
+     "summary": "Uma peça solta é uma peça que nenhuma outra defende. Capturá-la de graça ganha material; deixar uma das suas soltas é um convite ao adversário. Antes de capturar, confira se ela está defendida."},
+    {"key": "ch.forks", "title": "O garfo", "prerequisites": ["ch.hanging_pieces", "ch.check"],
+     "summary": "Garfo é um ataque a duas ou mais peças ao mesmo tempo. O cavalo é especialista, principalmente quando uma das peças atacadas é o rei: o adversário precisa sair do xeque e perde a outra peça."}
+  ],
+  "lessons": [
+    {
+      "id": "ch-l1", "concept": "ch.piece_moves", "title": "Como as peças se movem",
+      "summary": "O passo de cada peça do xadrez.",
+      "body": [
+        "A torre se move em linha reta, na horizontal ou na vertical, quantas casas quiser. O bispo se move na diagonal, quantas casas quiser, e por isso fica sempre na mesma cor de casa. A dama combina os movimentos da torre e do bispo.",
+        "O rei se move uma casa em qualquer direção. O cavalo se move em L, duas casas numa direção e uma na outra, e é a única peça que pode pular por cima das outras. O peão anda para frente uma casa (duas na primeira vez) e captura na diagonal.",
+        "No tabuleiro, clique na peça que quer mover e depois na casa de destino. As casas jogáveis são anunciadas."
+      ],
+      "exercises": [
+        {"id": "ch-move-q1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Como o bispo se move?",
+         "options": [
+           {"id": "a", "text": "Em linha reta, na horizontal ou vertical"},
+           {"id": "b", "text": "Na diagonal, quantas casas quiser, se o caminho estiver livre"},
+           {"id": "c", "text": "Em L"},
+           {"id": "d", "text": "Uma casa em qualquer direção"}],
+         "correct_option": "b",
+         "explanation": "O bispo percorre diagonais. Só vai até onde não há peças no caminho, e pode capturar a primeira peça adversária que encontrar."},
+        {"id": "ch-move-q2", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Qual peça pode pular por cima de outras peças?",
+         "options": [{"id": "a", "text": "A torre"}, {"id": "b", "text": "O bispo"}, {"id": "c", "text": "O cavalo"}, {"id": "d", "text": "A dama"}],
+         "correct_option": "c",
+         "explanation": "O movimento em L do cavalo não depende das casas do meio: só importa a casa de chegada."},
+        {"id": "ch-move-q3", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Como o peão captura?",
+         "options": [
+           {"id": "a", "text": "Uma casa na diagonal, para frente"},
+           {"id": "b", "text": "Uma casa para frente"},
+           {"id": "c", "text": "Em qualquer direção"},
+           {"id": "d", "text": "Em L"}],
+         "correct_option": "a",
+         "explanation": "O peão anda para frente, mas captura na diagonal. Por isso um peão não captura uma peça que está bem na sua frente."},
+        {"id": "ch-move-1", "type": "best_move", "goal": "listed", "verify": "legal", "difficulty": 1,
+         "prompt": "Você joga com as brancas, na posição inicial. Mova o cavalo de g1 para f3.",
+         "position": {"fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"},
+         "accepted": ["g1f3"],
+         "explanation": "O cavalo sai de g1 em L, duas casas para frente e uma para o lado, e chega a f3."}
+      ]
+    },
+    {
+      "id": "ch-l2", "concept": "ch.check", "title": "O xeque",
+      "summary": "Atacar o rei e como sair do ataque.",
+      "body": [
+        "Há xeque quando uma peça ataca o rei adversário. O rei nunca é capturado: quem está em xeque precisa, no mesmo lance, sair dele.",
+        "Há três jeitos de sair de um xeque: mover o rei para uma casa segura, capturar a peça que dá o xeque ou colocar uma peça entre o rei e a peça que ataca (isso não funciona contra o cavalo, que pula)."
+      ],
+      "exercises": [
+        {"id": "ch-check-q1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Seu rei está em xeque. Qual das opções NÃO é uma forma permitida de resolver?",
+         "options": [
+           {"id": "a", "text": "Mover o rei para uma casa segura"},
+           {"id": "b", "text": "Capturar a peça que dá o xeque"},
+           {"id": "c", "text": "Colocar uma peça entre o rei e a peça que ataca"},
+           {"id": "d", "text": "Mover outra peça sem tirar o rei do xeque"}],
+         "correct_option": "d",
+         "explanation": "O xeque precisa ser resolvido no mesmo lance. Um lance que deixa o rei em xeque não é permitido."},
+        {"id": "ch-check-1", "type": "best_move", "goal": "give_check", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Faça um lance que dê xeque ao rei preto.",
+         "position": {"fen": "4k3/8/8/8/8/8/8/R3K3 w - - 0 1"},
+         "explanation": "Levando a torre para a última fileira (a8), ela ataca o rei pela fileira, sem nada no caminho."},
+        {"id": "ch-check-2", "type": "best_move", "goal": "give_check", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Qual lance do bispo dá xeque?",
+         "position": {"fen": "4k3/8/8/8/8/8/8/4KB2 w - - 0 1"},
+         "explanation": "O bispo vai a b5 e ataca o rei pela diagonal b5, c6, d7, e8, que está livre."}
+      ]
+    },
+    {
+      "id": "ch-l3", "concept": "ch.mate_in_one", "title": "Mate em um lance",
+      "summary": "Encontre o xeque sem defesa e evite o mate do adversário.",
+      "body": [
+        "Xeque-mate é um xeque sem defesa: o rei não tem casa segura, a peça que ataca não pode ser capturada e não dá para interpor uma peça. A partida termina e quem deu o mate vence.",
+        "Em cada posição, olhe primeiro os xeques que você pode dar e verifique, um por um, se há defesa. Depois olhe o outro lado: o adversário ameaça mate? Se sim, escolha um lance que tire essa ameaça."
+      ],
+      "exercises": [
+        {"id": "ch-mate-1", "type": "best_move", "goal": "win_now", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Dê xeque-mate em um lance.",
+         "position": {"fen": "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"},
+         "explanation": "É o mate da última fileira: o rei preto está preso atrás dos próprios peões, então a torre em d8 dá xeque sem que ele tenha para onde ir."},
+        {"id": "ch-mate-2", "type": "best_move", "goal": "win_now", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Há um mate em um lance. Encontre-o.",
+         "position": {"fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4"},
+         "explanation": "A dama captura o peão de f7, defendida pelo bispo de c4. O rei não pode capturá-la e as casas em volta estão ocupadas ou atacadas."},
+        {"id": "ch-mate-3", "type": "best_move", "goal": "win_now", "difficulty": 2,
+         "prompt": "Você joga com as pretas. Dê xeque-mate em um lance.",
+         "position": {"fen": "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2"},
+         "explanation": "Os peões brancos de f3 e g4 abriram a diagonal até o rei. A dama preta vai a h4 e não há como se defender."},
+        {"id": "ch-mate-4", "type": "best_move", "goal": "win_now", "difficulty": 3,
+         "prompt": "Você joga com as brancas. Com dama e rei contra o rei, dê xeque-mate em um lance. Cuidado para não deixar o rei preto sem lances sem estar em xeque.",
+         "position": {"fen": "7k/5Q2/6K1/8/8/8/8/8 w - - 0 1"},
+         "explanation": "Existem vários mates. O que importa é dar xeque e cobrir as casas de fuga do rei, com a ajuda do rei branco."},
+        {"id": "ch-mate-def-1", "type": "best_move", "goal": "block_loss", "difficulty": 2,
+         "prompt": "Você joga com as pretas. As brancas ameaçam dar xeque-mate na próxima jogada. Escolha um lance que evite o mate.",
+         "position": {"fen": "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3"},
+         "explanation": "A dama branca e o bispo miram o peão de f7. Os lances que resolvem são os que defendem o ponto fraco de f7 ou afastam a dama, de modo que as brancas fiquem sem mate. Perceba que atacar a dama com o cavalo de g8 não basta."}
+      ]
+    },
+    {
+      "id": "ch-l4", "concept": "ch.hanging_pieces", "title": "Peças soltas",
+      "summary": "Ganhe material capturando o que está sem defesa.",
+      "body": [
+        "Uma peça solta é aquela que nenhuma peça do mesmo lado defende. Se você captura uma peça solta, o adversário não consegue recapturar e você ganha material de graça.",
+        "Antes de capturar, olhe se a casa de destino está defendida. Se estiver, a captura pode virar uma troca ruim. Da mesma forma, antes de terminar o seu lance, confira se você não deixou uma peça solta ao alcance do adversário."
+      ],
+      "exercises": [
+        {"id": "ch-hang-q1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "O que é uma peça solta?",
+         "options": [
+           {"id": "a", "text": "Uma peça que ainda não se moveu"},
+           {"id": "b", "text": "Uma peça que nenhuma outra peça do mesmo lado defende"},
+           {"id": "c", "text": "Uma peça que está na borda do tabuleiro"},
+           {"id": "d", "text": "Uma peça que não pode se mover"}],
+         "correct_option": "b",
+         "explanation": "Sem defensores, a peça pode ser capturada sem que o adversário perca nada em troca."},
+        {"id": "ch-hang-1", "type": "best_move", "goal": "free_capture", "difficulty": 1,
+         "prompt": "Você joga com as brancas. A dama preta está sem defesa. Ganhe-a.",
+         "position": {"fen": "4k3/8/8/3q4/8/8/8/3RK3 w - - 0 1"},
+         "explanation": "A torre captura a dama pela coluna d. Nenhuma peça preta defende a casa d5, então não há recaptura."},
+        {"id": "ch-hang-2", "type": "best_move", "goal": "free_capture", "difficulty": 1,
+         "prompt": "Você joga com as brancas. Ganhe uma peça de graça.",
+         "position": {"fen": "4k3/8/8/8/3n4/8/8/4K1B1 w - - 0 1"},
+         "explanation": "O bispo captura o cavalo em d4 pela diagonal. O cavalo não estava defendido."}
+      ]
+    },
+    {
+      "id": "ch-l5", "concept": "ch.forks", "title": "O garfo do cavalo",
+      "summary": "Ataque duas peças de uma vez.",
+      "body": [
+        "Um garfo é um ataque a duas ou mais peças ao mesmo tempo. O adversário só consegue salvar uma delas, e você captura a outra.",
+        "O cavalo é o rei dos garfos porque ataca em L e não pode ser bloqueado. O mais forte é o garfo com xeque: o adversário é obrigado a sair do xeque e perde a outra peça atacada."
+      ],
+      "exercises": [
+        {"id": "ch-fork-q1", "type": "rule_quiz", "difficulty": 2,
+         "prompt": "O que é um garfo no xadrez?",
+         "options": [
+           {"id": "a", "text": "Um lance que protege duas peças"},
+           {"id": "b", "text": "Um ataque a duas ou mais peças ao mesmo tempo"},
+           {"id": "c", "text": "Um mate com dois peões"},
+           {"id": "d", "text": "Uma troca de peças iguais"}],
+         "correct_option": "b",
+         "explanation": "Com duas peças atacadas, o adversário não consegue defender as duas com um só lance."},
+        {"id": "ch-fork-1", "type": "best_move", "goal": "listed", "verify": "best", "difficulty": 2,
+         "prompt": "Você joga com as brancas. Um lance do cavalo dá xeque ao rei e ataca a torre. Encontre-o.",
+         "position": {"fen": "r3k3/8/8/1N6/8/8/8/6K1 w - - 0 1"},
+         "accepted": ["b5c7"],
+         "explanation": "O cavalo vai a c7 e ataca o rei em e8 e a torre em a8. O rei precisa sair do xeque e o cavalo captura a torre."},
+        {"id": "ch-fork-2", "type": "best_move", "goal": "listed", "verify": "best", "difficulty": 3,
+         "prompt": "Você joga com as brancas. Encontre o lance do cavalo que dá xeque e ataca a torre ao mesmo tempo.",
+         "position": {"fen": "2r3k1/8/8/3N4/8/8/8/4K3 w - - 0 1"},
+         "accepted": ["d5e7"],
+         "explanation": "Em e7 o cavalo ataca o rei em g8 e a torre em c8. Depois que o rei sai do xeque, o cavalo captura a torre."}
+      ]
+    }
+  ]
+}
