@@ -146,6 +146,6 @@ test("no app, usuário comum abre Privacidade pelo menu e, ao excluir, sai da se
   await userEvent.click(screen.getByLabelText(/Entendo que/));
   await userEvent.click(screen.getByRole("button", { name: "Excluir minha conta" }));
   expect(await screen.findByText(/Exclusão agendada para/)).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Entrar" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Perfil" })).not.toBeInTheDocument();
 });
