@@ -42,7 +42,7 @@ def clean_tables() -> Iterator[None]:
     yield
     limiter.reset()
     with get_engine().begin() as conn:
-        conn.execute(text("TRUNCATE users, audit_log RESTART IDENTITY CASCADE"))
+        conn.execute(text("TRUNCATE users, matches, audit_log RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture
