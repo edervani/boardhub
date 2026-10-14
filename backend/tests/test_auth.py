@@ -230,11 +230,11 @@ def test_redefinicao_troca_senha_e_encerra_sessoes(client: TestClient, mailer: M
                                                    db: Session) -> None:
     register(client)
     login(client)
-    client.post("/api/v1/auth/password/forgot", json={"email": EMAIL})
+    anonimo = TestClient(client.app, base_url="https://testserver")
+    assert anonimo.post("/api/v1/auth/password/forgot", json={"email": EMAIL}).status_code == 202
     token = mailer.last_token(EMAIL)
     nova = "rainha-peao-roque-77"
     body = {"token": token, "new_password": nova}
-    anonimo = TestClient(client.app, base_url="https://testserver")
     assert anonimo.post("/api/v1/auth/password/reset", json=body).status_code == 204
     assert anonimo.post("/api/v1/auth/password/reset", json=body).status_code == 400
     assert client.get("/api/v1/me").status_code == 401
