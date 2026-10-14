@@ -6,16 +6,17 @@ Plataforma pública, **recreativa e educacional**, de jogos de tabuleiro — jog
 
 ## Estado atual do desenvolvimento
 
-**Fase 0 concluída — especificação aprovada em 2026-10-13.** Próxima: Fase 1 (base técnica).
+**Fase 0 concluída — especificação aprovada em 2026-10-13.** Fase 1 (base técnica) implementada na branch `feat/fase-1-base`, aguardando revisão e merge.
 
 | Item | Estado |
 |------|--------|
 | Documentação técnica (`docs/`) | **Aprovada** (v0.2.0) |
-| Backend, frontend, jogos, IA, Academy | **Não implementados** (apenas planejados) |
+| Backend e frontend: contas, perfil, preferências, catálogo com classificação etária, supervisão parental | **Implementados na branch da Fase 1** (não mesclados) |
+| Jogos, IA, partidas, ranking, Academy | **Não implementados** (apenas planejados) |
 | `docker-compose.yml` | Sobe somente PostgreSQL para a Fase 1 |
-| Testes | Apenas verificação automática da documentação (`scripts/check_docs.py`) |
+| Testes | `scripts/check_docs.py`, pytest (PostgreSQL real) e Vitest, executados no GitHub Actions |
 
-Nenhuma funcionalidade listada abaixo existe ainda.
+As funcionalidades de partidas, IA e Academy listadas abaixo ainda não existem.
 
 ## Funcionalidades planejadas
 - **v1:** cadastro/login, perfil, preferências (tema, animações, estilo de peças), lobby, partidas locais, contra IA (5 níveis) e online (convite e fila), três jogos com validação no servidor, ranking Elo (damas, xadrez), histórico, Academy inicial, exportação e exclusão de conta.
@@ -25,7 +26,7 @@ Detalhes: [plano de implementação](docs/14-plano-de-implementacao.md).
 
 ## Tecnologias (arquitetura de referência — proposta)
 React + TypeScript + Vite · Python + FastAPI · REST + WebSocket · PostgreSQL · SQLAlchemy + Alembic · pytest · Vitest · Playwright · Docker Compose · Ollama (opcional) · python-chess + motor UCI.
-**Versões ainda não verificadas** (ver [DT-012](docs/16-decisoes-tecnicas.md)).
+Versões exatas ficam nos lockfiles gerados pelo CI (ver [DT-012](docs/16-decisoes-tecnicas.md)).
 
 ## Requisitos mínimos (para a Fase 1 em diante)
 Git; Docker com Docker Compose v2; Python 3.13; Node.js 24 LTS; PostgreSQL 17 (via Compose). Ver DT-014. Para rodar as verificações da documentação hoje: apenas Python 3.
