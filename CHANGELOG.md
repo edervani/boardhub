@@ -4,6 +4,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Modificado
+- RF-001 a RF-005 passam a `implementado` (PR #1); matriz de rastreabilidade com evidência.
+
 ### Adicionado (Fase 1 — base técnica)
 - Backend FastAPI (monólito modular): configuração, logs sanitizados, erros RFC 9457, limitador de taxa, cabeçalhos de segurança, CSRF por duplo envio, migração Alembic 0001 (identidade, catálogo, auditoria).
 - Autenticação (RF-001 a RF-005): cadastro com Argon2id, verificação de e-mail, login com cookies `HttpOnly`/`Secure`, sessões revogáveis, redefinição de senha, antienumeração.

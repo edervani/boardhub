@@ -4,7 +4,7 @@
 
 ## 1. Situação do projeto
 
-Em 2026-10-13 o repositório foi criado do zero, a pedido do responsável pelo produto. Desde a Fase 1 existe código de aplicação na branch `feat/fase-1-base` (identidade, perfil, catálogo e supervisão — ver CHANGELOG). Nada foi mesclado na `main` ainda: os requisitos permanecem `aprovado` até o merge (doc 00 §4). Todo comportamento não coberto pelo CHANGELOG é **especificação**.
+Em 2026-10-13 o repositório foi criado do zero, a pedido do responsável pelo produto. Desde a Fase 1 (PR #1 mesclado) existe código de aplicação na `main` (identidade, perfil, catálogo e supervisão — ver CHANGELOG). Todo comportamento não coberto pelo CHANGELOG é **especificação**.
 
 ## 2. Índice
 

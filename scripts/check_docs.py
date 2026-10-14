@@ -177,6 +177,20 @@ def rnf_tests() -> dict[str, str]:
     return out
 
 
+PR1 = "[PR #1](https://github.com/edervani/boardhub/pull/1)"
+# Estado/evidência por requisito. `implementado` só com código mesclado (doc 00 §4).
+IMPLEMENTADOS = {1, 2, 3, 4, 5}
+PARCIAIS = {6, 7, 33, 34}  # código mesclado, aceite incompleto (P-15)
+
+
+def state_evidence(n: int) -> tuple[str, str]:
+    if n in IMPLEMENTADOS:
+        return "implementado", f"{PR1}; CI verde"
+    if n in PARCIAIS:
+        return "aprovado", f"parcial em {PR1}; lacunas em P-15"
+    return "aprovado", "—"
+
+
 def build_matrix(defined: dict[str, set[str]]) -> str:
     rows = [
         "| Requisito | Origem | Módulo | Endpoint/componente | Teste | Critério | Estado | Evidência |",
@@ -185,7 +199,8 @@ def build_matrix(defined: dict[str, set[str]]) -> str:
     for rf in sorted(defined["RF"]):
         n = int(rf[3:])
         mod, ep = RF_MAP.get(n, ("?", "?"))
-        rows.append(f"| {rf} | doc 02 | {mod} | {ep} | T-{n:03d} | CA-{n:03d} | aprovado | — |")
+        state, evid = state_evidence(n)
+        rows.append(f"| {rf} | doc 02 | {mod} | {ep} | T-{n:03d} | CA-{n:03d} | {state} | {evid} |")
     tests = rnf_tests()
     for rnf in sorted(defined["RNF"]):
         n = int(rnf[4:])

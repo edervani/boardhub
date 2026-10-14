@@ -19,7 +19,7 @@ Convenções: prioridade **M** (obrigatório v1), **S** (desejável v1), **C** (
 - **Regras de negócio:** nome de exibição passa por filtro de termos ofensivos; faixa etária autodeclarada em faixas (`<12`, `12–15`, `16–17`, `18+`) é obrigatória e serve só para aplicar configurações protetivas e consentimento parental (DT-015, doc 09 §10); menor de 12 tem cadastro pendente até confirmação do responsável (RF-034). Idade nunca altera dificuldade.
 - **Dados:** e-mail, nome de exibição, hash de senha, faixa etária, versão dos termos aceitos, data de criação.
 - **Segurança:** SEC-01, SEC-02, SEC-08 (rate limit), SEC-12 (logs sem senha).
-- **Prioridade:** M · **Dependências:** RNF-010 · **Aceite:** CA-001 · **Testes:** T-001 · **Estado:** aprovado.
+- **Prioridade:** M · **Dependências:** RNF-010 · **Aceite:** CA-001 · **Testes:** T-001 · **Estado:** implementado (PR #1).
 
 ### RF-002 — Verificação de e-mail
 - **Descrição:** usuário confirma propriedade do e-mail por link com token de uso único.
@@ -28,7 +28,7 @@ Convenções: prioridade **M** (obrigatório v1), **S** (desejável v1), **C** (
 - **Alternativos:** reenvio (máx. 3/h); token expirado → página orienta reenvio.
 - **Erros:** 400 token inválido/expirado (mensagem genérica).
 - **Regras:** contas não verificadas jogam contra IA e local, mas **não** entram em partidas ranqueadas online.
-- **Segurança:** SEC-03. **Prioridade:** M · **Dependências:** RF-001 · **Aceite:** CA-002 · **Testes:** T-002 · **Estado:** aprovado.
+- **Segurança:** SEC-03. **Prioridade:** M · **Dependências:** RF-001 · **Aceite:** CA-002 · **Testes:** T-002 · **Estado:** implementado (PR #1).
 
 ### RF-003 — Login
 - **Descrição:** autenticação por e-mail e senha, gerando sessão.
@@ -36,18 +36,18 @@ Convenções: prioridade **M** (obrigatório v1), **S** (desejável v1), **C** (
 - **Fluxo principal:** valida credenciais em tempo aproximadamente constante; cria sessão (cookie `HttpOnly`, `Secure`, `SameSite=Lax`, identificador opaco, hash no banco — DT-004); registra `last_login_at`.
 - **Alternativos:** conta desativada/suspensa → mensagem específica sem revelar motivos de moderação detalhados.
 - **Erros:** 401 genérico ("e-mail ou senha incorretos"); 429 após 5 falhas/15 min por conta+IP com atraso progressivo (sem bloqueio permanente que permita negação de serviço).
-- **Segurança:** SEC-01, SEC-04, SEC-08. **Prioridade:** M · **Dependências:** RF-001 · **Aceite:** CA-003 · **Testes:** T-003 · **Estado:** aprovado.
+- **Segurança:** SEC-01, SEC-04, SEC-08. **Prioridade:** M · **Dependências:** RF-001 · **Aceite:** CA-003 · **Testes:** T-003 · **Estado:** implementado (PR #1).
 
 ### RF-004 — Logout e gestão de sessões
 - **Descrição:** encerrar a sessão atual ou todas as sessões; listar sessões ativas (dispositivo aproximado, último uso).
 - **Fluxo principal:** revoga sessão no servidor e limpa cookie; "encerrar todas" revoga todas exceto a atual (opcionalmente inclusive).
 - **Regras:** troca de senha revoga todas as outras sessões. Sessão expira por inatividade (30 dias, proposta) e por tempo absoluto (90 dias).
-- **Segurança:** SEC-04. **Prioridade:** M · **Aceite:** CA-004 · **Testes:** T-004 · **Estado:** aprovado.
+- **Segurança:** SEC-04. **Prioridade:** M · **Aceite:** CA-004 · **Testes:** T-004 · **Estado:** implementado (PR #1).
 
 ### RF-005 — Recuperação de senha
 - **Fluxo principal:** solicita por e-mail → resposta sempre idêntica → token de uso único (hash armazenado, validade 30 min) → nova senha com as regras de RF-001 → revoga todas as sessões → e-mail de notificação.
 - **Erros:** 400 token inválido; 429.
-- **Segurança:** SEC-03, SEC-08. **Prioridade:** M · **Aceite:** CA-005 · **Testes:** T-005 · **Estado:** aprovado.
+- **Segurança:** SEC-03, SEC-08. **Prioridade:** M · **Aceite:** CA-005 · **Testes:** T-005 · **Estado:** implementado (PR #1).
 
 ### RF-006 — Perfil do usuário
 - **Descrição:** ver e editar nome de exibição, avatar predefinido (sem upload na v1 — reduz risco de conteúdo impróprio), bio curta (≤ 160 caracteres, opcional), visibilidade do perfil (público/privado).
