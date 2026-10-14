@@ -193,6 +193,24 @@ def join_invite(db: Session, user: User, raw_code: str) -> tuple[MatchOut, list[
                       .with_for_update()) if code else None
     if match is None:
         raise _invalid_code()
+    return _seat_joiner(db, user, match)
+
+
+def join_direct(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOut, list[Event]]:
+    """Entra na sala de um convite direto entre amigos (RF-032), sem o código (só o servidor
+    o conhece). Quem chama já verificou a amizade, o bloqueio e a supervisão."""
+    limiter.hit(f"invite-join:{user.id}", 20, HOUR)
+    guardian_service.require_online_access(user)
+    usage_service.require_within_limit(db, user)  # RF-034
+    match = db.scalar(select(Match).where(Match.id == match_id, Match.mode == "online_casual")
+                      .with_for_update())
+    if match is None:
+        raise _invalid_code()
+    return _seat_joiner(db, user, match)
+
+
+def _seat_joiner(db: Session, user: User, match: Match) -> tuple[MatchOut, list[Event]]:
+    """Senta quem entra na sala aguardando oponente e inicia a partida (RF-011)."""
     players = list(db.scalars(select(MatchPlayer).where(MatchPlayer.match_id == match.id)
                               .order_by(MatchPlayer.seat)))
     if any(p.user_id == user.id for p in players):

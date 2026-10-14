@@ -278,7 +278,7 @@ def _notify(mailer: Mailer, to: str, subject: str, body: str) -> None:
         log.warning("aviso de exclusão de conta não enviado")  # o pedido já foi registrado
 
 
-def _leave_open_matches(db: Session, user: User) -> list[Event]:
+def leave_open_matches(db: Session, user: User) -> list[Event]:
     """Tira a pessoa da fila e encerra o que dependia dela, sem deixar o oponente esperando."""
     db.execute(delete(QueueEntry).where(QueueEntry.user_id == user.id))
     events: list[Event] = []
@@ -317,7 +317,7 @@ def request_deletion(db: Session, mailer: Mailer, subject: User, actor: User,
     subject.deletion_requested_at = now
     subject.deletion_by_guardian = by_guardian
     auth_service.revoke_all_sessions(db, subject.id)
-    events = _leave_open_matches(db, subject)
+    events = leave_open_matches(db, subject)
     scheduled = now + DELETION_GRACE
     db.add(AuditLog(actor_user_id=actor.id, action="account_deletion_requested",
                     target_type="user", target_id=str(subject.id),
