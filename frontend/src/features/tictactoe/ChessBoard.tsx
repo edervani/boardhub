@@ -44,7 +44,10 @@ export const squareName = (idx: number) => `${"abcdefgh"[idx % 8]}${8 - Math.flo
 
 export function pieceName(p: string): string {
   if (!p) return "vazia";
-  return `${NAMES[p.toLowerCase()] ?? "peça"} ${p === p.toUpperCase() ? "branca" : "preta"}`;
+  const name = NAMES[p.toLowerCase()] ?? "peça";
+  const fem = name === "torre" || name === "dama" || name === "peça";
+  const white = p === p.toUpperCase();
+  return `${name} ${white ? (fem ? "branca" : "branco") : (fem ? "preta" : "preto")}`;
 }
 
 export function ChessBoard({ fen, playable, flipped, onPlay }: ChessBoardProps) {
