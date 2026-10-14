@@ -84,7 +84,8 @@ def test_jogo_desabilitado_nao_cria_partida(jogador: TestClient) -> None:
         assert resp.status_code == 404
     finally:
         with get_engine().begin() as conn:
-            conn.execute(text("UPDATE games SET enabled = (id IN ('tictactoe', 'checkers'))"))
+            conn.execute(text(
+                "UPDATE games SET enabled = (id IN ('tictactoe', 'checkers', 'chess'))"))
 
 
 def test_limite_de_20_partidas_por_hora(jogador: TestClient) -> None:
@@ -369,3 +370,99 @@ def test_damas_partida_local_aleatoria_mantem_replay_consistente(
     for mv in moves:
         state = eng.apply(state, eng.parse_move(mv.move))
         assert mv.state_after_hash.hex() == state_hash(eng.serialize(state))
+
+
+# ---------- xadrez ----------
+
+def test_xadrez_contra_ia_comeca_com_lances_legais_do_motor(jogador: TestClient) -> None:
+    from app.game_engines.chess import ChessEngine
+
+    eng = ChessEngine()
+    m = criar(jogador, game_id="chess", ai_level=1)
+    assert m["ply"] == 0 and m["rules_version"] == "chess-fide-1"
+    esperado = sorted(x.uci() for x in eng.legal_moves(eng.initial_state()))
+    assert sorted(m["legal_moves"]) == esperado
+    assert len(esperado) == 20
+
+
+def test_xadrez_lance_ilegal_e_recusado_e_legal_avanca(jogador: TestClient) -> None:
+    m = criar(jogador, game_id="chess", ai_level=1)
+    for ruim in ("e2e5", "e7e5", "e1g1", "e2e4q", "E2E4", "e2-e4", "Nf3", "0000"):
+        assert jogar(jogador, m, ruim).status_code in (409, 422), ruim
+    resp = jogar(jogador, m, "e2e4")
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["ply"] == 2  # o lance das brancas e a resposta da IA
+
+
+def test_xadrez_ia_joga_de_brancas_quando_o_jogador_escolhe_o_segundo_assento(
+        jogador: TestClient) -> None:
+    m = criar(jogador, game_id="chess", ai_level=1, preferred_seat=2)
+    assert m["ply"] == 1 and m["to_move_seat"] == 2
+
+
+def test_xadrez_mate_encerra_a_partida_com_vencedor(jogador: TestClient) -> None:
+    m = criar(jogador, game_id="chess", mode="local", ai_level=None)
+    for lance in ("f2f3", "e7e5", "g2g4", "d8h4"):
+        resp = jogar(jogador, m, lance)
+        assert resp.status_code == 200, resp.text
+        m = resp.json()
+    assert m["status"] == "finished" and m["result"] == "p2_win"
+    assert m["end_reason"] == "normal" and m["legal_moves"] == []
+    assert jogar(jogador, m, "a2a3").status_code in (409, 422)
+
+
+def test_xadrez_afogamento_encerra_empatado(jogador: TestClient) -> None:
+    m = criar(jogador, game_id="chess", mode="local", ai_level=None)
+    lances = ("e2e3 a7a5 d1h5 a8a6 h5a5 h7h5 h2h4 a6h6 a5c7 f7f6 c7d7 e8f7 d7b7 d8d3 b7b8 d3h7 "
+              "b8c8 f7g6 c8e6").split()
+    for lance in lances:
+        resp = jogar(jogador, m, lance)
+        assert resp.status_code == 200, resp.text
+        m = resp.json()
+    assert m["status"] == "finished" and m["result"] == "draw"
+    assert m["end_reason"] == "stalemate"
+
+
+def test_xadrez_partida_local_aleatoria_mantem_replay_consistente(
+        jogador: TestClient, db: Session) -> None:
+    from app.game_engines.chess import ChessEngine
+
+    rng = random.Random(11)
+    m = criar(jogador, game_id="chess", mode="local", ai_level=None)
+    for _ in range(60):
+        if m["status"] != "in_progress":
+            break
+        resp = jogar(jogador, m, rng.choice(m["legal_moves"]))
+        assert resp.status_code == 200, resp.text
+        m = resp.json()
+    eng = ChessEngine()
+    moves = db.scalars(select(MatchMove).where(MatchMove.match_id == uuid.UUID(m["id"]))
+                       .order_by(MatchMove.ply)).all()
+    assert len(moves) == m["ply"] > 0
+    state = eng.initial_state()
+    for mv in moves:
+        state = eng.apply(state, eng.parse_move(mv.move))
+        assert mv.state_after_hash.hex() == state_hash(eng.serialize(state))
+
+
+def test_xadrez_estado_corrompido_aborta_a_partida(jogador: TestClient, db: Session) -> None:
+    m = criar(jogador, game_id="chess", mode="local", ai_level=None)
+    with get_engine().begin() as conn:
+        conn.execute(text("UPDATE matches SET state = "
+                          "'{\"schema_version\": 1, \"fen\": \"x\", \"moves\": []}'::jsonb"))
+    resp = jogar(jogador, m, "e2e4")
+    assert resp.status_code == 409
+    assert resp.json()["type"] == "match_aborted"
+    assert db.execute(text("SELECT status FROM matches")).scalar_one() == "aborted"
+
+
+def test_xadrez_motor_sem_estado_para_visitante(client: TestClient) -> None:
+    from app.game_engines.chess import ChessEngine
+
+    eng = ChessEngine()
+    estado = eng.serialize(eng.initial_state())
+    resp = client.post(f"{API}/engines/chess/apply", json={"state": estado, "move": "e2e4"})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["state"]["moves"] == ["e2e4"]
+    ruim = client.post(f"{API}/engines/chess/apply", json={"state": estado, "move": "e2e5"})
+    assert ruim.status_code == 422 and ruim.json()["type"] == "illegal_move"

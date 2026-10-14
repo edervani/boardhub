@@ -13,6 +13,7 @@ dependencies = [
   "alembic>=1.13",
   "psycopg[binary]>=3.2",
   "argon2-cffi>=23.1",
+  "chess>=1.11",   # python-chess (DT-005, GPL-3.0)
 ]
 
 [dependency-groups]

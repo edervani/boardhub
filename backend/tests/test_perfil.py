@@ -170,7 +170,8 @@ def jogos_habilitados() -> Iterator[None]:
     yield
     with get_engine().begin() as conn:
         conn.execute(text(
-            "UPDATE games SET enabled = (id IN ('tictactoe', 'checkers')), age_rating = 'L'"))
+            "UPDATE games SET enabled = (id IN ('tictactoe', 'checkers', 'chess')), "
+            "age_rating = 'L'"))
 
 
 def test_catalogo_exibe_selo_textual(client: TestClient, jogos_habilitados: None,
@@ -204,8 +205,9 @@ def test_usuario_abaixo_da_classificacao_nao_ve_o_jogo(
     assert {g["id"] for g in client.get(f"{API}/games").json()} == esperado
 
 
-def test_velha_e_damas_estao_habilitados_por_padrao(client: TestClient) -> None:
-    assert sorted(g["id"] for g in client.get(f"{API}/games").json()) == ["checkers", "tictactoe"]
+def test_velha_damas_e_xadrez_estao_habilitados_por_padrao(client: TestClient) -> None:
+    ids = sorted(g["id"] for g in client.get(f"{API}/games").json())
+    assert ids == ["checkers", "chess", "tictactoe"]
 
 
 def test_jogos_desabilitados_nao_aparecem(client: TestClient) -> None:
@@ -215,7 +217,8 @@ def test_jogos_desabilitados_nao_aparecem(client: TestClient) -> None:
         assert client.get(f"{API}/games").json() == []
     finally:
         with get_engine().begin() as conn:
-            conn.execute(text("UPDATE games SET enabled = (id IN ('tictactoe', 'checkers'))"))
+            conn.execute(text(
+                "UPDATE games SET enabled = (id IN ('tictactoe', 'checkers', 'chess'))"))
 
 
 def test_jogo_sem_classificacao_nao_pode_ser_habilitado(db: Session) -> None:
