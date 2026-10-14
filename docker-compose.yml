@@ -1,6 +1,6 @@
-# Ambiente de DESENVOLVIMENTO. Não usar em produção (ver docs/12).
-# Fase 0: apenas o banco. Backend/frontend entram na Fase 1.
-# A tag da imagem deve ser fixada após verificação de versão (P-02).
+# Ambiente de TESTE LOCAL (decisão do responsável: hospedagem = computador Windows de testes).
+# Não usar em produção (ver docs/12). Sobe banco, backend, site e um servidor de e-mail de testes.
+# Uso: docker compose up -d --build   (no Windows: scripts/windows/iniciar.ps1)
 name: boardhub
 
 services:
@@ -21,6 +21,49 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY no .env}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}   # HTTP local; em HTTPS use true
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      DB_HOST: db
+      DB_PORT: "5432"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      MAIL_FROM: nao-responda@example.test
+    networks: [internal]     # sem portas publicadas: só o site fala com ele
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/v1/health/ready', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend: { condition: service_healthy }
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    networks: [internal]
+
+  # Caixa de e-mails de teste: os links de verificação aparecem em http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:${MAILPIT_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    networks: [internal]
 
   # Opcional (perfil "ai"): docker compose --profile ai up -d ollama
   ollama:

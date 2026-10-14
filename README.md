@@ -18,6 +18,24 @@ Plataforma pública, **recreativa e educacional**, de jogos de tabuleiro — jog
 
 As funcionalidades de partidas, IA e Academy listadas abaixo ainda não existem.
 
+## Rodando no Windows (teste local)
+
+Pré-requisito: [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e **aberto**.
+
+```powershell
+git clone https://github.com/edervani/boardhub.git
+cd boardhub
+.\scripts\windows\iniciar.ps1
+```
+
+- Site: <http://localhost:8080> · E-mails de teste (link de confirmação de conta): <http://localhost:8025>
+- Parar: `.\scripts\windows\parar.ps1` (dados mantidos; `-Apagar` remove o banco).
+- O script cria o `.env` com segredos aleatórios na primeira execução. Nunca versione esse arquivo.
+- Se o PowerShell bloquear scripts: `powershell -ExecutionPolicy Bypass -File .\scripts\windows\iniciar.ps1`.
+- Contas criadas são só para teste; use e-mails fictícios (`@example.test`).
+
+O CI executa o mesmo `docker compose` e um teste de fumaça ponta a ponta (`scripts/smoke_compose.py`).
+
 ## Funcionalidades planejadas
 - **v1:** cadastro/login, perfil, preferências (tema, animações, estilo de peças), lobby, partidas locais, contra IA (5 níveis) e online (convite e fila), três jogos com validação no servidor, ranking Elo (damas, xadrez), histórico, Academy inicial, exportação e exclusão de conta.
 - **Posteriores:** conquistas, desafio diário, notificações ampliadas, amizades, personalização avançada.

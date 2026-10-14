@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (execução local no Windows — DT-016)
+- Dockerfiles do backend e do site (nginx com proxy `/api`), `docker-compose.yml` completo com Mailpit e scripts `scripts/windows/iniciar.ps1` e `parar.ps1`.
+- Teste de fumaça ponta a ponta (`scripts/smoke_compose.py`) e job `compose` no CI.
+- P-06 (hospedagem) e P-04 (revisão jurídica) marcadas como resolvidas por declaração do responsável.
+
 ### Adicionado (Fase 2d — tabuleiro jogável)
 - Frontend: tabuleiro do jogo da velha acessível (rótulos por casa, setas do teclado, estado em texto com `aria-live`), partida contra a IA (níveis 1–5, escolha de assento), partida local de visitante validada pelo servidor, desistência e histórico paginado.
 - Lógica fora dos componentes visuais (`useGame.ts`, `status.ts`); ressincronização automática em `stale_state`.
