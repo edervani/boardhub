@@ -52,6 +52,10 @@ def _vincular(client: TestClient, mailer: MemoryMailer, band: str = "12_15",
     token = mailer.last_token("jogador2@example.test")
     ok = resp.post(f"{API}/guardian/links/confirm", headers=csrf(resp), json={"token": token})
     assert ok.status_code == 200
+    # A fila exige conta verificada (RF-002): o menor confirma o próprio e-mail.
+    verificar = client.post(f"{API}/auth/verify-email",
+                            json={"token": mailer.last_token("jogador1@example.test")})
+    assert verificar.status_code == 204
     assert login(client, 1).status_code == 200
     return client, resp, str(ok.json()["id"])
 
