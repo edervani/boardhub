@@ -378,7 +378,9 @@ def test_suspender_gera_auditoria_e_impede_login_e_uso(client: TestClient, maile
         select(User.id).where(User.email == "jogador3@example.test"))
     # sessão revogada, login recusado e partida em andamento encerrada
     assert b.get(f"{API}/me/profile").status_code == 401
-    assert login(b, 2).status_code == 403
+    novo = novo_cliente(client)  # sem cookies: evita a recusa por CSRF de sessão antiga
+    suspenso = login(novo, 2)
+    assert suspenso.status_code == 403 and suspenso.json()["type"] == "account_suspended"
     assert a.get(f"{API}/matches/{sala['id']}").json()["status"] == "finished"
     assert mailer.sent[-1].to == "jogador2@example.test"
     assert nome(1) not in mailer.sent[-1].body
@@ -390,7 +392,7 @@ def test_suspender_gera_auditoria_e_impede_login_e_uso(client: TestClient, maile
                     json={"reason": "de novo"}).status_code == 409
     # reativar devolve o acesso
     assert mod.post(f"{API}/admin/users/{uid}/reinstate", headers=csrf(mod)).status_code == 200
-    assert login(b, 2).status_code == 200
+    assert login(novo, 2).status_code == 200
     assert "user_reinstated" in db.scalars(select(AuditLog.action)).all()
 
 
