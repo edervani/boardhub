@@ -19,7 +19,7 @@ from app.schemas.profile import (
     ProfilePatch,
     PublicProfileOut,
 )
-from app.services import catalog_service, guardian_service, profile_service
+from app.services import catalog_service, guardian_service, privacy_service, profile_service
 
 router = APIRouter(tags=["perfil"])
 NAME_RE = re.compile(r"^[\w-]{3,24}$")
@@ -39,7 +39,8 @@ def _child_out(child: User) -> ChildOut:
             allow_open_matchmaking=child.preferences.allow_open_matchmaking,
             profile_public=child.profile.is_public,
             show_in_ranking=child.profile.show_in_ranking,
-            daily_minutes_limit=child.preferences.daily_minutes_limit))
+            daily_minutes_limit=child.preferences.daily_minutes_limit),
+        deletion_scheduled_for=privacy_service.deletion_scheduled_for(child))
 
 
 @router.get("/me/profile")

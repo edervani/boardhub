@@ -70,13 +70,13 @@ def _authenticate(raw_cookie: str | None) -> uuid.UUID | None:
         if sess is None:
             return None
         user = db.get(User, sess.user_id)
-        return None if user is None or user.status == "suspended" else user.id
+        return None if user is None or user.status != "active" else user.id
 
 
 def _in_session[T](user_id: uuid.UUID, work: Callable[[Session, User], T]) -> T:
     with Session(get_engine(), expire_on_commit=False) as db:
         user = db.get(User, user_id)
-        if user is None or user.status == "suspended":
+        if user is None or user.status != "active":
             raise ProblemError(401, "not_authenticated", "Sessão encerrada")
         return work(db, user)
 

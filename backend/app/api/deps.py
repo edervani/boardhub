@@ -32,7 +32,7 @@ class Auth:
     session: AuthSession
 
 
-def _optional_auth(request: Request, db: DbSession) -> Auth | None:
+def _resolve(request: Request, db: DbSession) -> Auth | None:
     sess = auth_service.session_from_cookie(db, request.cookies.get(SESSION_COOKIE))
     if sess is None:
         return None
@@ -42,13 +42,29 @@ def _optional_auth(request: Request, db: DbSession) -> Auth | None:
     return Auth(user, sess)
 
 
-def _auth(auth: Annotated[Auth | None, Depends(_optional_auth)]) -> Auth:
+def _optional_auth(auth: Annotated[Auth | None, Depends(_resolve)]) -> Auth | None:
+    # Conta em período de arrependimento (RF-030) é tratada como visitante fora das rotas de conta.
+    if auth is not None and auth.user.status == "pending_deletion":
+        return None
+    return auth
+
+
+def _account_auth(auth: Annotated[Auth | None, Depends(_resolve)]) -> Auth:
     if auth is None:
         raise ProblemError(401, "not_authenticated", "Faça login para continuar")
     return auth
 
 
+def _auth(auth: Annotated[Auth, Depends(_account_auth)]) -> Auth:
+    if auth.user.status == "pending_deletion":
+        raise ProblemError(403, "account_pending_deletion", "Conta em exclusão",
+                           "Cancele a exclusão para voltar a usar a conta.")
+    return auth
+
+
 OptionalAuth = Annotated[Auth | None, Depends(_optional_auth)]
+# Aceita contas em exclusão: só /me, logout e cancelamento da exclusão (RF-030).
+AccountAuth = Annotated[Auth, Depends(_account_auth)]
 CurrentAuth = Annotated[Auth, Depends(_auth)]
 
 

@@ -12,12 +12,14 @@ from app.models.base import Base
 from app.models.catalog import Game
 from app.models.identity import AuthSession, AuthToken, User, UserPreferences, UserProfile
 from app.models.match import DrawOffer, Match, MatchMove, MatchPlayer, QueueEntry
+from app.models.privacy import DataExportRequest
 
 __all__ = [
     "AuditLog",
     "AuthSession",
     "AuthToken",
     "Base",
+    "DataExportRequest",
     "DrawOffer",
     "ExerciseAttempt",
     "ExerciseHint",

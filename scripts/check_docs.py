@@ -77,8 +77,8 @@ RF_MAP = {
     26: ("services/achievement_service", "(fase 6)"),
     27: ("services/academy_service", "(fase 6)"),
     28: ("services/notification_service", "WS eventos"),
-    29: ("services/privacy_service", "/me/export"),
-    30: ("services/privacy_service", "/me/delete"),
+    29: ("services/privacy_service", "/me/export, /guardian/children/{id}/export"),
+    30: ("services/privacy_service", "/me/delete, /guardian/children/{id}/delete"),
     31: ("services/moderation_service", "/reports, /admin/*"),
     32: ("services/social_service", "(fase 6)"),
     33: ("services/catalog_service", "GET /games; features/lobby"),
@@ -184,6 +184,7 @@ PARCIAIS = {6, 7, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33, 34}  # códi
 
 
 ACADEMY = {22, 23, 24, 25}  # Academy e Mentor (fase 6)
+PRIVACIDADE = {29, 30}  # direitos do titular (fase 7)
 
 
 def state_evidence(n: int) -> tuple[str, str]:
@@ -193,6 +194,9 @@ def state_evidence(n: int) -> tuple[str, str]:
         return "aprovado", f"parcial em {PR1}; lacunas em P-15"
     if n in ACADEMY:
         return "aprovado", "código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge)"
+    if n in PRIVACIDADE:
+        return "aprovado", ("código na branch `feat/fase-7-privacidade` (PR aberto; `implementado` "
+                            "só após merge); lacunas em P-21")
     return "aprovado", "—"
 
 

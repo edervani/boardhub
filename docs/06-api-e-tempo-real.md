@@ -55,10 +55,13 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | GET /academy/tracks, GET /academy/progress | Trilhas e progresso por conceito | U | — | 200 | — | — | progress | RF-022/025 |
 | POST /academy/{game_id}/placement | Avaliação inicial | U | respostas | 200 próximo exercício ou nível estimado (o servidor reexecuta as respostas; sem estado no cliente) | 409 `placement_too_soon`, 422 | 5/dia | progress | RF-022 |
 | GET /matches/{id}/analysis | Análise pós-partida | U participante; partida finalizada e **não** em andamento | — | 200 (análise síncrona; 202 não implementado, P-20) | 403, 409 | 10/h | cache de análise | RF-024 |
-| POST /me/export | Pedir exportação | U | — | 202 | 429 | 1/24 h | data_export_requests, audit | RF-029 |
-| GET /me/export/{id} | Baixar | U dono | — | 200 arquivo | 404, 410 | — | — | RF-029 |
-| POST /me/delete | Pedir exclusão | U | `password` | 202 | 401, 429 | 3/dia | users.status, audit | RF-030 |
-| POST /me/delete/cancel | Cancelar | U | — | 204 | 409 | — | users.status | RF-030 |
+| POST /me/export | Pedir exportação (gerada na hora, DT-019; resposta `{id, status, created_at, expires_at}`) | U (inclusive em carência de exclusão) | — | 202 | 429 `export_rate_limited` com `Retry-After` | 1/24 h por titular | data_export_requests, audit | RF-029 |
+| GET /me/export | Exportações vigentes de quem pediu | U | — | 200 | — | — | — | RF-029 |
+| GET /me/export/{id} | Baixar (JSON com `Content-Disposition: attachment`) | U que pediu | — | 200 arquivo | 404 (inclusive de outra pessoa), 410 `export_expired` | — | — | RF-029 |
+| POST /me/delete | Pedir exclusão: revoga todas as sessões, tira da fila e encerra partidas online abertas; conclusão em 14 dias (`{scheduled_for}`) | U | `password` | 202 | 401, 409 `already_pending`, 429 | 3/dia | users.status, audit | RF-030 |
+| POST /me/delete/cancel | Cancelar (só em carência, só quem pediu) | U em carência (login restrito, DT-019) | — | 204 | 403 `cancel_not_allowed`, 409 `not_pending` | 10/h | users.status | RF-030 |
+| POST /guardian/children/{id}/export · GET …/export · GET …/export/{export_id} | Responsável exporta os dados do menor vinculado | U responsável do menor | — | 202 / 200 | 404 (não vinculado), 410, 429 | 1/24 h por titular | data_export_requests, audit | RF-029, RF-034 |
+| POST /guardian/children/{id}/delete · POST …/delete/cancel | Responsável pede (com a **própria** senha) ou cancela a exclusão da conta do menor | U responsável do menor | `password` | 202 / 204 | 401, 403, 404, 409, 429 | 3/dia · 10/h | users.status, audit | RF-030, RF-034 |
 | POST /guardian/links/confirm | Responsável confirma vínculo com menor | U (18+) | `token` | 204 | 400, 422 | 10/h | users.guardian_user_id, audit_log | RF-034 |
 | GET /guardian/children · PUT /guardian/children/{id}/settings | Ver e ajustar configurações do menor vinculado | U responsável do menor | `daily_minutes?, allow_open_matchmaking?, profile_public?, show_in_ranking?` | 200 | 403 (não é responsável), 422 | 30/h | user_preferences, audit_log | RF-034 |
 | POST /reports | Denunciar | V | `target_type, target_id, reason, note?` | 201 | 422, 429 | 10/dia | reports | RF-031 |

@@ -57,6 +57,11 @@ def _child(db: Session, guardian: User, child_id: uuid.UUID) -> User:
     return child
 
 
+def supervised_child(db: Session, guardian: User, child_id: uuid.UUID) -> User:
+    """Conta de menor vinculada a este responsável; qualquer outra responde 404 (IDOR)."""
+    return _child(db, guardian, child_id)
+
+
 def update_settings(db: Session, guardian: User, child_id: uuid.UUID,
                     patch: ChildSettingsPatch) -> User:
     child = _child(db, guardian, child_id)

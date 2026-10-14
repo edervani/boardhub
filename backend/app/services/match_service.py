@@ -73,8 +73,12 @@ def is_online(match: Match) -> bool:
 
 def _players_out(db: Session, players: list[MatchPlayer]) -> list[PlayerOut]:
     ids = [p.user_id for p in players if p.user_id is not None]
-    names = dict(db.execute(select(UserProfile.user_id, UserProfile.display_name)
-                            .where(UserProfile.user_id.in_(ids))).tuples().all()) if ids else {}
+    # Conta em período de exclusão (RF-030) já aparece como removida para o oponente.
+    names = dict(db.execute(
+        select(UserProfile.user_id, UserProfile.display_name)
+        .join(User, User.id == UserProfile.user_id)
+        .where(UserProfile.user_id.in_(ids), User.status != "pending_deletion")
+    ).tuples().all()) if ids else {}
     grace = timedelta(seconds=get_settings().online_grace_seconds)
     return [PlayerOut(seat=p.seat, display_name=names.get(p.user_id) if p.user_id else None,
                       connected=p.disconnected_at is None,

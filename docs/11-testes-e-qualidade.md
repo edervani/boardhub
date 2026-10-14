@@ -75,8 +75,8 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-026 | doc 02 | services/achievement_service | (fase 6) | T-026 | CA-026 | aprovado | — |
 | RF-027 | doc 02 | services/academy_service | (fase 6) | T-027 | CA-027 | aprovado | — |
 | RF-028 | doc 02 | services/notification_service | WS eventos | T-028 | CA-028 | aprovado | — |
-| RF-029 | doc 02 | services/privacy_service | /me/export | T-029 | CA-029 | aprovado | — |
-| RF-030 | doc 02 | services/privacy_service | /me/delete | T-030 | CA-030 | aprovado | — |
+| RF-029 | doc 02 | services/privacy_service | /me/export, /guardian/children/{id}/export | T-029 | CA-029 | aprovado | código na branch `feat/fase-7-privacidade` (PR aberto; `implementado` só após merge); lacunas em P-21 |
+| RF-030 | doc 02 | services/privacy_service | /me/delete, /guardian/children/{id}/delete | T-030 | CA-030 | aprovado | código na branch `feat/fase-7-privacidade` (PR aberto; `implementado` só após merge); lacunas em P-21 |
 | RF-031 | doc 02 | services/moderation_service | /reports, /admin/* | T-031 | CA-031 | aprovado | — |
 | RF-032 | doc 02 | services/social_service | (fase 6) | T-032 | CA-032 | aprovado | — |
 | RF-033 | doc 02 | services/catalog_service | GET /games; features/lobby | T-033 | CA-033 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |

@@ -103,7 +103,7 @@ PK (`match_id`,`ply`); `seat`; `move` text (notação do jogo: índice 0–8, PD
 `id`; `actor_user_id` NULL; `action`; `target_type`; `target_id`; `details` jsonb (sem dados pessoais desnecessários); `created_at`. Somente inserção (permissão de UPDATE/DELETE revogada para o usuário da aplicação).
 
 ### data_export_requests
-`id`; `user_id` CASCADE; `status`; `file_key`; `expires_at`; `created_at`.
+`id`; `user_id` FK→users CASCADE (titular); `requested_by_user_id` FK→users SET NULL (titular ou responsável; só ele baixa); `status` (`ready`); `payload` jsonb (o JSON da exportação, em vez de `file_key` — DT-019); `expires_at` (7 dias); `created_at`. Migração 0008. Também em 0008: `users.deletion_by_guardian` bool (exclusão pedida pelo responsável só é cancelada por ele).
 
 ## 3. Estado oficial da partida
 - Fonte da verdade: `matches.state` + `matches.ply`; `match_moves` permite reconstrução (replay de todos os lances a partir do estado inicial deve produzir o mesmo `state` — invariante testada T-122).
@@ -133,7 +133,7 @@ UNIQUE em e-mail, nome de exibição, (`match_id`,`ply`), (`match_id`,`client_mo
 
 ## 7. Exclusão e exportação
 - Exclusão (RF-030): job diário processa `pending_deletion` vencidos: apaga `users` (CASCADE em perfil, preferências, sessões, tokens, progresso, tentativas), `match_players.user_id` vira NULL com `removed_account=true`, ratings apagados, `audit_log` mantém o `actor_user_id` substituído por NULL.
-- Exportação (RF-029): JSON gerado a partir das tabelas acima, sem hashes de senha nem tokens.
+- Exportação (RF-029): JSON gerado a partir das tabelas acima, sem hashes de senha nem tokens (DT-019). Partidas locais e contra a IA que só envolvem a conta são apagadas na exclusão; partidas com outro humano permanecem com o lado removido pseudonimizado (`removed_account=true`).
 
 ## 8. Migrações
 Alembic; uma migração por mudança lógica; revisão obrigatória; `downgrade` implementado ou justificativa escrita (RNF-028); migrações de dados separadas das de esquema; nunca editar migração já aplicada em homologação/produção.

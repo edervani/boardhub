@@ -79,6 +79,7 @@ class ChildOut(BaseModel):
     display_name: str
     age_band: str
     settings: ChildSettings
+    deletion_scheduled_for: datetime | None = None
 
 
 class ChildSettingsPatch(Strict):
