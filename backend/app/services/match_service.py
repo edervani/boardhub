@@ -23,6 +23,7 @@ from app.core.errors import ProblemError
 from app.core.logging import get_logger
 from app.core.ratelimit import limiter
 from app.game_engines.base import IllegalMove, InvalidState, state_hash
+from app.game_engines.chess import ChessEngine
 from app.models import AuditLog, DrawOffer, Match, MatchMove, MatchPlayer, User, UserProfile
 from app.models.base import new_id
 from app.schemas.matches import MatchOut, MatchPage, MatchSummary, PlayerOut, SeatOut
@@ -96,6 +97,14 @@ def _san_moves(match: Match) -> list[str]:
     return chess_san_moves([str(m) for m in moves]) if isinstance(moves, list) else []
 
 
+def _claimable_reason(match: Match, state: Any) -> str | None:
+    """Motivo pelo qual quem tem a vez pode reivindicar empate (só xadrez em andamento)."""
+    engine = _kit(match).engine
+    if match.status != "in_progress" or not isinstance(engine, ChessEngine):
+        return None
+    return engine.claimable_draw(state)
+
+
 def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
          invite_code: str | None = None) -> MatchOut:
     kit = _kit(match)
@@ -103,6 +112,9 @@ def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
     state = kit.engine.deserialize(match.state) if in_progress else None
     legal = [str(m) for m in kit.engine.legal_moves(state)] if state is not None else []
     online = is_online(match)
+    to_move = _seat_to_move(match.ply)
+    can_claim = state is not None and _claimable_reason(match, state) is not None \
+        and any(p.seat == to_move and p.user_id == user.id for p in players)
     offer_seat = db.scalar(select(DrawOffer.by_seat).where(
         DrawOffer.match_id == match.id, DrawOffer.status == "pending")) \
         if online and in_progress else None
@@ -120,7 +132,7 @@ def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
                for p in players],
         rating_changes=[RatingChangeOut(seat=c.seat, before=c.before, after=c.after)
                         for c in rating_service.changes_from_players(players)],
-        san_moves=_san_moves(match),
+        san_moves=_san_moves(match), can_claim_draw=can_claim,
         created_at=match.created_at, finished_at=match.finished_at,
     )
 
@@ -247,12 +259,14 @@ def move_applied(match: Match, seat: int, move: str) -> Event:
     """
     in_progress = match.status == "in_progress"
     kit = _kit(match)
-    legal = [str(m) for m in kit.engine.legal_moves(kit.engine.deserialize(match.state))] \
-        if in_progress else []
+    state = kit.engine.deserialize(match.state) if in_progress else None
+    legal = [str(m) for m in kit.engine.legal_moves(state)] if state is not None else []
     next_seat = _seat_to_move(match.ply) if in_progress else None
     payload: dict[str, Any] = {"match_id": str(match.id), "ply": match.ply, "seat": seat,
                                "move": move, "state": match.state, "next_seat": next_seat,
                                "legal_moves": legal}
+    if state is not None and _claimable_reason(match, state) is not None:
+        payload["can_claim_draw"] = True  # vale para quem tem a vez (`next_seat`)
     san = _san_moves(match)
     if san:  # xadrez: o cliente exibe o lance na notação escolhida (RF-007) sem motor próprio
         payload["san"] = san[-1]
@@ -345,6 +359,48 @@ def finish_with_winner(match: Match, winner_seat: int | None, reason: str) -> No
     match.status = "finished"
     match.end_reason = reason
     match.result = "draw" if winner_seat is None else ("p1_win" if winner_seat == 1 else "p2_win")
+
+
+# P-17: motivos de fim que dependem de reivindicação (FIDE 9.2 e 9.3).
+CLAIMED_DRAW_REASONS = ("repetition", "fifty_move")
+
+
+def claim_draw_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOut, list[Event]]:
+    """Xadrez: quem tem a vez reivindica empate por repetição tripla ou regra dos 50 lances.
+
+    O servidor revalida com o motor; nada do cliente decide o resultado. Repetir o pedido depois
+    de a partida ter terminado assim devolve a visão atual, sem efeitos (idempotente).
+    """
+    limiter.hit(f"online-cmd:{user.id}", 120, 60)
+    match, players = load_for_participant(db, user, match_id, lock=True)
+    if match.game_id != "chess":
+        raise ProblemError(422, "draw_claim_not_available",
+                           "Este jogo não tem reivindicação de empate")
+    if match.status == "finished" and match.result == "draw" \
+            and match.end_reason in CLAIMED_DRAW_REASONS:
+        return view(db, match, players, user), []
+    if match.status == "waiting":
+        raise ProblemError(409, "match_not_started", "A partida ainda não começou")
+    if match.status != "in_progress":
+        raise ProblemError(409, "match_finished", "A partida já terminou")
+    to_move = _seat_to_move(match.ply)
+    if not any(p.seat == to_move and p.user_id == user.id for p in players):
+        raise ProblemError(403, "not_your_turn", "Só quem tem a vez pode reivindicar empate")
+    try:
+        state = _kit(match).engine.deserialize(match.state)
+    except InvalidState:
+        raise ProblemError(409, "match_aborted", "Esta partida foi encerrada por um erro") from None
+    reason = _claimable_reason(match, state)
+    if reason is None:
+        raise ProblemError(409, "draw_not_claimable", "Ainda não cabe reivindicar empate",
+                           "É preciso a mesma posição pela 3ª vez ou 50 lances sem captura "
+                           "nem movimento de peão.")
+    finish_with_winner(match, None, reason)
+    events = [finish_event(db, match, players, user)] if is_online(match) else []
+    if match.mode == "ai":
+        announce_finish(db, match, players, user)
+    db.commit()
+    return view(db, match, players, user), events
 
 
 def _outcome_for(match: Match, seat: int) -> str:

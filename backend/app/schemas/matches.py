@@ -73,6 +73,9 @@ class MatchOut(BaseModel):
     rating_changes: list[RatingChangeOut] = []
     # Xadrez: lances já jogados em SAN internacional (K, Q, R, B, N), só para exibição (RF-007).
     san_moves: list[str] = []
+    # Xadrez (P-17): quem tem a vez pode reivindicar empate (3x ou 50 lances) agora. O servidor
+    # decide; o cliente só mostra o botão.
+    can_claim_draw: bool = False
 
 
 class MoveOut(BaseModel):

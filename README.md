@@ -34,6 +34,8 @@ cd boardhub
 - Se o PowerShell bloquear scripts: `powershell -ExecutionPolicy Bypass -File .\scripts\windows\iniciar.ps1`.
 - Contas criadas são só para teste; use e-mails fictícios (`@example.test`).
 
+- A rotina diária de privacidade (exclusões de conta vencidas, exportações expiradas) roda sozinha no serviço `jobs` do compose (a cada 24 h; mude com `JOBS_INTERVAL_SECONDS` no `.env`). Registros: `docker compose logs jobs`.
+
 O CI executa o mesmo `docker compose` e um teste de fumaça ponta a ponta (`scripts/smoke_compose.py`).
 
 ## Funcionalidades planejadas

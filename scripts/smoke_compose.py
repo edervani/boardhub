@@ -73,8 +73,20 @@ def verification_token() -> str:
     raise AssertionError("e-mail de verificação não chegou")
 
 
+def check_jobs_service() -> None:
+    """O agendador da rotina diária sobe, está saudável e não publica portas."""
+    out = subprocess.run(["docker", "compose", "ps", "--format", "json", "jobs"],
+                         capture_output=True, text=True, check=True).stdout
+    rows = [json.loads(line) for line in out.splitlines() if line.strip()]
+    check(len(rows) == 1 and rows[0].get("State") == "running", "serviço jobs em execução")
+    check(rows[0].get("Health") == "healthy", "serviço jobs saudável (rotina diária executou)")
+    published = [p for p in rows[0].get("Publishers") or [] if p.get("PublishedPort")]
+    check(not published, "serviço jobs não publica portas no host")
+
+
 def main() -> None:
     wait_ready()
+    check_jobs_service()
     with urllib.request.urlopen(WEB, timeout=10) as page:
         check(b"BoardHub" in page.read(), "página inicial do site carrega")
     status, _ = call("POST", f"{WEB}/api/v1/auth/register", {
@@ -107,5 +119,5 @@ if __name__ == "__main__":
         main()
     except Exception as exc:  # noqa: BLE001
         print(f"FALHA: {exc}", file=sys.stderr)
-        subprocess.run(["docker", "compose", "logs", "--tail=60", "backend", "web"], check=False)
+        subprocess.run(["docker", "compose", "logs", "--tail=60", "backend", "web", "jobs"], check=False)
         sys.exit(1)

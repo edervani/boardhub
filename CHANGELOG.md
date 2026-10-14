@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (reivindicação de empate no xadrez e agendador da rotina diária — fecha P-17, parte de P-22)
+- Xadrez: `POST /matches/{id}/claim-draw` e mensagem WebSocket `claim_draw`. Repetição tripla e regra dos 50 lances são reivindicadas por quem tem a vez e validadas no servidor com python-chess; fim `repetition`/`fifty_move`, resultado empate, rating liquidado e `match_ended` para a outra parte. 403 sem a vez, 404 para não participante, 409 sem base, idempotente. `can_claim_draw` na visão da partida e em `move_applied`. Sem migração (DT-024).
+- Frontend: botão "Reivindicar empate" (online, local e contra a IA) só quando o servidor indica, com aviso `aria-live`; textos de fim "repetição de posição" e "50/75 lances".
+- Compose: serviço `jobs` executa `python -m app.jobs` ao subir e a cada `JOBS_INTERVAL_SECONDS` (24 h), sem portas, com healthcheck; o smoke do compose confere que está saudável. Docs 02/06/07/13 e README atualizados.
+- Testes: pytest (`test_empate_xadrez.py`) e Vitest (`ClaimDraw.test.tsx`).
+
 ### Adicionado (engajamento ético — RF-026 conquistas, RF-027 desafio diário, RF-028 notificações; DT-023, P-25)
 - Módulo de eventos de domínio (`services/domain_events.py`): fim de partida, lance online, desconexão, tentativa da Academy e desafio respondido; consumidores em savepoint (falha de engajamento nunca derruba o jogo).
 - Conquistas: 16 definições versionadas em `achievements.json`, concessão idempotente pelo servidor, progresso em `GET /me/achievements`, vitrine na aba "Conquistas" e em `GET /users/{nome}` (perfis públicos). Só distintivos: sem valor monetário, troca ou vantagem.

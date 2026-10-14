@@ -63,6 +63,13 @@ def resign(match_id: uuid.UUID, auth: CurrentAuth, db: DbSession) -> MatchOut:
     return out
 
 
+@router.post("/matches/{match_id}/claim-draw")
+def claim_draw(match_id: uuid.UUID, auth: CurrentAuth, db: DbSession) -> MatchOut:
+    out, events = match_service.claim_draw_result(db, auth.user, match_id)
+    hub.publish_all(events)
+    return out
+
+
 @router.post("/matches/join")
 def join_match(body: JoinIn, auth: CurrentAuth, db: DbSession) -> MatchOut:
     out, events = online_service.join_invite(db, auth.user, body.invite_code)

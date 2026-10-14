@@ -70,6 +70,12 @@ class RespondDraw(Strict):
     payload: DrawResponsePayload
 
 
+class ClaimDraw(Strict):
+    type: Literal["claim_draw"]
+    id: uuid.UUID
+    payload: MatchRef
+
+
 class ClaimAbandon(Strict):
     type: Literal["claim_abandon"]
     id: uuid.UUID
@@ -82,7 +88,8 @@ class Pong(Strict):
 
 
 ClientMessage = Annotated[
-    JoinMatch | LeaveMatch | SubmitMove | Resign | OfferDraw | RespondDraw | ClaimAbandon | Pong,
+    JoinMatch | LeaveMatch | SubmitMove | Resign | OfferDraw | RespondDraw | ClaimDraw
+    | ClaimAbandon | Pong,
     Field(discriminator="type"),
 ]
 _adapter: TypeAdapter[ClientMessage] = TypeAdapter(ClientMessage)
