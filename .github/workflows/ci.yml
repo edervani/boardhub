@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "feat/**", "fix/**", "docs/**", "chore/**"]
+    branches: [main, "feat/**", "fix/**", "docs/**", "chore/**", "test/**"]
   pull_request:
 
 permissions:
@@ -37,9 +37,10 @@ jobs:
         run: |
           (cd backend && uv lock)
           (cd frontend && npm install --package-lock-only --no-audit --no-fund)
+          (cd e2e && npm install --package-lock-only --no-audit --no-fund)
       - name: Commitar lockfiles
         run: |
-          git add backend/uv.lock frontend/package-lock.json
+          git add backend/uv.lock frontend/package-lock.json e2e/package-lock.json
           if git diff --cached --quiet; then echo "Nada a commitar"; exit 0; fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "chore: lockfiles gerados pelo CI"
@@ -121,6 +122,51 @@ jobs:
         run: scripts/ci/run.sh compose-up docker compose up -d --build --wait
       - name: Teste de fumaca
         run: scripts/ci/run.sh compose-fumaca python3 scripts/smoke_compose.py
+      - name: Derrubar ambiente
+        if: always()
+        run: docker compose down --volumes
+
+  # Testes ponta a ponta (RNF-014/015/016): Playwright + axe-core contra o mesmo ambiente do compose.
+  # Sobe a própria stack (cada job tem seu runner); roda em paralelo ao job `compose`.
+  e2e:
+    runs-on: ubuntu-24.04
+    env:
+      SECRET_KEY: chave-somente-para-ci-0123456789abcdef0123456789
+      POSTGRES_DB: boardhub
+      POSTGRES_USER: boardhub_app
+      POSTGRES_PASSWORD: senha-somente-para-ci
+      RUN: ../scripts/ci/run.sh
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: "24" }
+      - name: Subir ambiente
+        run: scripts/ci/run.sh e2e-compose-up docker compose up -d --build --wait
+      - name: Instalar dependências do E2E
+        working-directory: e2e
+        run: |
+          if [ -f package-lock.json ]; then $RUN "e2e-npm ci" npm ci; else $RUN "e2e-npm install" npm install --no-audit --no-fund; fi
+      - name: Tipagem
+        working-directory: e2e
+        run: $RUN "e2e-tsc" npm run typecheck
+      - name: Instalar Chromium
+        working-directory: e2e
+        run: $RUN "e2e-playwright-install" npx playwright install --with-deps chromium
+      - name: Testes E2E (Chromium) com axe
+        working-directory: e2e
+        run: CI_NOTICE=1 $RUN "e2e-playwright" npx playwright test --project=chromium
+      - name: Relatório e traces (falha)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-relatorio
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
+      - name: Logs do ambiente (falha)
+        if: failure()
+        run: docker compose logs --tail=80 backend web
       - name: Derrubar ambiente
         if: always()
         run: docker compose down --volumes

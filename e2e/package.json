@@ -1,0 +1,20 @@
+{
+  "name": "boardhub-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Testes ponta a ponta (Playwright) e auditoria de acessibilidade (axe-core) contra o ambiente do docker compose.",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  }
+}
