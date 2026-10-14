@@ -42,18 +42,18 @@ Reinício do backend durante partidas (RNF-009); restauração de backup em banc
 
 ## 8. Matriz de rastreabilidade
 
-Colunas: requisito · documento de origem · módulo responsável · endpoint/componente · caso de teste · critério de aceite · estado · evidência. Estado de todos: **aprovado** (o código da Fase 1 ainda não foi mesclado). Evidência da Fase 1 na branch `feat/fase-1-base`: CI verde (backend 76 testes pytest, frontend 6 testes Vitest); nenhum requisito é marcado `implementado` antes do merge. Gerada e verificada por `scripts/check_docs.py`.
+Colunas: requisito · documento de origem · módulo responsável · endpoint/componente · caso de teste · critério de aceite · estado · evidência. RF-001 a RF-005 estão **implementado** (PR #1 mesclado); RF-006, RF-007, RF-033 e RF-034 seguem **aprovado** com código mesclado e aceite parcial (P-15). Evidência da Fase 1 na branch `feat/fase-1-base`: CI verde (backend 76 testes pytest, frontend 6 testes Vitest); nenhum requisito é marcado `implementado` antes do merge. Gerada e verificada por `scripts/check_docs.py`.
 
 <!-- MATRIZ:INICIO -->
 | Requisito | Origem | Módulo | Endpoint/componente | Teste | Critério | Estado | Evidência |
 |---|---|---|---|---|---|---|---|
-| RF-001 | doc 02 | services/auth_service | POST /auth/register | T-001 | CA-001 | aprovado | — |
-| RF-002 | doc 02 | services/auth_service | POST /auth/verify-email | T-002 | CA-002 | aprovado | — |
-| RF-003 | doc 02 | services/auth_service | POST /auth/login | T-003 | CA-003 | aprovado | — |
-| RF-004 | doc 02 | services/auth_service | /auth/logout, /auth/sessions | T-004 | CA-004 | aprovado | — |
-| RF-005 | doc 02 | services/auth_service | /auth/password/* | T-005 | CA-005 | aprovado | — |
-| RF-006 | doc 02 | services/user_service | PATCH /me/profile; features/profile | T-006 | CA-006 | aprovado | — |
-| RF-007 | doc 02 | services/user_service | /me/preferences; features/profile | T-007 | CA-007 | aprovado | — |
+| RF-001 | doc 02 | services/auth_service | POST /auth/register | T-001 | CA-001 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
+| RF-002 | doc 02 | services/auth_service | POST /auth/verify-email | T-002 | CA-002 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
+| RF-003 | doc 02 | services/auth_service | POST /auth/login | T-003 | CA-003 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
+| RF-004 | doc 02 | services/auth_service | /auth/logout, /auth/sessions | T-004 | CA-004 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
+| RF-005 | doc 02 | services/auth_service | /auth/password/* | T-005 | CA-005 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
+| RF-006 | doc 02 | services/user_service | PATCH /me/profile; features/profile | T-006 | CA-006 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-007 | doc 02 | services/user_service | /me/preferences; features/profile | T-007 | CA-007 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-008 | doc 02 | frontend features/lobby | GET /games; features/lobby | T-008 | CA-008 | aprovado | — |
 | RF-009 | doc 02 | services/match_service | POST /engines/{game}/apply; POST /matches | T-009 | CA-009 | aprovado | — |
 | RF-010 | doc 02 | services/match_service + ai/opponents | POST /matches; WS submit_move | T-010 | CA-010 | aprovado | — |
@@ -79,8 +79,8 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-030 | doc 02 | services/privacy_service | /me/delete | T-030 | CA-030 | aprovado | — |
 | RF-031 | doc 02 | services/moderation_service | /reports, /admin/* | T-031 | CA-031 | aprovado | — |
 | RF-032 | doc 02 | services/social_service | (fase 6) | T-032 | CA-032 | aprovado | — |
-| RF-033 | doc 02 | services/catalog_service | GET /games; features/lobby | T-033 | CA-033 | aprovado | — |
-| RF-034 | doc 02 | services/guardian_service | /guardian/*; features/guardian | T-034 | CA-034 | aprovado | — |
+| RF-033 | doc 02 | services/catalog_service | GET /games; features/lobby | T-033 | CA-033 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-034 | doc 02 | services/guardian_service | /guardian/*; features/guardian | T-034 | CA-034 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RNF-001 | doc 03 | transversal | — | T-101 | CA-101 | aprovado | — |
 | RNF-002 | doc 03 | transversal | — | T-102 | CA-102 | aprovado | — |
 | RNF-003 | doc 03 | transversal | — | T-103 | CA-103 | aprovado | — |

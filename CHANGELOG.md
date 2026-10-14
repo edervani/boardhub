@@ -4,6 +4,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Modificado
+- RF-001 a RF-005 passam a `implementado` (PR #1); matriz de rastreabilidade com evidência.
+
 ### Adicionado (Fase 2a — motor do jogo da velha)
 - `game_engines`: contrato comum (`IllegalMove`, `InvalidState`, `Outcome`, hash canônico do estado) e motor do jogo da velha com serialização validada (RF-016).
 - `ai/opponents`: IA do jogo da velha em 5 níveis com semente injetada (doc 07 §2).
