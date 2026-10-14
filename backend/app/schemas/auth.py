@@ -72,6 +72,9 @@ class MeOut(BaseModel):
     age_band: AgeBand
     role: str
     supervised: bool
+    # RF-030: preenchido enquanto a conta está em período de arrependimento.
+    deletion_scheduled_for: datetime | None = None
+    deletion_by_guardian: bool = False
 
 
 class SessionOut(BaseModel):

@@ -604,7 +604,9 @@ def active_matches(db: Session, user: User) -> list[ActiveMatchOut]:
         pairs = db.execute(
             select(MatchPlayer.match_id, UserProfile.display_name)
             .join(UserProfile, UserProfile.user_id == MatchPlayer.user_id)
-            .where(MatchPlayer.match_id.in_(ids), MatchPlayer.user_id != user.id)).tuples().all()
+            .join(User, User.id == MatchPlayer.user_id)
+            .where(MatchPlayer.match_id.in_(ids), MatchPlayer.user_id != user.id,
+                   User.status != "pending_deletion")).tuples().all()
         opponents = dict(pairs)
     out: list[ActiveMatchOut] = []
     seen: set[uuid.UUID] = set()

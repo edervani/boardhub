@@ -8,6 +8,16 @@ export interface Me {
   age_band: AgeBand;
   role: string;
   supervised: boolean;
+  /** RF-030: data prevista da exclusão, enquanto a conta está em período de arrependimento. */
+  deletion_scheduled_for?: string | null;
+  deletion_by_guardian?: boolean;
+}
+
+export interface DataExport {
+  id: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
 }
 
 export interface Game {

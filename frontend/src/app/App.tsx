@@ -7,18 +7,22 @@ import { History } from "../features/tictactoe/History";
 import { AcademyPage } from "../features/academy/AcademyPage";
 import { ReviewPage } from "../features/academy/ReviewPage";
 import { MatchBoard } from "../features/tictactoe/MatchBoard";
+import { PrivacyPage } from "../features/profile/PrivacyPage";
 import { ProfilePage } from "../features/profile/ProfilePage";
 import { RankingPage } from "../features/ranking/RankingPage";
-import { ApiError, api } from "../services/api";
+import { ApiError, api, errorMessage } from "../services/api";
 import type { Me } from "../services/types";
 
-type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "revisao" | "perfil" | "entrar" | "cadastro";
+type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "revisao" | "perfil" | "privacidade" | "entrar" | "cadastro";
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("jogos");
   const [reviewId, setReviewId] = useState("");
+  const [notice, setNotice] = useState("");
+  // Conta em período de arrependimento (RF-030): o servidor só aceita /me e o cancelamento.
+  const pending = Boolean(me?.deletion_scheduled_for);
 
   useEffect(() => {
     api<Me>("GET", "/me")
@@ -32,20 +36,41 @@ export function App() {
     setMe(null); setView("jogos");
   }
 
+  function deletionScheduled(scheduledFor: string) {
+    setMe(null); setView("entrar");
+    setNotice(`Exclusão agendada para ${new Date(scheduledFor).toLocaleDateString("pt-BR")}. ` +
+      "Você saiu de todos os dispositivos. Para desistir, entre de novo até essa data e cancele.");
+  }
+
+  async function deletionCancelled() {
+    try {
+      setMe(await api<Me>("GET", "/me"));
+      setNotice("Exclusão cancelada. Sua conta voltou ao normal.");
+    } catch (err) {
+      setNotice(errorMessage(err));
+    }
+  }
+
   return (
     <>
       <header>
         <nav aria-label="Principal">
           <strong>BoardHub</strong>
-          <button className="secondary" onClick={() => setView("jogos")}>Jogos</button>
-          <button className="secondary" onClick={() => setView("jogar")}>Jogar</button>
-          <button className="secondary" onClick={() => setView("ranking")}>Ranking</button>
-          {me ? (
+          {!pending && <button className="secondary" onClick={() => setView("jogos")}>Jogos</button>}
+          {!pending && <button className="secondary" onClick={() => setView("jogar")}>Jogar</button>}
+          {!pending && <button className="secondary" onClick={() => setView("ranking")}>Ranking</button>}
+          {me && pending ? (
+            <>
+              <button className="secondary" onClick={() => setView("privacidade")}>Privacidade</button>
+              <button className="secondary" onClick={() => void logout()}>Sair</button>
+            </>
+          ) : me ? (
             <>
               <button className="secondary" onClick={() => setView("online")}>Online</button>
               <button className="secondary" onClick={() => setView("historico")}>Histórico</button>
               <button className="secondary" onClick={() => setView("academy")}>Academy</button>
               <button className="secondary" onClick={() => setView("perfil")}>Perfil</button>
+              <button className="secondary" onClick={() => setView("privacidade")}>Privacidade</button>
               <button className="secondary" onClick={() => void logout()}>Sair</button>
             </>
           ) : (
@@ -58,7 +83,11 @@ export function App() {
       </header>
       <main>
         <h1>BoardHub</h1>
-        {!ready ? <p role="status">Carregando…</p> : (
+        {notice && <p role="status">{notice}</p>}
+        {!ready ? <p role="status">Carregando…</p> : me && pending ? (
+          <PrivacyPage me={me} onDeletionScheduled={deletionScheduled}
+            onDeletionCancelled={() => void deletionCancelled()} />
+        ) : (
           <>
             {view === "jogos" && <GameList />}
             {view === "jogar" && <GamePage me={me} />}
@@ -70,7 +99,11 @@ export function App() {
             {view === "academy" && me && <AcademyPage />}
             {view === "revisao" && me && <ReviewPage matchId={reviewId} onBack={() => setView("historico")} />}
             {view === "perfil" && me && <ProfilePage me={me} />}
-            {view === "entrar" && <LoginForm onLogin={(m) => { setMe(m); setView("jogos"); }} />}
+            {view === "privacidade" && me && (
+              <PrivacyPage me={me} onDeletionScheduled={deletionScheduled}
+                onDeletionCancelled={() => void deletionCancelled()} />
+            )}
+            {view === "entrar" && <LoginForm onLogin={(m) => { setMe(m); setNotice(""); setView("jogos"); }} />}
             {view === "cadastro" && <RegisterForm />}
           </>
         )}

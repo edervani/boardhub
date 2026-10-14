@@ -174,10 +174,10 @@ In-app (v1): convite recebido, vez de jogar, partida encerrada, oponente descone
 ## Privacidade e administração
 
 ### RF-029 — Exportação de dados pessoais
-Usuário solicita exportação; servidor gera JSON com conta, perfil, preferências, partidas, progresso; disponível por link autenticado por 7 dias. Limite: 1 solicitação por 24 h. **Prioridade:** M · **Aceite:** CA-029 · **Testes:** T-029 · **Estado:** aprovado.
+Usuário solicita exportação; servidor gera JSON com conta, perfil, preferências, partidas, progresso; disponível por link autenticado por 7 dias. Limite: 1 solicitação por 24 h. **Prioridade:** M · **Aceite:** CA-029 · **Testes:** T-029 · **Estado:** aprovado. *Implementação (Fase 7, DT-020): geração na hora; o responsável vinculado também pode exportar os dados do menor (P-22).*
 
 ### RF-030 — Exclusão de conta
-Usuário confirma com senha; conta marcada para exclusão; após 14 dias (período de arrependimento — proposta) dados pessoais são apagados e partidas são **pseudonimizadas** (jogador vira "Conta removida") para preservar o histórico do oponente. Sessões revogadas imediatamente. **Prioridade:** M · **Aceite:** CA-030 · **Testes:** T-030 · **Estado:** aprovado.
+Usuário confirma com senha; conta marcada para exclusão; após 14 dias (período de arrependimento — proposta) dados pessoais são apagados e partidas são **pseudonimizadas** (jogador vira "Conta removida") para preservar o histórico do oponente. Sessões revogadas imediatamente. **Prioridade:** M · **Aceite:** CA-030 · **Testes:** T-030 · **Estado:** aprovado. *Implementação (Fase 7, DT-020): na carência o login é restrito ao cancelamento (P-22); o responsável vinculado também pode excluir a conta do menor.*
 
 ### RF-031 — Denúncia e moderação
 Usuário denuncia nome/bio ofensivos ou suspeita de trapaça; administrador (papel `admin`/`moderator`) revisa, oculta conteúdo, suspende conta. Toda ação administrativa é auditada (`audit_log`). **Prioridade:** S · **Aceite:** CA-031 · **Testes:** T-031 · **Estado:** aprovado.

@@ -29,7 +29,7 @@ Ferramenta (Prometheus + Grafana auto-hospedados) é proposta; nenhuma ferrament
 | Picos de 429/login falho | > 10× linha de base | Média (possível ataque) |
 
 ## 5. Rotinas operacionais
-Diário: verificar backup; job de limpeza (tokens, sessões, exportações, exclusões de conta). Semanal: revisar alertas e erros. Mensal: atualizar dependências, revisar acessos. Trimestral: teste de restauração, revisão de capacidade e custos.
+Diário: verificar backup; job de limpeza (tokens, sessões, exportações, exclusões de conta). A rotina de privacidade existe como `python -m app.jobs` (dentro do contêiner do backend, ex.: `docker compose exec backend python -m app.jobs`); ela conclui exclusões vencidas (14 dias), apaga exportações expiradas (7 dias) e remove cadastros de menores de 12 anos sem confirmação (7 dias); código de saída diferente de zero indica falha numa exclusão. **Precisa ser agendada** (cron ou Agendador de Tarefas do Windows); nada a executa sozinho (P-21). Semanal: revisar alertas e erros. Mensal: atualizar dependências, revisar acessos. Trimestral: teste de restauração, revisão de capacidade e custos.
 
 ## 6. Runbooks
 - **RB-01 Banco indisponível:** verificar contêiner/volume → logs do PostgreSQL → espaço em disco → restaurar de backup se corrompido (registrar perda conforme RPO) → comunicar usuários.

@@ -14,6 +14,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - Testes: Elo (29 casos), liquidação/idempotência/concorrência/atomicidade, fila e antiabuso, ranking (privacidade, paginação, ECA), estatísticas (500 partidas sintéticas, IDOR) e Vitest.
 - **Pendência P-21:** conflito entre RF-019 (Elo para damas) e doc 14/P-16 (regras de damas não conferidas); damas ficam fora do ranking até decisão humana.
 
+### Adicionado (Fase 7 — direitos do titular, RF-029 e RF-030)
+- Exportação dos dados (`POST /me/export`, `GET /me/export`, `GET /me/export/{id}`): JSON com conta, perfil, preferências, sessões (sem hashes), partidas e lances, progresso da Academy e eventos de auditoria da própria conta; sem hash de senha, tokens nem nome, e-mail ou id de outras pessoas (o oponente aparece só como tipo). Um pedido por 24 h por titular (429 com `Retry-After`), link válido por 7 dias (410 depois), 404 para quem não pediu (IDOR).
+- Exclusão de conta (`POST /me/delete` com senha, `POST /me/delete/cancel`): carência de 14 dias; o pedido revoga todas as sessões, tira da fila, encerra por desistência as partidas online abertas e esconde o apelido do oponente. Em carência o login é restrito (só `/me`, exportação, cancelamento e logout). Limite de 3 pedidos por dia.
+- Rotina diária `python -m app.jobs`: conclui exclusões vencidas (cascata; partidas com outro humano ficam com o jogador "Conta removida"; partidas só da conta são apagadas; `audit_log` `account_deleted` sem autor nem dados pessoais), apaga exportações expiradas e cadastros de menores de 12 anos sem confirmação.
+- Responsável legal: `POST /guardian/children/{id}/export`, `…/delete` (com a senha do responsável) e `…/delete/cancel`; cada pedido só é cancelado por quem o fez; ao excluir o responsável, o menor volta ao padrão protetivo.
+- Migração 0008 (`data_export_requests`, `users.deletion_by_guardian`). Frontend: página Privacidade (pedir e baixar exportação, excluir com senha e confirmação, cancelar).
+- Testes: pytest (`test_privacidade.py`) e Vitest (`Privacy.test.tsx`).
+- **Pendência P-22:** conciliação entre "sessões revogadas" e cancelamento, fluxo do responsável sem tela, ranking a incluir ao mesclar a Fase 5, cadeia da migração e agendamento da rotina. Decisão DT-020 (proposta).
+
 ### Adicionado (Fase 6 — Academy e Mentor, RF-022 a RF-025)
 - Conteúdo original em pt-BR como dados versionados (`backend/app/academy/content/*.json`, DT-018): trilhas de jogo da velha, damas brasileiras e xadrez, com lições, conceitos e exercícios; cada solução é conferida pelo motor em teste.
 - Backend: trilhas, lições, exercício sem solução, dicas contadas no servidor, resposta validada pelos motores, domínio por conceito com revisão espaçada (3/7/21/60 dias), nivelamento adaptativo sem estado no cliente e progresso. Migração 0006.

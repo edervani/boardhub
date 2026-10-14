@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from app.api.deps import (
     CSRF_COOKIE,
     SESSION_COOKIE,
+    AccountAuth,
     ClientIp,
     CurrentAuth,
     DbSession,
@@ -24,7 +25,7 @@ from app.schemas.auth import (
     SessionOut,
     TokenIn,
 )
-from app.services import auth_service
+from app.services import auth_service, privacy_service
 from app.services.mailer import Mailer, get_mailer
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -36,6 +37,8 @@ def me_out(user: User) -> MeOut:
         "id": user.id, "email": user.email, "display_name": user.profile.display_name,
         "email_verified": user.email_verified_at is not None, "age_band": user.age_band,
         "role": user.role, "supervised": user.guardian_user_id is not None,
+        "deletion_scheduled_for": privacy_service.deletion_scheduled_for(user),
+        "deletion_by_guardian": user.deletion_by_guardian,
     })
 
 
@@ -82,7 +85,7 @@ def login(body: LoginIn, request: Request, response: Response, db: DbSession,
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(auth: CurrentAuth, db: DbSession, response: Response) -> None:
+def logout(auth: AccountAuth, db: DbSession, response: Response) -> None:
     auth_service.logout(db, auth.session)
     _clear_cookies(response)
 

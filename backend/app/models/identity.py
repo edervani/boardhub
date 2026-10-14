@@ -50,6 +50,8 @@ class User(CreatedAt, Base):
         ForeignKey("users.id", ondelete="SET NULL")
     )
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # RF-030: exclusão pedida pelo responsável só pode ser cancelada por ele.
+    deletion_by_guardian: Mapped[bool] = mapped_column(Boolean, default=False)
     terms_version: Mapped[str] = mapped_column(String(32))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(
