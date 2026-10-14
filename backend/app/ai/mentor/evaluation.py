@@ -209,7 +209,8 @@ def _ch_exact(board: chess.Board, move: chess.Move, budget: Budget) -> int:
 # ----------------------------------------------------------------- interface
 
 def _chess_board(state: Any) -> chess.Board:
-    return state.board.copy(stack=False)  # a busca não usa repetição
+    board: chess.Board = state.board.copy(stack=False)  # a busca não usa repetição
+    return board
 
 
 def move_scores(game_id: str, state: Any, budget: Budget | None = None) -> dict[str, int]:
@@ -248,12 +249,12 @@ def best_move(game_id: str, state: Any, budget: Budget | None = None) -> Scored 
     board = _chess_board(state)
     best = None
     alpha = -CHESS_MATE * 2
-    for m in ordered(board, sorted(board.legal_moves, key=lambda x: x.uci())):
-        board.push(m)
+    for cm in ordered(board, sorted(board.legal_moves, key=lambda x: x.uci())):
+        board.push(cm)
         score = -_ch_search(board, CHESS_DEPTH - 1, -CHESS_MATE * 2, -alpha, 1, budget)
         board.pop()
         if best is None or score > best.score:
-            best = Scored(m.uci(), score)
+            best = Scored(cm.uci(), score)
             alpha = score
     return best
 

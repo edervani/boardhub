@@ -97,7 +97,7 @@ def get_progress(db: Session, user: User, game_id: str | None) -> ProgressOut:
     rows = _rows(db, user, game_id)
     now = clock.now()
     visible = {g.id for g in catalog_service.visible_games(db, user.age_band)}
-    out = []
+    out: list[ConceptStatusOut] = []
     for gid, game_content in content.load_all().items():
         if gid not in visible or (game_id is not None and gid != game_id):
             continue
