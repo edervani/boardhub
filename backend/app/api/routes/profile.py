@@ -22,6 +22,7 @@ from app.schemas.profile import (
     PublicProfileOut,
 )
 from app.services import (
+    achievement_service,
     catalog_service,
     guardian_service,
     privacy_service,
@@ -81,7 +82,8 @@ def public_profile(display_name: str, db: DbSession) -> PublicProfileOut:
     if not NAME_RE.fullmatch(display_name):
         raise ProblemError(404, "not_found", "Perfil não encontrado")
     p = profile_service.public_profile(db, display_name)
-    return PublicProfileOut(display_name=p.display_name, avatar_key=p.avatar_key, bio=p.bio)
+    return PublicProfileOut(display_name=p.display_name, avatar_key=p.avatar_key, bio=p.bio,
+                            achievements=achievement_service.showcase(db, p.user_id))
 
 
 @router.get("/games")

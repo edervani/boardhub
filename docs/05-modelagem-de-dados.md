@@ -21,10 +21,12 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 | lessons, exercises | **Criar** (fase 3) | Conteúdo da Academy, versionado |
 | user_skill_progress | **Criar** (fase 3) | RF-025 |
 | exercise_attempts | **Criar** (fase 3) | Evidência para domínio — substitui/generaliza `challenge_attempts` |
-| achievements, user_achievements | **Adiar** (fase 6) | RF-026 |
-| daily_challenges | **Adiar** (fase 6); tentativas usam `exercise_attempts` | Evita tabela duplicada |
-| friendships, invitations | **Adiar** (fase 6) | RF-032; convites de partida usam `matches.invite_code` |
-| reports, audit_log | **Criar** (`audit_log` fase 1; `reports` fase 6/7) | RF-031, SEC-11 |
+| achievements | **Não criar**: definições em arquivo versionado (`achievements.json`), como o conteúdo da Academy (DT-018, DT-023) | RF-026 |
+| user_achievements | **Criar** (DT-023) | RF-026 |
+| daily_challenge_results | **Criar** (DT-023, P-25): o exercício do dia é calculado, não guardado; o resultado fica à parte de `exercise_attempts`, que não tem unicidade por dia e alimenta o domínio | RF-027 |
+| notifications, notification_preferences | **Criar** (DT-023) | RF-028 |
+| friendships, user_blocks, direct_invitations | **Criar** (DT-022, migração 0010) | RF-032; o convite direto aponta para a sala por convite (`matches`) |
+| reports, audit_log | **Criar** (`audit_log` fase 1; `reports` DT-022, migração 0010) | RF-031, SEC-11 |
 | data_export_requests | **Criar** | RF-029 |
 | daily_usage | **Criar** (DT-021) | RF-034: segundos de atividade por menor e dia (America/Sao_Paulo) |
 
@@ -53,6 +55,18 @@ Convenções: chaves primárias `uuid` (gerado na aplicação, UUIDv7 se dispon�
 
 ### user_preferences
 `user_id` PK/FK CASCADE; `theme` (`light|dark|system`); `motion` (`full|reduced|none|system`); `sound` bool; `move_confirmation` bool; `move_notation` (`algebraic_pt|san|uci`, padrão `algebraic_pt`; só exibição, RF-007); `piece_styles` jsonb (`{"chess":"classic",…}`, validado por esquema); `locale` default `pt-BR`.
+
+### user_achievements
+`user_id` FK CASCADE + `achievement_key` varchar(48) (PK composta, garante concessão única); `definition_version`; `earned_at`. Sem valor monetário.
+
+### daily_challenge_results
+`user_id` FK CASCADE + `game_id` FK + `day` date (dia civil de America/Sao_Paulo) (PK composta = uma tentativa válida por jogo e dia); `exercise_id`, `content_version`, `answer`, `correct`, `completed_at`.
+
+### notifications
+`id` uuid PK; `user_id` FK CASCADE; `kind` (`your_turn`, `match_ended`, `opponent_disconnected`, `achievement_earned`); `payload` jsonb (ids e título, sem dados de terceiros); `dedupe_key` (único entre não lidas por usuário: um aviso por partida); `read_at`; `created_at`. Retenção: lidas por 30 dias, qualquer uma por 90 (rotina diária).
+
+### notification_preferences
+`user_id` FK CASCADE + `kind` (PK composta); `enabled`. Sem linha = ativo.
 
 ### daily_usage
 `user_id` FK CASCADE + `day` date (PK composta; dia civil de America/Sao_Paulo); `seconds` int ≥ 0; `last_activity_at` timestamptz. Só existe para contas de menores (minimização de dados); some com a conta (CASCADE). Regra de contagem em DT-021.
@@ -109,6 +123,12 @@ PK (`match_id`,`ply`); `seat`; `move` text (notação do jogo: índice 0–8, PD
 
 ### data_export_requests
 `id`; `user_id` FK→users CASCADE (titular); `requested_by_user_id` FK→users SET NULL (titular ou responsável; só ele baixa); `status` (`ready`); `payload` jsonb (o JSON da exportação, em vez de `file_key` — DT-020); `expires_at` (7 dias); `created_at`. Migração 0008. Também em 0008: `users.deletion_by_guardian` bool (exclusão pedida pelo responsável só é cancelada por ele).
+
+### friendships / user_blocks / direct_invitations / reports (DT-022, migração 0010)
+- `friendships`: `id`; `user_low_id < user_high_id` (UNIQUE do par, sem duplicata) FK→users CASCADE; `requested_by`; `status` (`pending|accepted|declined`); `responded_at`; `created_at`.
+- `user_blocks`: `id`; `blocker_id`, `blocked_id` FK CASCADE, UNIQUE do par, CHECK distintos.
+- `direct_invitations`: `id`; `match_id` FK→matches CASCADE (sala por convite aguardando); `sender_id`, `recipient_id` FK CASCADE; `status` (`pending|accepted|declined|cancelled`). A validade é a da sala (`invite_expires_at`).
+- `reports`: `id`; `reporter_id` FK SET NULL (nunca exposto por API); `target_user_id` FK CASCADE (a denúncia some com a conta denunciada); `target_type` (`user|match`); `match_id` NULL FK CASCADE; `reason` (`offensive_name|offensive_bio|cheating|harassment|other`); `note` ≤ 500 sanitizada; `status` (`open|resolved`); `resolution_action` (`warn|suspend|archive`); `resolved_by` FK SET NULL; `resolved_at`.
 
 ## 3. Estado oficial da partida
 - Fonte da verdade: `matches.state` + `matches.ply`; `match_moves` permite reconstrução (replay de todos os lances a partir do estado inicial deve produzir o mesmo `state` — invariante testada T-122).

@@ -80,7 +80,7 @@ test("textos de status do xadrez", () => {
   expect(statusText(base)).toBe("Xeque-mate. Brancas venceram.");
   expect(statusText({ ...base, result: "p2_win", end_reason: "resign" })).toBe("Pretas venceram: o outro jogador desistiu.");
   expect(statusText({ ...base, result: "draw", end_reason: "stalemate" })).toBe("Empate (afogamento).");
-  expect(statusText({ ...base, result: "draw", end_reason: "repetition" })).toBe("Empate (repetição quíntupla).");
-  expect(statusText({ ...base, result: "draw", end_reason: "fifty_move" })).toBe("Empate (regra dos 75 lances).");
+  expect(statusText({ ...base, result: "draw", end_reason: "repetition" })).toBe("Empate (repetição de posição).");
+  expect(statusText({ ...base, result: "draw", end_reason: "fifty_move" })).toBe("Empate (regra dos 50/75 lances).");
   expect(statusText({ ...base, status: "in_progress", result: null, end_reason: null, to_move_seat: 2 })).toBe("Vez de Pretas.");
 });

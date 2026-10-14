@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.auth import DISPLAY_NAME_RE, Strict
+from app.schemas.engagement import ShowcaseItemOut
 
 AVATARS = ("default", "torre", "cavalo", "bispo", "peao", "dama")
 GAME_IDS = ("tictactoe", "checkers", "chess")
@@ -44,6 +45,7 @@ class PublicProfileOut(BaseModel):
     display_name: str
     avatar_key: str
     bio: str | None
+    achievements: list[ShowcaseItemOut] = Field(default_factory=list)  # vitrine (RF-026)
 
 
 class PreferencesModel(Strict):

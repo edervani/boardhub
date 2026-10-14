@@ -7,6 +7,7 @@ import {
   onlineStatusText,
   ratingChangeText,
 } from "./onlineStatus";
+import { ReportButton } from "../social/ReportButton";
 import { useOnlineMatch } from "./useOnlineMatch";
 
 /** O lobby não conhece os tabuleiros (features não se importam entre si): a aplicação os injeta. */
@@ -78,6 +79,7 @@ export function OnlineMatch({ matchId, renderBoard, onLeave }: Props) {
 
       {renderBoard({ match, playable, onPlay: m.play })}
       {m.error && <p role="alert">{m.error}</p>}
+      {opponent && <ReportButton targetType="match" targetId={match.id} label="Denunciar o oponente" />}
 
       {inProgress && opponent && !opponent.connected && (
         <div className="card" role="group" aria-label="Adversário desconectado">
@@ -92,6 +94,15 @@ export function OnlineMatch({ matchId, renderBoard, onLeave }: Props) {
               Reivindicar vitória por abandono
             </button>
           )}
+        </div>
+      )}
+
+      {inProgress && match.can_claim_draw === true && myTurn && (
+        <div className="card" role="group" aria-label="Reivindicação de empate">
+          <p role="status" aria-live="polite">
+            Você pode reivindicar empate: a mesma posição se repete pela terceira vez ou há 50 lances sem captura nem movimento de peão.
+          </p>
+          <button type="button" disabled={m.pending} onClick={m.claimDraw}>Reivindicar empate</button>
         </div>
       )}
 

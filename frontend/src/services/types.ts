@@ -13,6 +13,25 @@ export interface Me {
   deletion_by_guardian?: boolean;
 }
 
+// ---- RF-031 / RF-032: social e moderação (só apelido, nunca e-mail nem id de conta alheia) ----
+export interface Person { display_name: string; avatar_key: string }
+export interface Friend extends Person { friendship_id: string; since: string }
+export interface FriendRequest extends Person { friendship_id: string; created_at: string }
+export interface FriendRequests { incoming: FriendRequest[]; outgoing: FriendRequest[] }
+export interface BlockedUser extends Person { block_id: string; created_at: string }
+export interface DirectInvitation {
+  id: string; game_id: string; status: string; created_at: string;
+  expires_at: string | null; match_id: string | null; other: Person;
+}
+export type ReportReason = "offensive_name" | "offensive_bio" | "cheating" | "harassment" | "other";
+export interface ReportQueueItem {
+  id: string; status: string; target_type: string; reason: ReportReason; note: string | null;
+  created_at: string; target_user_id: string; target_display_name: string | null;
+  target_bio: string | null; target_status: string; match_id: string | null;
+  open_reports_on_target: number; resolution_action: string | null; resolved_at: string | null;
+}
+export interface ReportQueue { items: ReportQueueItem[]; total: number }
+
 export interface DataExport {
   id: string;
   status: string;
@@ -96,6 +115,8 @@ export interface MatchView {
   rating_changes?: RatingChange[];
   /** Xadrez: lances já jogados em SAN internacional (K, Q, R, B, N), para exibição. */
   san_moves?: string[];
+  /** Xadrez (P-17): o servidor indica que quem tem a vez pode reivindicar empate agora. */
+  can_claim_draw?: boolean;
 }
 
 export interface RatingChange {

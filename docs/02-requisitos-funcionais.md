@@ -125,7 +125,7 @@ Regras, estado e IA conforme [doc 07 §2](07-motores-e-regras-dos-jogos.md#2-jog
 Variante **damas brasileiras** (8×8, regras internacionais de captura) conforme [doc 07 §3](07-motores-e-regras-dos-jogos.md#3-damas) — pendente de aprovação (DT-006). **Prioridade:** M · **Aceite:** CA-017 · **Testes:** T-017 · **Estado:** aprovado.
 
 ### RF-018 — Xadrez
-Regras FIDE do Livro de Regras (jogo sem relógio na v1, salvo RF-015) via biblioteca consolidada, conforme [doc 07 §4](07-motores-e-regras-dos-jogos.md#4-xadrez). **Prioridade:** M · **Aceite:** CA-018 · **Testes:** T-018 · **Estado:** aprovado.
+Regras FIDE do Livro de Regras (jogo sem relógio na v1, salvo RF-015) via biblioteca consolidada, conforme [doc 07 §4](07-motores-e-regras-dos-jogos.md#4-xadrez). Repetição tripla e regra dos 50 lances são **reivindicadas** por quem tem a vez (`POST /matches/{id}/claim-draw`, validadas no servidor; `end_reason` `repetition`/`fifty_move`, resultado empate, rating liquidado); quíntupla repetição e 75 lances seguem automáticas (P-17). **Prioridade:** M · **Aceite:** CA-018 · **Testes:** T-018 · **Estado:** aprovado.
 
 ## Competição e histórico
 
@@ -164,13 +164,13 @@ Mostra domínio por conceito (não iniciado / em prática / dominado / em revis�
 ## Engajamento (fases posteriores)
 
 ### RF-026 — Conquistas
-Distintivos por marcos verificáveis no servidor (ex.: "primeira vitória em damas"). Sem valor monetário. Concessão idempotente. **Prioridade:** C · **Aceite:** CA-026 · **Testes:** T-026 · **Estado:** aprovado.
+Distintivos por marcos verificáveis no servidor (ex.: "primeira vitória em damas"). Sem valor monetário. Concessão idempotente. **Prioridade:** C · **Aceite:** CA-026 · **Testes:** T-026 · **Estado:** aprovado. *Implementação (DT-023): definições versionadas em `backend/app/engagement/content/achievements.json` (critérios fechados medidos pelo servidor: partidas, vitórias, ranking, Academy, desafio diário); concessão idempotente por `user_achievements` (PK usuário+conquista); só distintivos, sem valor, troca ou vantagem; vitrine na aba "Conquistas" e no perfil público (`GET /users/{nome}`, só de perfis públicos).*
 
 ### RF-027 — Desafio diário
-Um exercício por jogo por dia (fuso America/Sao_Paulo), mesmo para todos, uma tentativa válida registrada. **Prioridade:** C · **Aceite:** CA-027 · **Testes:** T-027 · **Estado:** aprovado.
+Um exercício por jogo por dia (fuso America/Sao_Paulo), mesmo para todos, uma tentativa válida registrada. **Prioridade:** C · **Aceite:** CA-027 · **Testes:** T-027 · **Estado:** aprovado. *Implementação (DT-023): exercício da Academy escolhido por hash determinístico de (data civil de São Paulo, jogo); uma tentativa válida por jogo e dia em `daily_challenge_results`; resposta inválida não gasta a tentativa; sem sequência (streak), sem perda por faltar, só total acumulado; não altera domínio da Academy nem rating.*
 
 ### RF-028 — Notificações
-In-app (v1): convite recebido, vez de jogar, partida encerrada, oponente desconectou. E-mail apenas transacional (verificação, senha, alerta de segurança). Sem marketing sem consentimento explícito. **Prioridade:** S · **Aceite:** CA-028 · **Testes:** T-028 · **Estado:** aprovado.
+In-app (v1): convite recebido, vez de jogar, partida encerrada, oponente desconectou. E-mail apenas transacional (verificação, senha, alerta de segurança). Sem marketing sem consentimento explícito. **Prioridade:** S · **Aceite:** CA-028 · **Testes:** T-028 · **Estado:** aprovado. *Implementação (DT-023, P-25): tipos `your_turn`, `match_ended`, `opponent_disconnected` e `achievement_earned`; lista, marcar como lida e preferências por tipo (todos ativos por padrão e desativáveis); entrega por WebSocket (`notification`) e sino com consulta periódica; nenhum e-mail nem push; `invite_received` depende de RF-032 (P-25).*
 
 ## Privacidade e administração
 
@@ -181,10 +181,10 @@ Usuário solicita exportação; servidor gera JSON com conta, perfil, preferênc
 Usuário confirma com senha; conta marcada para exclusão; após 14 dias (período de arrependimento — proposta) dados pessoais são apagados e partidas são **pseudonimizadas** (jogador vira "Conta removida") para preservar o histórico do oponente. Sessões revogadas imediatamente. **Prioridade:** M · **Aceite:** CA-030 · **Testes:** T-030 · **Estado:** aprovado. *Implementação (Fase 7, DT-020): na carência o login é restrito ao cancelamento (P-22); o responsável vinculado também pode excluir a conta do menor.*
 
 ### RF-031 — Denúncia e moderação
-Usuário denuncia nome/bio ofensivos ou suspeita de trapaça; administrador (papel `admin`/`moderator`) revisa, oculta conteúdo, suspende conta. Toda ação administrativa é auditada (`audit_log`). **Prioridade:** S · **Aceite:** CA-031 · **Testes:** T-031 · **Estado:** aprovado.
+Usuário denuncia nome/bio ofensivos ou suspeita de trapaça; administrador (papel `admin`/`moderator`) revisa, oculta conteúdo, suspende conta. Toda ação administrativa é auditada (`audit_log`). **Prioridade:** S · **Aceite:** CA-031 · **Testes:** T-031 · **Estado:** aprovado. *Implementação (DT-022): denúncia de perfil (apelido) ou de partida da qual o denunciante participou, motivo fechado e texto livre sanitizado (≤ 500), 10 por dia e uma aberta por alvo e motivo; o denunciante nunca é exposto nem ao denunciado nem à fila; fila para `moderator`/`admin` com resolução advertir, suspender ou arquivar (opcionalmente ocultar conteúdo: apaga a bio e, se o motivo for o apelido, o troca), tudo em `audit_log`; suspensão revoga sessões, tira da fila, encerra partidas abertas e bloqueia o login; reativação auditada.*
 
 ### RF-032 — Amizades e convites diretos
-Solicitar, aceitar, recusar, remover amizade; bloquear usuário (bloqueado não pode convidar). **Prioridade:** C · **Aceite:** CA-032 · **Testes:** T-032 · **Estado:** aprovado.
+Solicitar, aceitar, recusar, remover amizade; bloquear usuário (bloqueado não pode convidar). **Prioridade:** C · **Aceite:** CA-032 · **Testes:** T-032 · **Estado:** aprovado. *Implementação (DT-022): pedido por apelido, aceitar/recusar (recusado espera 7 dias para repetir)/remover; bloqueio remove a amizade e cancela convites; convite direto entre amigos reaproveita a sala por convite (RF-011) sem expor o código. Sem chat livre. Menores só usam o social com responsável vinculado que liberou o contato e só entre menores (P-24); bloqueio e conta alheia respondem 404.*
 
 ## Proteção de crianças e adolescentes
 

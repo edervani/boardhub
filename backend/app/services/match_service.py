@@ -23,11 +23,12 @@ from app.core.errors import ProblemError
 from app.core.logging import get_logger
 from app.core.ratelimit import limiter
 from app.game_engines.base import IllegalMove, InvalidState, state_hash
+from app.game_engines.chess import ChessEngine
 from app.models import AuditLog, DrawOffer, Match, MatchMove, MatchPlayer, User, UserProfile
 from app.models.base import new_id
 from app.schemas.matches import MatchOut, MatchPage, MatchSummary, PlayerOut, SeatOut
 from app.schemas.ranking import RatingChangeOut
-from app.services import catalog_service, rating_service, usage_service
+from app.services import catalog_service, domain_events, rating_service, usage_service
 from app.services.events import Event, match_ended
 from app.services.game_registry import KITS, GameKit
 
@@ -96,6 +97,14 @@ def _san_moves(match: Match) -> list[str]:
     return chess_san_moves([str(m) for m in moves]) if isinstance(moves, list) else []
 
 
+def _claimable_reason(match: Match, state: Any) -> str | None:
+    """Motivo pelo qual quem tem a vez pode reivindicar empate (só xadrez em andamento)."""
+    engine = _kit(match).engine
+    if match.status != "in_progress" or not isinstance(engine, ChessEngine):
+        return None
+    return engine.claimable_draw(state)
+
+
 def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
          invite_code: str | None = None) -> MatchOut:
     kit = _kit(match)
@@ -103,6 +112,9 @@ def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
     state = kit.engine.deserialize(match.state) if in_progress else None
     legal = [str(m) for m in kit.engine.legal_moves(state)] if state is not None else []
     online = is_online(match)
+    to_move = _seat_to_move(match.ply)
+    can_claim = state is not None and _claimable_reason(match, state) is not None \
+        and any(p.seat == to_move and p.user_id == user.id for p in players)
     offer_seat = db.scalar(select(DrawOffer.by_seat).where(
         DrawOffer.match_id == match.id, DrawOffer.status == "pending")) \
         if online and in_progress else None
@@ -120,7 +132,7 @@ def view(db: Session, match: Match, players: list[MatchPlayer], user: User,
                for p in players],
         rating_changes=[RatingChangeOut(seat=c.seat, before=c.before, after=c.after)
                         for c in rating_service.changes_from_players(players)],
-        san_moves=_san_moves(match),
+        san_moves=_san_moves(match), can_claim_draw=can_claim,
         created_at=match.created_at, finished_at=match.finished_at,
     )
 
@@ -247,12 +259,14 @@ def move_applied(match: Match, seat: int, move: str) -> Event:
     """
     in_progress = match.status == "in_progress"
     kit = _kit(match)
-    legal = [str(m) for m in kit.engine.legal_moves(kit.engine.deserialize(match.state))] \
-        if in_progress else []
+    state = kit.engine.deserialize(match.state) if in_progress else None
+    legal = [str(m) for m in kit.engine.legal_moves(state)] if state is not None else []
     next_seat = _seat_to_move(match.ply) if in_progress else None
     payload: dict[str, Any] = {"match_id": str(match.id), "ply": match.ply, "seat": seat,
                                "move": move, "state": match.state, "next_seat": next_seat,
                                "legal_moves": legal}
+    if state is not None and _claimable_reason(match, state) is not None:
+        payload["can_claim_draw"] = True  # vale para quem tem a vez (`next_seat`)
     san = _san_moves(match)
     if san:  # xadrez: o cliente exibe o lance na notação escolhida (RF-007) sem motor próprio
         payload["san"] = san[-1]
@@ -271,6 +285,14 @@ def _expire_draw_offers_on_move(db: Session, match: Match, mover_seat: int) -> l
         return []
     return [Event("draw_declined", {"match_id": str(match.id), "by_seat": mover_seat,
                                     "reason": "moved"}, match_id=match.id)]
+
+
+def _announce_move(db: Session, match: Match, players: list[MatchPlayer], mover: User) -> None:
+    """Partida online com outra pessoa: avisa que ela tem a vez (RF-028)."""
+    other = next((p.user_id for p in players if p.user_id not in (None, mover.id)), None)
+    if other is not None:
+        domain_events.emit_new(db, domain_events.MOVE_PLAYED, mover.id, match_id=str(match.id),
+                               game_id=match.game_id, opponent_user_id=other)
 
 
 def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_ply: int,
@@ -304,8 +326,12 @@ def submit_move_result(db: Session, user: User, match_id: uuid.UUID, expected_pl
         events.append(move_applied(match, seat, move_text))
         events.extend(_expire_draw_offers_on_move(db, match, seat))
         if match.status == "finished":
-            events.append(finish_event(db, match, players))
+            events.append(finish_event(db, match, players, user))
+        else:
+            _announce_move(db, match, players, user)
     _play_ai_turn_if_due(db, match, players, kit)
+    if match.mode == "ai" and match.status == "finished":
+        announce_finish(db, match, players, user)
     usage_service.touch(db, user)
     db.commit()
     return MoveResult(view(db, match, players, user), events)
@@ -335,12 +361,83 @@ def finish_with_winner(match: Match, winner_seat: int | None, reason: str) -> No
     match.result = "draw" if winner_seat is None else ("p1_win" if winner_seat == 1 else "p2_win")
 
 
-def finish_event(db: Session, match: Match, players: list[MatchPlayer]) -> Event:
+# P-17: motivos de fim que dependem de reivindicação (FIDE 9.2 e 9.3).
+CLAIMED_DRAW_REASONS = ("repetition", "fifty_move")
+
+
+def claim_draw_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOut, list[Event]]:
+    """Xadrez: quem tem a vez reivindica empate por repetição tripla ou regra dos 50 lances.
+
+    O servidor revalida com o motor; nada do cliente decide o resultado. Repetir o pedido depois
+    de a partida ter terminado assim devolve a visão atual, sem efeitos (idempotente).
+    """
+    limiter.hit(f"online-cmd:{user.id}", 120, 60)
+    match, players = load_for_participant(db, user, match_id, lock=True)
+    if match.game_id != "chess":
+        raise ProblemError(422, "draw_claim_not_available",
+                           "Este jogo não tem reivindicação de empate")
+    if match.status == "finished" and match.result == "draw" \
+            and match.end_reason in CLAIMED_DRAW_REASONS:
+        return view(db, match, players, user), []
+    if match.status == "waiting":
+        raise ProblemError(409, "match_not_started", "A partida ainda não começou")
+    if match.status != "in_progress":
+        raise ProblemError(409, "match_finished", "A partida já terminou")
+    to_move = _seat_to_move(match.ply)
+    if not any(p.seat == to_move and p.user_id == user.id for p in players):
+        raise ProblemError(403, "not_your_turn", "Só quem tem a vez pode reivindicar empate")
+    try:
+        state = _kit(match).engine.deserialize(match.state)
+    except InvalidState:
+        raise ProblemError(409, "match_aborted", "Esta partida foi encerrada por um erro") from None
+    reason = _claimable_reason(match, state)
+    if reason is None:
+        raise ProblemError(409, "draw_not_claimable", "Ainda não cabe reivindicar empate",
+                           "É preciso a mesma posição pela 3ª vez ou 50 lances sem captura "
+                           "nem movimento de peão.")
+    finish_with_winner(match, None, reason)
+    events = [finish_event(db, match, players, user)] if is_online(match) else []
+    if match.mode == "ai":
+        announce_finish(db, match, players, user)
+    db.commit()
+    return view(db, match, players, user), events
+
+
+def _outcome_for(match: Match, seat: int) -> str:
+    if match.result == "draw":
+        return "draw"
+    return "win" if (match.result == "p1_win") == (seat == 1) else "loss"
+
+
+def announce_finish(db: Session, match: Match, players: list[MatchPlayer],
+                    actor: User | None) -> None:
+    """Avisa os consumidores (conquistas, notificações) que a partida terminou (RF-026/028).
+
+    Um fato por pessoa humana; partidas locais, anuladas e abortadas não contam. Na mesma
+    transação, depois de o rating ser liquidado e antes do `commit`.
+    """
+    if match.status != "finished" or match.mode == "local" or match.result is None:
+        return
+    humans = [p for p in players if p.user_id is not None and not p.is_ai]
+    for p in humans:
+        if p.user_id is None:
+            continue
+        other = next((q.user_id for q in humans if q.user_id != p.user_id), None)
+        domain_events.emit_new(
+            db, domain_events.MATCH_FINISHED, p.user_id, match_id=str(match.id),
+            game_id=match.game_id, mode=match.mode, ranked=match.mode == "online_ranked",
+            online=is_online(match), outcome=_outcome_for(match, p.seat),
+            actor_user_id=actor.id if actor else None, opponent_user_id=other)
+
+
+def finish_event(db: Session, match: Match, players: list[MatchPlayer],
+                 actor: User | None = None) -> Event:
     """Liquida o rating (se a partida for ranqueada e válida) e descreve o fim da partida.
 
     Deve ser chamado na mesma transação que encerrou a partida, antes do `commit`.
     """
     changes = rating_service.settle(db, match, players)
+    announce_finish(db, match, players, actor)
     return match_ended(match.id, match.result, match.end_reason, match.ply,
                        [{"seat": c.seat, "before": c.before, "after": c.after}
                         for c in changes])
@@ -358,7 +455,9 @@ def resign_result(db: Session, user: User, match_id: uuid.UUID) -> tuple[MatchOu
     else:
         loser = next(p.seat for p in players if p.user_id == user.id)
     finish_with_winner(match, 3 - loser, "resign")
-    events = [finish_event(db, match, players)] if is_online(match) else []
+    events = [finish_event(db, match, players, user)] if is_online(match) else []
+    if match.mode == "ai":
+        announce_finish(db, match, players, user)
     db.commit()
     return view(db, match, players, user), events
 

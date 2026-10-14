@@ -11,7 +11,7 @@ export function statusText(m: Pick<MatchView, "game_id" | "status" | "result" | 
     repetition: " (tripla repetição)", kings_only: " (limite de lances só com damas)",
   };
   const chessReasons: Record<string, string> = {
-    stalemate: " (afogamento)", repetition: " (repetição quíntupla)", fifty_move: " (regra dos 75 lances)",
+    stalemate: " (afogamento)", repetition: " (repetição de posição)", fifty_move: " (regra dos 50/75 lances)",
   };
   if (m.status === "aborted") return "Partida encerrada por um erro. Comece outra.";
   if (m.status === "finished") {

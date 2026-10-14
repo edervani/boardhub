@@ -44,7 +44,7 @@ from app.schemas.academy import (
     ProgressOut,
     TrackOut,
 )
-from app.services import catalog_service, usage_service
+from app.services import catalog_service, domain_events, usage_service
 
 DAY = 86400.0
 
@@ -168,6 +168,11 @@ def _exercise_out(ref: ExerciseRef, hints_used: int) -> ExerciseOut:
         options=[OptionOut(id=o.id, text=o.text) for o in ex.options], hints_used=hints_used)
 
 
+def exercise_view(ref: ExerciseRef) -> ExerciseOut:
+    """Enunciado sem dicas usadas, para outros módulos (ex.: desafio diário) reaproveitarem."""
+    return _exercise_out(ref, 0)
+
+
 def _hint_row(db: Session, user: User, exercise_id: str, lock: bool = False) -> ExerciseHint | None:
     stmt = select(ExerciseHint).where(ExerciseHint.user_id == user.id,
                                       ExerciseHint.exercise_id == exercise_id)
@@ -255,6 +260,8 @@ def submit_attempt(db: Session, user: User, exercise_id: str, answer: str,
     if graded.correct and hint_row is not None:
         db.delete(hint_row)  # as dicas valem para a tentativa que as usou
     usage_service.touch(db, user, now)  # RF-034: o tempo na Academy também conta
+    domain_events.emit_new(db, domain_events.EXERCISE_ATTEMPTED, user.id, game_id=game_id,
+                           correct=graded.correct)  # conquistas (RF-026)
     db.commit()
     return AttemptOut(
         correct=graded.correct, feedback=graded.feedback,

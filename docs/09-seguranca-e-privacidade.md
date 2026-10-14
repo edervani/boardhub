@@ -60,7 +60,7 @@ Acesso/portabilidade (RF-029), correção (RF-006), eliminação (RF-030), infor
 - Obrigações que **dependem de validação jurídica e organizacional** (não resolvidas por código): nomeação do encarregado; política de privacidade e termos; registro das operações de tratamento; contratos com operadores (hospedagem, e-mail); avaliação sobre relatório de impacto; procedimento de comunicação de incidentes.
 
 ## 9. Exclusão e exportação
-Ver doc 05 §7, RF-029/RF-030 e DT-020. A exportação nunca contém hash de senha, tokens, hashes de sessão nem nome, e-mail ou id de outras pessoas (testado). Exclusão e exportação gravam `audit_log` sem dados pessoais; o registro final `account_deleted` não tem autor.
+Ver doc 05 §7, RF-029/RF-030 e DT-020. A exportação nunca contém hash de senha, tokens, hashes de sessão nem nome, e-mail ou id de outras pessoas (testado). A exportação inclui a seção `engagement` (conquistas, desafios diários, avisos e preferências de aviso) e a exclusão apaga essas tabelas em cascata (DT-023). Exclusão e exportação gravam `audit_log` sem dados pessoais; o registro final `account_deleted` não tem autor.
 
 ## 10. Crianças e adolescentes
 
@@ -78,5 +78,7 @@ Normas aplicáveis: art. 14 da LGPD e o ECA Digital (Lei 15.211/2025), em vigor 
 | Sem perfilamento para publicidade (art. 22) | Não há publicidade nem perfilamento |
 | Riscos de contato com adultos (art. 6º) | Sem chat livre; convites só por código ou entre amigos aprovados pelo responsável |
 | Consentimento parental para menores de 12 anos (LGPD, art. 14) | Cadastro de menor de 12 só concluído após confirmação do responsável por e-mail; mecanismo final depende de P-04 |
+
+**Social e denúncias (DT-022, P-24):** não há chat livre. Pedidos de amizade e convites diretos só existem entre contas com a mesma condição de idade (menor com menor, adulto com adulto); a conta de menor precisa de responsável vinculado que liberou o contato (`allow_open_matchmaking`) e perde o acesso se o responsável revogar. Bloqueio, conta alheia e regra de menores respondem 404 igual a "inexistente" (SEC-02/05). Denúncias: o denunciante nunca é exposto (nem ao denunciado, nem na fila, nem por e-mail), texto livre sanitizado e exibido como texto (SEC-09), limite por conta e por alvo; moderação exige papel conferido no servidor e grava `audit_log` (SEC-11).
 
 Faixa etária coletada: autodeclarada em faixas (`<12`, `12–15`, `16–17`, `18+`), sem data de nascimento. Pontos a confirmar com o jurídico: se a lei exige vínculo obrigatório de contas até determinada idade, qual método de confirmação parental é aceitável e se a autodeclaração basta para aplicar as configurações protetivas.
