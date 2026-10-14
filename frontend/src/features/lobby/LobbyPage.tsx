@@ -102,7 +102,9 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
       api<QueueStatus>("GET", "/matchmaking/queue").then((s) => {
         if (!vivo || !queueActive.current) return;
         if (s.state === "matched" && s.match_id) { setQueue(null); setOpenId(s.match_id); }
-        else setQueue(s.state === "idle" ? null : s);
+        // Só atualiza quem ainda está na fila: uma resposta atrasada, emitida antes de "Sair da fila",
+        // não pode recolocar o usuário na fila (corrida entre a consulta periódica e o DELETE).
+        else setQueue((cur) => (cur === null ? null : s.state === "idle" ? null : s));
       }, (e: unknown) => { if (vivo) setError(errorMessage(e)); });
     }, pollMs);
     return () => { vivo = false; clearInterval(timer); };

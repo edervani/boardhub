@@ -40,6 +40,14 @@ IDOR em todo endpoint com `{id}`; CSRF (requisição sem token ⇒ 403); WS com 
 ## 7. Recuperação, migração e desempenho
 Reinício do backend durante partidas (RNF-009); restauração de backup em banco limpo (RNF-008); `alembic upgrade head` → `downgrade base` → `upgrade head` em CI (RNF-028); carga conforme RNF-001–006.
 
+## 7-A. E2E e acessibilidade (RNF-014/015/016)
+Pacote próprio em `e2e/` (Playwright em TypeScript + `@axe-core/playwright`, lockfile gerado pelo job `lockfiles`). O job `e2e` do CI sobe o mesmo `docker compose` do job `compose`, cria **uma** conta sintética verificada (cadastro → token lido no Mailpit → verificação → login por API; o servidor limita cadastros por IP) e roda a suíte no Chromium, sem retentativas; relatório HTML e traces viram artefato em caso de falha.
+
+- **axe-core** (`e2e/support/a11y.ts`): todas as regras padrão; violação `serious`/`critical` reprova o teste. A lista de exceções (`A11Y_EXCEPTIONS`) está vazia; qualquer entrada exige motivo, registro em docs/16 e aprovação humana. Telas auditadas: cadastro (inclusive menor de 12 anos e conta criada), login (com erro), lista de jogos (visitante e autenticado), nova partida, velha/damas/xadrez (início, seleção e após o lance), histórico, revisão do Mentor, lobby, ranking, perfil, privacidade (inclusive exportação e confirmação de exclusão), Academy (trilhas, lições, lição e exercício) e, em tema escuro, jogos, xadrez, lobby, perfil e privacidade.
+- **Teclado (RNF-015):** jogo da velha completo contra a IA, só com Tab/setas/Enter; damas e xadrez com um lance cada. Partida completa por teclado em damas e xadrez, xadrez com promoção e modo online ainda **não** têm E2E.
+- **Navegadores (RNF-016):** `playwright.config.ts` declara Chromium, Firefox e WebKit, mas o CI roda só o Chromium. Firefox e WebKit seguem pendentes: RNF-016 **não** está atendido.
+- **Fora do escopo desta entrega:** auditoria manual WCAG 2.2 AA (RNF-014 exige também o checklist), 320 px, zoom 200%, `prefers-reduced-motion`, varredura de logs (RNF-013) e partidas online entre dois navegadores.
+
 ## 8. Matriz de rastreabilidade
 
 Colunas: requisito · documento de origem · módulo responsável · endpoint/componente · caso de teste · critério de aceite · estado · evidência. RF-001 a RF-005 estão **implementado** (PR #1 mesclado); RF-006, RF-007, RF-033 e RF-034 seguem **aprovado** com código mesclado e aceite parcial (P-15). Evidência da Fase 1 na branch `feat/fase-1-base`: CI verde (backend 76 testes pytest, frontend 6 testes Vitest); nenhum requisito é marcado `implementado` antes do merge. Gerada e verificada por `scripts/check_docs.py`.
