@@ -180,7 +180,7 @@ def rnf_tests() -> dict[str, str]:
 PR1 = "[PR #1](https://github.com/edervani/boardhub/pull/1)"
 # Estado/evidência por requisito. `implementado` só com código mesclado (doc 00 §4).
 IMPLEMENTADOS = {1, 2, 3, 4, 5}
-PARCIAIS = {6, 7, 33, 34}  # código mesclado, aceite incompleto (P-15)
+PARCIAIS = {6, 7, 9, 10, 13, 15, 16, 20, 33, 34}  # código mesclado, aceite incompleto (P-15)
 
 
 def state_evidence(n: int) -> tuple[str, str]:

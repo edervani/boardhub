@@ -101,7 +101,7 @@ boardhub/
 └── docker-compose.yml
 ```
 
-**Estado atual (Fase 1):** existem `backend/` (core, db, models, schemas, services e api de identidade/perfil/catálogo/supervisão) e `frontend/` (app, features auth/profile/catalog, services, styles). `game_engines/` e `ai/opponents/` existem apenas para o jogo da velha (Fase 2a); `realtime/` não existe ainda, de propósito — não se criam diretórios vazios para simular arquitetura.
+**Estado atual (Fase 1):** existem `backend/` (core, db, models, schemas, services e api de identidade/perfil/catálogo/supervisão) e `frontend/` (app, features auth/profile/catalog, services, styles). `game_engines/` e `ai/opponents/` existem apenas para o jogo da velha (Fases 2a e 2b); `realtime/` não existe ainda, de propósito — não se criam diretórios vazios para simular arquitetura.
 
 ### Regras de dependência (anticiclo)
 `api/realtime → services → (game_engines, ai, db) → core`. `game_engines` só depende da biblioteca padrão e de bibliotecas de regras (ex.: python-chess). `ai` depende de `game_engines`, nunca o contrário. `features/*` no frontend não importam umas das outras; o que for comum vai para `components/` ou `services/`. Verificado por RNF-019.
