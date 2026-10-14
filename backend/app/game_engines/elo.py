@@ -21,7 +21,7 @@ LOSS = 0.0
 
 def expected_score(rating: int, opponent_rating: int) -> float:
     """Pontuação esperada de `rating` contra `opponent_rating` (0 a 1)."""
-    return 1.0 / (1.0 + 10.0 ** ((opponent_rating - rating) / 400.0))
+    return 1.0 / (1.0 + math.pow(10.0, (opponent_rating - rating) / 400.0))
 
 
 def k_factor(games_played: int) -> int:
