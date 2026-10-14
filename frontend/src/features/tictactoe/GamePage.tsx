@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Me } from "../../services/types";
 import { Board } from "./Board";
-import { CheckersBoard } from "./CheckersBoard";
-import { ChessBoard } from "./ChessBoard";
+import { MatchBoard } from "./MatchBoard";
 import { LEVEL_LABELS, statusText } from "./status";
 import { useGuestLocalMatch, useServerMatch } from "./useGame";
 
@@ -84,21 +83,11 @@ export function GamePage({ me }: { me: Me | null }) {
   const playable = match.status === "in_progress" && !m.busy &&
     (match.mode === "local" || match.seats.find((s) => s.seat === match.to_move_seat)?.is_you)
     ? match.legal_moves : [];
-  const checkers = match.game_id === "checkers";
-  const mySeat = match.seats.find((s) => s.is_you)?.seat ?? 1;
   return (
     <section aria-labelledby="game-title">
       <h2 id="game-title">{TITLES[match.game_id] ?? match.game_id}{match.ai_level ? ` — IA nível ${match.ai_level}` : ""}</h2>
       <p role="status" aria-live="polite">{statusText(match)}</p>
-      {match.game_id === "chess" ? (
-        <ChessBoard fen={match.state.fen ?? ""} playable={playable}
-          flipped={match.mode !== "local" && mySeat === 2} onPlay={(mv) => void m.play(mv)} />
-      ) : checkers ? (
-        <CheckersBoard squares={match.state.squares ?? []} playable={playable}
-          flipped={match.mode !== "local" && mySeat === 2} onPlay={(mv) => void m.play(mv)} />
-      ) : (
-        <Board board={match.state.board ?? ""} playable={playable} onPlay={(i) => void m.play(String(i))} />
-      )}
+      <MatchBoard match={match} playable={playable} onPlay={(mv) => void m.play(mv)} />
       {m.error && <p role="alert">{m.error}</p>}
       <p>
         {match.status === "in_progress" && (

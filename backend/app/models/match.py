@@ -44,6 +44,11 @@ class Match(CreatedAt, Base):
             f"end_reason IS NULL OR {_in('end_reason', END_REASONS)}", name="end_reason"
         ),
         CheckConstraint("ai_level IS NULL OR ai_level BETWEEN 1 AND 5", name="ai_level"),
+        CheckConstraint(
+            "invite_creator_seat IS NULL OR invite_creator_seat IN (1, 2)",
+            name="invite_creator_seat",
+        ),
+        UniqueConstraint("invite_code_hash"),
         Index("ix_matches_status_game_id", "status", "game_id"),
         Index("ix_matches_updated_at", "updated_at"),
     )
@@ -59,6 +64,11 @@ class Match(CreatedAt, Base):
     rules_version: Mapped[str] = mapped_column(String(24))
     ai_level: Mapped[int | None] = mapped_column(SmallInteger)
     ai_seed: Mapped[int | None] = mapped_column(Integer)  # reprodutibilidade da IA (doc 07)
+    # Sala por convite (RF-011): só o HMAC do código é guardado; NULL nos demais modos.
+    invite_code_hash: Mapped[bytes | None] = mapped_column(LargeBinary(32))
+    invite_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Assento escolhido pelo criador; NULL = sorteio quando o segundo jogador entra.
+    invite_creator_seat: Mapped[int | None] = mapped_column(SmallInteger)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(
@@ -82,6 +92,8 @@ class MatchPlayer(Base):
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_ai: Mapped[bool] = mapped_column(Boolean, default=False)
     removed_account: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Presença (RF-014): NULL = conectado; preenchido = desconectado desde esse instante.
+    disconnected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class MatchMove(Base):
@@ -100,3 +112,44 @@ class MatchMove(Base):
     client_move_id: Mapped[uuid.UUID] = mapped_column()
     state_after_hash: Mapped[bytes] = mapped_column(LargeBinary(32))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+DRAW_OFFER_STATUSES = ("pending", "accepted", "declined", "expired")
+
+
+class DrawOffer(Base):
+    """Oferta de empate por acordo (RF-015). Só uma `pending` por partida."""
+
+    __tablename__ = "draw_offers"
+    __table_args__ = (
+        CheckConstraint("by_seat IN (1, 2)", name="by_seat"),
+        CheckConstraint(_in("status", DRAW_OFFER_STATUSES), name="status"),
+        Index("ix_draw_offers_match_id_status", "match_id", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    match_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("matches.id", ondelete="CASCADE"))
+    by_seat: Mapped[int] = mapped_column(SmallInteger)
+    at_ply: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(8), default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class QueueEntry(Base):
+    """Fila de pareamento (RF-012): uma entrada por usuário; some ao parear ou sair."""
+
+    __tablename__ = "matchmaking_queue"
+    __table_args__ = (Index("ix_matchmaking_queue_game_id_enqueued_at", "game_id", "enqueued_at"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    game_id: Mapped[str] = mapped_column(ForeignKey("games.id"))
+    enqueued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # Atualizado a cada consulta do cliente; entradas sem consulta recente são ignoradas.
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # Preenchido quando outro jogador pareou com este; o cliente consome na próxima consulta.
+    matched_match_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("matches.id", ondelete="SET NULL")
+    )

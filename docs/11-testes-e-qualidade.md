@@ -54,14 +54,14 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-005 | doc 02 | services/auth_service | /auth/password/* | T-005 | CA-005 | implementado | [PR #1](https://github.com/edervani/boardhub/pull/1); CI verde |
 | RF-006 | doc 02 | services/user_service | PATCH /me/profile; features/profile | T-006 | CA-006 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-007 | doc 02 | services/user_service | /me/preferences; features/profile | T-007 | CA-007 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
-| RF-008 | doc 02 | frontend features/lobby | GET /games; features/lobby | T-008 | CA-008 | aprovado | — |
+| RF-008 | doc 02 | frontend features/lobby | GET /games, /me/active-matches; features/lobby | T-008 | CA-008 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-009 | doc 02 | services/match_service | POST /engines/{game}/apply; POST /matches | T-009 | CA-009 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-010 | doc 02 | services/match_service + ai/opponents | POST /matches; WS submit_move | T-010 | CA-010 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
-| RF-011 | doc 02 | services/match_service | POST /matches, /matches/join | T-011 | CA-011 | aprovado | — |
-| RF-012 | doc 02 | services/matchmaking_service | /matchmaking/queue | T-012 | CA-012 | aprovado | — |
+| RF-011 | doc 02 | services/online_service | POST /matches, /matches/join, /matches/{id}/cancel | T-011 | CA-011 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-012 | doc 02 | services/online_service | /matchmaking/queue | T-012 | CA-012 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-013 | doc 02 | services/match_service + realtime | WS submit_move | T-013 | CA-013 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
-| RF-014 | doc 02 | realtime | WS join_match | T-014 | CA-014 | aprovado | — |
-| RF-015 | doc 02 | services/match_service | /matches/{id}/resign, draw-* | T-015 | CA-015 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-014 | doc 02 | realtime + services/online_service | WS /api/v1/ws join_match; GET /matches/{id} | T-014 | CA-014 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
+| RF-015 | doc 02 | services/match_service + online_service | /matches/{id}/resign, draw-offer, draw-response, claim-abandon | T-015 | CA-015 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-016 | doc 02 | game_engines/tictactoe | features/tictactoe | T-016 | CA-016 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-017 | doc 02 | game_engines/checkers | features/checkers | T-017 | CA-017 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-018 | doc 02 | game_engines/chess | features/chess | T-018 | CA-018 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |

@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     session_absolute_days: int = 90
     terms_version: str = "2026-10-13"
 
+    # Partidas online (RF-011, RF-012, RF-014, RF-015; doc 06 §3.6)
+    invite_ttl_seconds: int = Field(default=900, ge=60)
+    queue_stale_seconds: int = Field(default=45, ge=5)
+    online_grace_seconds: int = Field(default=60, ge=1)
+    online_inactivity_seconds: int = Field(default=600, ge=30)
+
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_user: str = ""

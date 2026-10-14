@@ -8,6 +8,7 @@ from app.api.routes import auth, health, matches, me, profile
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
+from app.realtime import endpoint as realtime
 
 
 def create_app() -> FastAPI:
@@ -28,7 +29,8 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Content-Type", "X-CSRF-Token"],
     )
-    for router in (health.router, auth.router, me.router, profile.router, matches.router):
+    for router in (health.router, auth.router, me.router, profile.router, matches.router,
+                   realtime.router):
         app.include_router(router, prefix="/api/v1")
     return app
 

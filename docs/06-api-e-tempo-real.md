@@ -68,7 +68,7 @@ Validação: Pydantic com `extra="forbid"`, tamanhos máximos em todas as string
 ## 3. WebSocket
 
 ### 3.1 Conexão
-- URL: `wss://<host>/ws/v1`. Uma conexão por aba; multiplexa partidas.
+- URL: `wss://<host>/api/v1/ws` (DT-017; códigos de fechamento 4401, 4403, 4408, 4429, 1009, 1013; retomada com `last_known_ply`; endpoints REST extras: `/matches/{id}/cancel`, `/claim-abandon`, `GET /matchmaking/queue`, `/me/active-matches`). Uma conexão por aba; multiplexa partidas.
 - Handshake: valida cookie de sessão e cabeçalho `Origin` contra lista branca; falha ⇒ fecha com código 4401 (não autenticado) ou 4403 (origem).
 - Heartbeat: servidor envia `ping` a cada 20 s; sem `pong` em 40 s ⇒ conexão considerada perdida.
 - Tamanho máximo de mensagem 4 KB; limite 20 mensagens/s por conexão (excedido ⇒ fecha 4429).
