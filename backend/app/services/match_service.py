@@ -112,6 +112,7 @@ def create_match(db: Session, user: User, game_id: str, mode: str, ai_level: int
     else:
         players = [MatchPlayer(match_id=match.id, seat=s, user_id=user.id, is_ai=False)
                    for s in (1, 2)]
+    players.sort(key=lambda p: p.seat)
     db.add_all(players)
     db.flush()
     _play_ai_turn_if_due(db, match, players, kit)
