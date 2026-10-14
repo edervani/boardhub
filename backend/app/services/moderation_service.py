@@ -14,7 +14,7 @@ import unicodedata
 import uuid
 from typing import Any
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core import clock
@@ -87,11 +87,11 @@ def _report_target(db: Session, reporter: User, body: ReportIn) -> tuple[User, u
     if not any(p.user_id == reporter.id for p in players):
         raise ProblemError(404, "not_found", "Partida não encontrada")  # IDOR (SEC-05)
     others = [p.user_id for p in players if p.user_id is not None and p.user_id != reporter.id]
-    target = db.get(User, others[0]) if others else None
-    if target is None:
+    opponent = db.get(User, others[0]) if others else None
+    if opponent is None:
         raise ProblemError(422, "no_human_opponent", "Não há outra pessoa para denunciar",
                            "Esta partida não teve outro jogador humano.")
-    return target, match_id
+    return opponent, match_id
 
 
 def create_report(db: Session, reporter: User, body: ReportIn) -> ReportCreatedOut:
@@ -132,7 +132,7 @@ def list_reports(db: Session, staff: User, status: str, limit: int,
     return ReportQueueOut(items=_items(db, list(rows)), total=total)
 
 
-def _queue_select() -> Select[Any]:
+def _queue_select() -> Any:
     return (select(Report, UserProfile.display_name, UserProfile.bio, User.status)
             .join(User, User.id == Report.target_user_id)
             .join(UserProfile, UserProfile.user_id == User.id))
