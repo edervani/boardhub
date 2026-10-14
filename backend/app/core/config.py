@@ -1,9 +1,9 @@
 """Configuração carregada de variáveis de ambiente (doc 04 §15)."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, PostgresDsn, computed_field
+from pydantic import Field, PostgresDsn, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,12 +34,31 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     mail_from: str = "nao-responda@example.test"
+    # "file" grava as mensagens em MAIL_FILE_PATH (modo nativo de teste, DT-022): só em
+    # APP_ENV development/test, porque o arquivo contém os links de verificação.
+    mail_backend: Literal["smtp", "file"] = "smtp"
+    mail_file_path: str = ""
+
+    # Diretório do build do frontend servido pelo backend (modo nativo, DT-022). Vazio = desligado.
+    serve_frontend_dir: str = ""
 
     postgres_db: str
     postgres_user: str
     postgres_password: str
     db_host: str = "localhost"
     db_port: int = 5432
+
+    @model_validator(mode="after")
+    def _only_for_local_tests(self) -> Self:
+        local = self.app_env in ("development", "test")
+        if self.serve_frontend_dir and not local:
+            raise ValueError("SERVE_FRONTEND_DIR só é permitido com APP_ENV development ou test")
+        if self.mail_backend == "file":
+            if not local:
+                raise ValueError("MAIL_BACKEND=file só é permitido com APP_ENV development ou test")
+            if not self.mail_file_path:
+                raise ValueError("MAIL_BACKEND=file exige MAIL_FILE_PATH")
+        return self
 
     @computed_field  # type: ignore[prop-decorator]
     @property

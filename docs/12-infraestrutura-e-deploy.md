@@ -11,6 +11,8 @@
 | Homologação | Validação pré-produção | Sintéticos; **nunca cópia de produção** | Equipe, protegido por autenticação |
 | Produção | Usuários reais | Reais | Operação restrita |
 
+> **Teste local sem Docker (DT-025):** onde o Docker não pode ser instalado, existe um modo nativo apenas para testes (`scripts/windows/*-nativo.ps1`; ver [doc 13 §8](13-monitoramento-e-operacao.md#8-modo-nativo-no-windows-sem-docker--somente-testes-dt-025)). Ele **não** é um ambiente de produção nem de homologação.
+
 ## 2. Contêineres
 - `backend`: imagem Python slim multi-stage, usuário não root, sistema de arquivos somente leitura exceto `/tmp`, `uvicorn` com workers conforme CPU, healthcheck em `/health/live`.
 - `frontend`: build estático do Vite servido pelo proxy (sem servidor Node em produção).

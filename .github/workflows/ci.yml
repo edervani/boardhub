@@ -170,3 +170,159 @@ jobs:
       - name: Derrubar ambiente
         if: always()
         run: docker compose down --volumes
+
+  # ---------- Modo nativo do Windows, sem Docker (DT-025) ----------
+
+  # Sintaxe no Windows PowerShell 5.1 (o do Windows Server 2019) e PSScriptAnalyzer.
+  powershell:
+    runs-on: windows-latest
+    defaults:
+      run: { shell: powershell }
+    steps:
+      - uses: actions/checkout@v5
+      - name: Sintaxe (Windows PowerShell 5.1)
+        run: |
+          "PowerShell $($PSVersionTable.PSVersion)"
+          $erros = 0
+          foreach ($f in Get-ChildItem scripts/windows -Filter *.ps1) {
+            $tokens = $null; $errs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$tokens, [ref]$errs)
+            foreach ($e in $errs) { Write-Host "::error file=$($f.FullName),line=$($e.Extent.StartLineNumber)::$($e.Message)"; $erros++ }
+          }
+          if ($erros -gt 0) { exit 1 }
+      - name: Instalar PSScriptAnalyzer
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
+            Install-Module PSScriptAnalyzer -MinimumVersion 1.22.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          }
+          (Get-Module -ListAvailable PSScriptAnalyzer | Select-Object -First 1).Version.ToString()
+      - name: PSScriptAnalyzer (regras padrão e compatibilidade com 5.1)
+        run: |
+          Import-Module PSScriptAnalyzer
+          $achados = @()
+          $alvos = @(Get-ChildItem scripts/windows -Filter '*-nativo.ps1') + @(Get-Item scripts/windows/PSScriptAnalyzerSettings.psd1)
+          foreach ($alvo in $alvos) {
+            $achados += Invoke-ScriptAnalyzer -Path $alvo.FullName -Settings scripts/windows/PSScriptAnalyzerSettings.psd1
+            $achados += Invoke-ScriptAnalyzer -Path $alvo.FullName -Settings @{ IncludeRules = @('PSUseCompatibleSyntax'); Rules = @{ PSUseCompatibleSyntax = @{ Enable = $true; TargetVersions = @('5.1') } } }
+          }
+          foreach ($a in $achados) { Write-Host "::error file=$($a.ScriptPath),line=$($a.Line),title=$($a.RuleName)::$($a.Message)" }
+          "$($achados.Count) achado(s)"
+          if ($achados.Count -gt 0) { exit 1 }
+
+  # Pacote para quem não tem Node nem Git: backend + scripts + frontend já construído.
+  pacote-windows-nativo:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: "24" }
+      - name: Construir o frontend
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then ../scripts/ci/run.sh "pacote-npm ci" npm ci; else ../scripts/ci/run.sh "pacote-npm install" npm install --no-audit --no-fund; fi
+          ../scripts/ci/run.sh "pacote-build" npm run build
+      - name: Montar o pacote
+        run: |
+          set -euo pipefail
+          mkdir -p pacote/backend pacote/frontend pacote/scripts/windows
+          cp -r backend/app backend/alembic backend/alembic.ini backend/pyproject.toml backend/uv.lock pacote/backend/
+          find pacote -name __pycache__ -prune -exec rm -rf {} +
+          cp -r frontend/dist pacote/frontend/dist
+          cp scripts/windows/_nativo-comum.ps1 scripts/windows/*-nativo.ps1 pacote/scripts/windows/
+          cp scripts/smoke_compose.py pacote/scripts/
+          cp scripts/windows/LEIA-ME-NATIVO.txt pacote/
+          test -f pacote/frontend/dist/index.html
+          find pacote -type f | wc -l
+      # O GitHub compacta a pasta: o download é o arquivo boardhub-windows-nativo.zip.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: boardhub-windows-nativo
+          path: pacote/
+          if-no-files-found: error
+          retention-days: 30
+
+  # Prova que o modo nativo funciona de fato: instala (uv, Python, PostgreSQL portátil, migrações),
+  # sobe backend + frontend estático e roda o teste de fumaça ponta a ponta no Windows.
+  #  - pacote: usa o pacote do CI numa pasta limpa, com Mailpit;
+  #  - construir: usa o checkout, constrói o frontend com Node portátil, e-mails em arquivo.
+  native-smoke:
+    needs: pacote-windows-nativo
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { modo: pacote, mailpit: "true" }
+          - { modo: construir, mailpit: "false" }
+    defaults:
+      run: { shell: powershell }
+    env:
+      MODO: ${{ matrix.modo }}
+      COM_MAILPIT: ${{ matrix.mailpit }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Baixar o pacote
+        if: matrix.modo == 'pacote'
+        uses: actions/download-artifact@v4
+        with:
+          name: boardhub-windows-nativo
+          path: ${{ runner.temp }}\pacote
+      - name: Definir a pasta de trabalho
+        run: |
+          if ($env:MODO -eq 'pacote') { $d = Join-Path $env:RUNNER_TEMP 'pacote' } else { $d = $env:GITHUB_WORKSPACE }
+          "BH_DIR=$d" | Out-File -FilePath $env:GITHUB_ENV -Encoding ascii -Append
+          Get-ChildItem $d | Select-Object -ExpandProperty Name
+      - name: Verificar antes de instalar (deve acusar itens faltando)
+        working-directory: ${{ env.BH_DIR }}
+        run: |
+          .\scripts\windows\instalar-nativo.ps1 -SomenteVerificar
+          if ($LASTEXITCODE -eq 0) { Write-Host 'Esperava itens faltando antes da instalação.'; exit 1 }
+          exit 0
+      - name: Instalar (modo nativo)
+        working-directory: ${{ env.BH_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $p = @{ PostgresPortatil = $true }
+          if ($env:MODO -eq 'construir') { $p.ConstruirFrontend = $true }
+          if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-instalar' { .\scripts\windows\instalar-nativo.ps1 @p }
+      - name: Verificar depois de instalar
+        working-directory: ${{ env.BH_DIR }}
+        run: |
+          $p = @{ SomenteVerificar = $true }
+          if ($env:MODO -eq 'construir') { $p.ConstruirFrontend = $true }
+          if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-verificar' { .\scripts\windows\instalar-nativo.ps1 @p }
+      # Iniciar, fumaça e rotina ficam no MESMO passo: o runner encerra os processos filhos de cada
+      # passo ao terminá-lo (o backend é filho do PowerShell). Fora do CI isso não ocorre.
+      - name: Iniciar, teste de fumaça (site, API, banco e e-mail) e rotina diária
+        working-directory: ${{ env.BH_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          $p = @{}
+          if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
+          Invoke-Passo 'nativo-iniciar' { .\scripts\windows\iniciar-nativo.ps1 @p }
+          $env:SMOKE_WEB = 'http://localhost:8080'
+          if ($env:COM_MAILPIT -ne 'true') { $env:SMOKE_MAIL_FILE = Join-Path $env:BH_DIR '.native\data\emails.jsonl' }
+          Invoke-Passo 'nativo-fumaca' { & (Join-Path $env:BH_DIR 'backend\.venv\Scripts\python.exe') -I scripts\smoke_compose.py }
+          Invoke-Passo 'nativo-jobs' { .\scripts\windows\jobs-nativo.ps1 }
+          Get-Content .native\logs\jobs.log
+      - name: Registros (falha)
+        if: failure()
+        working-directory: ${{ env.BH_DIR }}
+        run: |
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          foreach ($f in Get-ChildItem .native\logs -ErrorAction SilentlyContinue) {
+            Write-Anotacao ("log " + $f.Name) @(Get-Content $f.FullName -Tail 40) 'error' 40
+          }
+      - name: Parar
+        if: always()
+        working-directory: ${{ env.BH_DIR }}
+        run: .\scripts\windows\parar-nativo.ps1

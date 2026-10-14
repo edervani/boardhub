@@ -40,3 +40,18 @@ Diário: verificar backup; job de limpeza (tokens, sessões, exportações, excl
 
 ## 7. Capacidade e custos
 Revisão trimestral: CPU da IA, conexões WS, crescimento de `match_moves`. Orçamento mensal pendente (P-06).
+
+## 8. Modo nativo no Windows (sem Docker) — somente testes (DT-025)
+
+Execução para quem não consegue instalar Docker (ex.: Windows Server 2019 virtualizado). Procedimento completo no [README](../README.md#windows-sem-docker-modo-nativo-só-para-testes).
+
+| Item | Como é no modo nativo |
+|------|-----------------------|
+| Processos | PostgreSQL 17 portátil (`pg_ctl`, só `127.0.0.1:5433`), backend `uvicorn` (`127.0.0.1:<porta>`, padrão 8080) e, opcionalmente, Mailpit (`127.0.0.1:8025`/`1025`); PIDs em `.native\run`; sem serviço do Windows nem administrador |
+| Site | O backend serve `frontend\dist` (`SERVE_FRONTEND_DIR`, fallback de SPA; `/api` nunca cai no fallback); mesma origem de `/api`, sem nginx |
+| Cookies/CORS | `COOKIE_SECURE=false` (HTTP em localhost), `SameSite=Lax`, CSRF por cabeçalho inalterado; `FRONTEND_ORIGIN=http://localhost:<porta>` é a única origem aceita por CORS e WebSocket (acessar por `127.0.0.1` ou pelo nome da máquina é recusado) |
+| E-mail | `MAIL_BACKEND=file` grava um JSON por linha em `.native\data\emails.jsonl` (inclui links de verificação; só com `APP_ENV` development/test; o log registra apenas que houve gravação) ou SMTP para o Mailpit |
+| Segredos | `.native\.env` (permissões restritas ao usuário, ignorado pelo controle de versão) com `SECRET_KEY` e senhas aleatórias; o usuário da aplicação não é superusuário |
+| Registros | `.native\logs\backend.log`, `backend.err.log`, `postgres.log`, `jobs.log` |
+| Backup | Não há; `pg_dump.exe` fica em `.native\tools\pgsql\bin` se for necessário |
+| Limites | Só testes; sem TLS; para se a sessão do Windows terminar; nenhum dado real; não substitui o plano de produção do doc 12 |

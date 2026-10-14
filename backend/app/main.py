@@ -17,6 +17,7 @@ from app.api.routes import (
     ranking,
     social,
 )
+from app.api.static_frontend import install_frontend
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -50,6 +51,8 @@ def create_app() -> FastAPI:
                    social.router, admin.router,
                    realtime.router):
         app.include_router(router, prefix="/api/v1")
+    if settings.serve_frontend_dir:  # modo nativo de teste (DT-022); sempre depois da API
+        install_frontend(app, settings.serve_frontend_dir)
     return app
 
 

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Teste de fumaça ponta a ponta contra o ambiente do docker compose (site → API → banco → e-mail).
 
+Também valida o modo nativo do Windows (DT-022): com `SMOKE_WEB` (URL do site) e
+`SMOKE_MAIL_FILE` (arquivo JSONL do MAIL_BACKEND=file) no lugar do Mailpit.
+
 Cadastra uma conta sintética, confirma o e-mail pela caixa de teste, entra, joga o jogo da
 velha contra a IA e confere o histórico. Sai com código != 0 em qualquer divergência.
 """
 
 import http.cookiejar
 import json
+import os
 import re
 import subprocess
 import sys
@@ -15,8 +19,9 @@ import urllib.error
 import urllib.request
 import uuid
 
-WEB = "http://localhost:8080"
-MAILPIT = "http://localhost:8025"
+WEB = os.environ.get("SMOKE_WEB", "http://localhost:8080")
+MAILPIT = os.environ.get("SMOKE_MAILPIT", "http://localhost:8025")
+MAIL_FILE = os.environ.get("SMOKE_MAIL_FILE", "")  # modo nativo: e-mails em arquivo JSONL
 PASSWORD = "cavalo-bispo-torre-42"
 EMAIL = f"fumaca-{uuid.uuid4().hex[:8]}@example.test"
 
@@ -60,8 +65,27 @@ def wait_ready() -> None:
     raise AssertionError("o site não ficou pronto em 120 s")
 
 
+def token_from_file() -> str | None:
+    try:
+        with open(MAIL_FILE, encoding="utf-8") as fh:
+            lines = fh.read().splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        msg = json.loads(line)
+        m = re.search(r"token=([A-Za-z0-9_-]+)", msg["body"])
+        if msg["to"] == EMAIL and m:
+            return m.group(1)
+    return None
+
+
 def verification_token() -> str:
     for _ in range(20):
+        if MAIL_FILE:
+            if (token := token_from_file()) is not None:
+                return token
+            time.sleep(1)
+            continue
         _, listing = call("GET", f"{MAILPIT}/api/v1/messages")
         for msg in (listing or {}).get("messages", []):
             if any(t.get("Address") == EMAIL for t in msg.get("To", [])):
@@ -119,5 +143,6 @@ if __name__ == "__main__":
         main()
     except Exception as exc:  # noqa: BLE001
         print(f"FALHA: {exc}", file=sys.stderr)
-        subprocess.run(["docker", "compose", "logs", "--tail=60", "backend", "web", "jobs"], check=False)
+        if not MAIL_FILE:
+            subprocess.run(["docker", "compose", "logs", "--tail=60", "backend", "web", "jobs"], check=False)
         sys.exit(1)

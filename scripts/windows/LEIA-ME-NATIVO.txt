@@ -1,0 +1,54 @@
+﻿BOARDHUB - MODO NATIVO NO WINDOWS (SEM DOCKER) - SOMENTE PARA TESTES
+=====================================================================
+
+Para quê: rodar o BoardHub em um Windows que não tem Docker (por exemplo, Windows Server 2019
+virtualizado, sem WSL2). Não serve para produção nem para dados de pessoas reais.
+
+O que este pacote contém
+  backend\        código do servidor (Python) e migrações do banco
+  frontend\dist\  site já construído (você NÃO precisa instalar Node)
+  scripts\        scripts PowerShell do modo nativo e o teste de fumaça
+  (os mesmos arquivos existem no repositório: https://github.com/edervani/boardhub)
+
+Requisitos
+  - Windows 64 bits com Windows PowerShell 5.1 (já vem no Windows Server 2019).
+  - Acesso à internet na primeira instalação (GitHub, EDB e, se quiser, Mailpit).
+    Sem internet: veja "Alternativas offline" no README do projeto.
+  - Visual C++ Redistributable 2015-2022 x64 (o instalador avisa se faltar; instalar exige
+    administrador: https://aka.ms/vs/17/release/vc_redist.x64.exe).
+  - Nenhum outro recurso: não precisa de Hyper-V, WSL2, Docker nem administrador.
+
+Passo a passo (PowerShell, dentro da pasta onde você extraiu este pacote)
+  1. Se o PowerShell bloquear scripts baixados:
+       Get-ChildItem -Recurse -Filter *.ps1 | Unblock-File
+     ou prefixe os comandos com:  powershell -ExecutionPolicy Bypass -File
+  2. Instalar (uma vez; leva alguns minutos e baixa algumas centenas de MB):
+       .\scripts\windows\instalar-nativo.ps1
+     Opcional: -Mailpit  (caixa de e-mails de teste com interface web)
+  3. Iniciar:
+       .\scripts\windows\iniciar-nativo.ps1
+     Abra  http://localhost:8080  (use sempre "localhost").
+  4. E-mails de teste (confirmação de conta):
+       .\scripts\windows\emails-nativo.ps1          (ou http://localhost:8025 com -Mailpit)
+  5. Rotina diária (apaga exportações vencidas, conclui exclusões de conta etc.):
+       .\scripts\windows\jobs-nativo.ps1 -RegistrarTarefa      (todo dia às 03:30)
+  6. Parar:
+       .\scripts\windows\parar-nativo.ps1            (dados mantidos)
+       .\scripts\windows\parar-nativo.ps1 -ApagarDados   (apaga banco e e-mails de teste)
+
+Onde ficam as coisas
+  .native\.env          segredos aleatórios gerados na instalação (NÃO compartilhe)
+  .native\data\pg       banco de dados     .native\data\emails.jsonl   e-mails de teste
+  .native\logs          registros          .native\tools               PostgreSQL, uv, Mailpit
+  Para desfazer tudo: pare o BoardHub e apague a pasta .native.
+
+Cuidados
+  - O site e o banco só escutam em 127.0.0.1 (esta máquina). Para acessar de outro computador use
+    Área de Trabalho Remota; não abra portas no firewall.
+  - Se você encerrar a sua sessão do Windows, o BoardHub para; rode iniciar-nativo.ps1 de novo.
+  - Use contas e e-mails fictícios (@example.test). Nenhum dado real deve entrar neste ambiente.
+  - Porta ocupada? Use  -Porta 8090  (iniciar-nativo.ps1) ou  -PortaBanco 5440  (instalar-nativo.ps1).
+
+Diagnóstico
+  .\scripts\windows\instalar-nativo.ps1 -SomenteVerificar   mostra o que está pronto ou faltando.
+  Registros em .native\logs (backend.log, backend.err.log, postgres.log).
