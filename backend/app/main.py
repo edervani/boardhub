@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.middleware import install_middleware
 from app.api.routes import (
     academy,
+    admin,
     auth,
     engagement,
     health,
@@ -14,6 +15,7 @@ from app.api.routes import (
     privacy,
     profile,
     ranking,
+    social,
 )
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
@@ -45,6 +47,7 @@ def create_app() -> FastAPI:
     notify.install()
     for router in (health.router, auth.router, me.router, profile.router, matches.router,
                    academy.router, privacy.router, ranking.router, engagement.router,
+                   social.router, admin.router,
                    realtime.router):
         app.include_router(router, prefix="/api/v1")
     return app

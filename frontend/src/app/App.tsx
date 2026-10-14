@@ -11,13 +11,15 @@ import { GuardianPage } from "../features/guardian/GuardianPage";
 import { AchievementsPage } from "../features/engagement/AchievementsPage";
 import { DailyPage } from "../features/engagement/DailyPage";
 import { NotificationBell } from "../features/engagement/NotificationBell";
+import { FriendsPage } from "../features/social/FriendsPage";
+import { ModerationPage } from "../features/moderation/ModerationPage";
 import { PrivacyPage } from "../features/profile/PrivacyPage";
 import { ProfilePage } from "../features/profile/ProfilePage";
 import { RankingPage } from "../features/ranking/RankingPage";
 import { ApiError, api, errorMessage } from "../services/api";
 import type { Me } from "../services/types";
 
-type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "desafio" | "conquistas" | "revisao" | "perfil" | "responsavel" | "privacidade" | "entrar" | "cadastro";
+type View = "jogos" | "jogar" | "online" | "historico" | "ranking" | "academy" | "desafio" | "conquistas" | "revisao" | "perfil" | "responsavel" | "amigos" | "moderacao" | "privacidade" | "entrar" | "cadastro";
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -29,6 +31,10 @@ export function App() {
   const pending = Boolean(me?.deletion_scheduled_for);
   // Painel do responsável (RF-034): contas 18+ com e-mail confirmado.
   const guardian = Boolean(me && me.age_band === "18_plus" && me.email_verified);
+
+  // RF-031/032: Amigos para contas verificadas; Moderação só para os papéis moderator/admin.
+  const social = Boolean(me && me.email_verified);
+  const staff = Boolean(me && (me.role === "moderator" || me.role === "admin"));
 
   useEffect(() => {
     api<Me>("GET", "/me")
@@ -78,6 +84,8 @@ export function App() {
               <button className="secondary" onClick={() => setView("desafio")}>Desafio</button>
               <button className="secondary" onClick={() => setView("conquistas")}>Conquistas</button>
               <button className="secondary" onClick={() => setView("perfil")}>Perfil</button>
+              {social && <button className="secondary" onClick={() => setView("amigos")}>Amigos</button>}
+              {staff && <button className="secondary" onClick={() => setView("moderacao")}>Moderação</button>}
               {guardian && <button className="secondary" onClick={() => setView("responsavel")}>Responsável</button>}
               <button className="secondary" onClick={() => setView("privacidade")}>Privacidade</button>
               <NotificationBell />
@@ -111,6 +119,8 @@ export function App() {
             {view === "conquistas" && me && <AchievementsPage />}
             {view === "revisao" && me && <ReviewPage matchId={reviewId} onBack={() => setView("historico")} />}
             {view === "perfil" && me && <ProfilePage me={me} />}
+            {view === "amigos" && me && social && <FriendsPage onMatchStarted={() => setView("online")} />}
+            {view === "moderacao" && me && staff && <ModerationPage />}
             {view === "responsavel" && me && guardian && <GuardianPage />}
             {view === "privacidade" && me && (
               <PrivacyPage me={me} onDeletionScheduled={deletionScheduled}

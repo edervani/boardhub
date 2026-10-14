@@ -7,6 +7,7 @@ import {
   onlineStatusText,
   ratingChangeText,
 } from "./onlineStatus";
+import { ReportButton } from "../social/ReportButton";
 import { useOnlineMatch } from "./useOnlineMatch";
 
 /** O lobby não conhece os tabuleiros (features não se importam entre si): a aplicação os injeta. */
@@ -78,6 +79,7 @@ export function OnlineMatch({ matchId, renderBoard, onLeave }: Props) {
 
       {renderBoard({ match, playable, onPlay: m.play })}
       {m.error && <p role="alert">{m.error}</p>}
+      {opponent && <ReportButton targetType="match" targetId={match.id} label="Denunciar o oponente" />}
 
       {inProgress && opponent && !opponent.connected && (
         <div className="card" role="group" aria-label="Adversário desconectado">

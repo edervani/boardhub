@@ -181,10 +181,10 @@ Usuário solicita exportação; servidor gera JSON com conta, perfil, preferênc
 Usuário confirma com senha; conta marcada para exclusão; após 14 dias (período de arrependimento — proposta) dados pessoais são apagados e partidas são **pseudonimizadas** (jogador vira "Conta removida") para preservar o histórico do oponente. Sessões revogadas imediatamente. **Prioridade:** M · **Aceite:** CA-030 · **Testes:** T-030 · **Estado:** aprovado. *Implementação (Fase 7, DT-020): na carência o login é restrito ao cancelamento (P-22); o responsável vinculado também pode excluir a conta do menor.*
 
 ### RF-031 — Denúncia e moderação
-Usuário denuncia nome/bio ofensivos ou suspeita de trapaça; administrador (papel `admin`/`moderator`) revisa, oculta conteúdo, suspende conta. Toda ação administrativa é auditada (`audit_log`). **Prioridade:** S · **Aceite:** CA-031 · **Testes:** T-031 · **Estado:** aprovado.
+Usuário denuncia nome/bio ofensivos ou suspeita de trapaça; administrador (papel `admin`/`moderator`) revisa, oculta conteúdo, suspende conta. Toda ação administrativa é auditada (`audit_log`). **Prioridade:** S · **Aceite:** CA-031 · **Testes:** T-031 · **Estado:** aprovado. *Implementação (DT-022): denúncia de perfil (apelido) ou de partida da qual o denunciante participou, motivo fechado e texto livre sanitizado (≤ 500), 10 por dia e uma aberta por alvo e motivo; o denunciante nunca é exposto nem ao denunciado nem à fila; fila para `moderator`/`admin` com resolução advertir, suspender ou arquivar (opcionalmente ocultar conteúdo: apaga a bio e, se o motivo for o apelido, o troca), tudo em `audit_log`; suspensão revoga sessões, tira da fila, encerra partidas abertas e bloqueia o login; reativação auditada.*
 
 ### RF-032 — Amizades e convites diretos
-Solicitar, aceitar, recusar, remover amizade; bloquear usuário (bloqueado não pode convidar). **Prioridade:** C · **Aceite:** CA-032 · **Testes:** T-032 · **Estado:** aprovado.
+Solicitar, aceitar, recusar, remover amizade; bloquear usuário (bloqueado não pode convidar). **Prioridade:** C · **Aceite:** CA-032 · **Testes:** T-032 · **Estado:** aprovado. *Implementação (DT-022): pedido por apelido, aceitar/recusar (recusado espera 7 dias para repetir)/remover; bloqueio remove a amizade e cancela convites; convite direto entre amigos reaproveita a sala por convite (RF-011) sem expor o código. Sem chat livre. Menores só usam o social com responsável vinculado que liberou o contato e só entre menores (P-24); bloqueio e conta alheia respondem 404.*
 
 ## Proteção de crianças e adolescentes
 

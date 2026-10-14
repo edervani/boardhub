@@ -68,8 +68,14 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | GET /daily-challenge · POST /daily-challenge/{game_id}/attempt | Desafio do dia por jogo (mesmo para todos; dia de America/Sao_Paulo) e resposta (`answer`); uma tentativa válida por jogo e dia | U | `answer` | 200 | 404, 409 `daily_already_answered`, 422 `invalid_answer`, 429 | 30/min | daily_challenge_results | RF-027 |
 | GET /me/notifications?unread_only&limit · POST /me/notifications/{id}/read · POST /me/notifications/read-all | Lista (até 50), marcar como lida | U | — | 200 / 204 | 404 (inclusive de outra pessoa) | — | notifications | RF-028 |
 | GET/PUT /me/notification-preferences | Ativar/desativar tipos de aviso (`kinds: {tipo: bool}`) | U | `kinds` | 200 | 422 `unknown_notification_kind` | — | notification_preferences | RF-028 |
-| POST /reports | Denunciar | V | `target_type, target_id, reason, note?` | 201 | 422, 429 | 10/dia | reports | RF-031 |
-| GET /admin/reports · POST /admin/users/{id}/suspend | Moderação | M/A | — | 200 | 403 | — | **audit_log obrigatório** | RF-031 |
+| POST /reports | Denunciar (`target_type` `user`: apelido; `match`: id de partida da qual participou, senão 404). Resposta `{id, status, created_at}`, sem o denunciante | V | `target_type, target_id, reason, note?` | 201 | 404, 409 `already_reported`, 422, 429 | 10/dia | reports | RF-031 |
+| GET /admin/reports?status=open\|resolved\|all&limit&offset | Fila de moderação (sem denunciante) | M/A | — | 200 | 401, 403 | — | — | RF-031 |
+| POST /admin/reports/{id}/resolve | Resolver: `action` `warn\|suspend\|archive`, `hide_content?`, `note?` | M/A | idem | 200 | 403 `insufficient_role`, 404, 409 `already_resolved` | 120/h | **audit_log** `report_resolved` (+ `user_suspended`) | RF-031 |
+| POST /admin/users/{id}/suspend · POST /admin/users/{id}/reinstate | Suspender (`reason`) / reativar | M/A | `reason` | 200 `{user_id, status}` | 403, 404, 409 | 120/h | **audit_log** `user_suspended`/`user_reinstated` | RF-031 |
+| GET /friends · GET /friends/requests · POST /friends/requests `{display_name}` | Amigos e pedidos (só apelido e avatar) | V | — | 200 / 201 | 403 `supervision_required`, 404 `user_not_found` (inexistente, privada, bloqueio ou regra de menores), 409, 429 | 20 pedidos/dia | friendships | RF-032 |
+| POST /friends/requests/{id}/accept · …/decline · DELETE /friends/{id} | Aceitar, recusar, remover/cancelar | V | — | 200 / 204 | 404 (IDOR) | 60/h | friendships | RF-032 |
+| GET/POST /blocks · DELETE /blocks/{id} | Bloquear (por apelido) e desbloquear | V | `display_name` | 200 / 201 / 204 | 404 | 30/h | user_blocks | RF-032 |
+| POST /friends/{id}/invitations `{game_id}` · GET /invitations?box=received\|sent · POST /invitations/{id}/accept\|decline\|cancel | Convite direto entre amigos (sala casual por convite; `accept` devolve a partida iniciada) | V | `game_id` | 201 / 200 / 204 | 403, 404, 409 `invite_already_pending`, 429 | 10 convites/h | direct_invitations, matches | RF-032 |
 | GET /health/live · /health/ready | Saúde | — (ready só na rede interna) | — | 200/503 | — | — | — | RNF-007 |
 
 Validação: Pydantic com `extra="forbid"`, tamanhos máximos em todas as strings, enums fechados. IDs de usuário **nunca** vêm do corpo; usa-se o da sessão.

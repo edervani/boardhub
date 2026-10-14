@@ -75,3 +75,13 @@ def _verified(auth: CurrentAuth) -> Auth:
 
 
 VerifiedAuth = Annotated[Auth, Depends(_verified)]
+
+
+def _staff(auth: CurrentAuth) -> Auth:
+    # Papel conferido no servidor a cada chamada (SEC-05); a UI esconder botões não é controle.
+    if auth.user.role not in ("moderator", "admin"):
+        raise ProblemError(403, "forbidden", "Acesso restrito à moderação")
+    return auth
+
+
+StaffAuth = Annotated[Auth, Depends(_staff)]
