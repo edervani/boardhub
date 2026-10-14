@@ -29,8 +29,9 @@ router = APIRouter(tags=["partidas"])
 
 @router.post("/matches", status_code=201)
 def create_match(body: CreateMatchIn, auth: CurrentAuth, db: DbSession) -> MatchOut:
-    if body.mode == "online_casual":  # convite: o código só aparece nesta resposta (RF-011)
-        return online_service.create_invite(db, auth.user, body.game_id, body.preferred_seat)
+    if body.mode in ("online_casual", "online_ranked"):  # convite: código só aparece aqui (RF-011)
+        return online_service.create_invite(db, auth.user, body.game_id, body.preferred_seat,
+                                            body.mode)
     return match_service.create_match(db, auth.user, body.game_id, body.mode, body.ai_level,
                                       body.preferred_seat)
 
@@ -99,7 +100,7 @@ def claim_abandon(match_id: uuid.UUID, auth: CurrentAuth, db: DbSession) -> Matc
 @router.post("/matchmaking/queue", status_code=202)
 def enter_queue(body: QueueIn, response: Response, auth: VerifiedAuth,
                 db: DbSession) -> QueueStatusOut:
-    out, events = online_service.enter_queue(db, auth.user, body.game_id)
+    out, events = online_service.enter_queue(db, auth.user, body.game_id, body.ranked)
     hub.publish_all(events)
     if out.state == "matched":
         response.status_code = 200
@@ -108,7 +109,9 @@ def enter_queue(body: QueueIn, response: Response, auth: VerifiedAuth,
 
 @router.get("/matchmaking/queue")
 def queue_status(auth: CurrentAuth, db: DbSession) -> QueueStatusOut:
-    return online_service.queue_status(db, auth.user)
+    out, events = online_service.queue_status(db, auth.user)  # a fila ranqueada pareia aqui
+    hub.publish_all(events)
+    return out
 
 
 @router.delete("/matchmaking/queue", status_code=204)

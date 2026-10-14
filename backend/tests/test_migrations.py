@@ -25,6 +25,13 @@ def test_catalogo_semeado_com_classificacao(db: Session) -> None:
     ]
 
 
+def test_ranking_habilitado_so_no_xadrez(db: Session) -> None:
+    """DT-008 (velha sem ranking) e P-21 (damas aguardam a conferência de regras, P-16)."""
+    rows = db.execute(text("SELECT id, ranked_enabled FROM games ORDER BY id")).all()
+    assert [(r.id, r.ranked_enabled) for r in rows] == [
+        ("checkers", False), ("chess", True), ("tictactoe", False)]
+
+
 def test_jogo_sem_classificacao_nao_pode_ser_habilitado(db: Session) -> None:
     """CA-033: restrição no banco."""
     with pytest.raises(IntegrityError):

@@ -3,7 +3,7 @@ import { api, errorMessage } from "../../services/api";
 import type { MatchSummary } from "../../services/types";
 
 const RESULT: Record<string, string> = { p1_win: "Vitória do 1º jogador (X)", p2_win: "Vitória do 2º jogador (O)", draw: "Empate" };
-const MODE: Record<string, string> = { ai: "Contra a IA", local: "Local", online_casual: "Online (casual)" };
+const MODE: Record<string, string> = { ai: "Contra a IA", local: "Local", online_casual: "Online (casual)", online_ranked: "Online (ranqueada)" };
 
 export function History({ onReview }: { onReview?: (matchId: string) => void }) {
   const [items, setItems] = useState<MatchSummary[] | null>(null);
@@ -30,7 +30,8 @@ export function History({ onReview }: { onReview?: (matchId: string) => void }) 
         {items.map((m) => (
           <li key={m.id} className="card">
             {MODE[m.mode] ?? m.mode} · {new Date(m.created_at).toLocaleString("pt-BR")} ·{" "}
-            {m.status === "finished" ? (m.result ? RESULT[m.result] : "Encerrada") : "Em andamento"}
+            {m.status === "finished" ? (m.result ? RESULT[m.result] : "Encerrada")
+              : m.status === "annulled" ? "Anulada (sem efeito no rating)" : "Em andamento"}
             {m.status === "finished" && onReview && (
               <> <button type="button" className="secondary" onClick={() => onReview(m.id)}>Revisar partida</button></>
             )}

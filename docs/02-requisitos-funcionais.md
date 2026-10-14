@@ -93,6 +93,7 @@ Convenções: prioridade **M** (obrigatório v1), **S** (desejável v1), **C** (
 - **Descrição:** usuário entra na fila de um jogo e é pareado com oponente de rating próximo.
 - **Fluxo principal:** janela inicial ±100 de rating, ampliada em +50 a cada 10 s até ±400; após 60 s oferece jogar contra IA. Pareamento é atômico (um usuário nunca em duas partidas da fila).
 - **Regras:** evitar pareamento repetido com o mesmo oponente mais de 3 vezes seguidas na mesma hora (antiabuso de rating).
+- **Detalhamento da implementação (DT-019):** a fila tem duas modalidades que nunca se misturam — casual (ordem de chegada, sem rating) e ranqueada (`ranked: true`; exige conta verificada e jogo com ranking). Na ranqueada o par é o candidato de rating mais próximo dentro da janela de qualquer um dos dois; a janela cresce com a espera e é reavaliada a cada consulta da fila (`GET /matchmaking/queue`). O limite de 3 partidas por hora contra o mesmo oponente vale na fila e no convite ranqueado.
 - **Prioridade:** S · **Dependências:** RF-019 · **Aceite:** CA-012 · **Testes:** T-012 · **Estado:** aprovado.
 
 ### RF-013 — Submeter jogada
@@ -131,6 +132,7 @@ Regras FIDE do Livro de Regras (jogo sem relógio na v1, salvo RF-015) via bibli
 - **Descrição:** rating Elo separado por jogo (damas, xadrez); rating inicial 1200; fator K = 40 nas primeiras 30 partidas ranqueadas, depois 20 (proposta — DT-008).
 - **Fluxo principal:** ao término de partida ranqueada, servidor calcula e grava novos ratings dos dois jogadores na **mesma transação** que finaliza a partida, com registro em `rating_history`.
 - **Regras:** apenas partidas online ranqueadas entre contas verificadas; partidas anuladas não contam; ranking público lista apenas perfis públicos com ≥ 10 partidas.
+- **Detalhamento da implementação (DT-019):** modo `online_ranked` por convite ou fila ranqueada; a liquidação é idempotente (um ajuste por usuário e partida) e vale para vitória, derrota, desistência, abandono, acordo de empate e fim pelo motor; contra a IA, local, casual e partida anulada o rating não muda. O ranking público (`GET /ranking/{game_id}`) é paginado e traz só apelido, avatar, posição, rating e nº de partidas, respeitando `is_public`, `show_in_ranking` e o padrão protetivo de menores (RF-034). O jogo precisa ter `games.ranked_enabled`: **hoje só o xadrez** (velha: DT-008; damas: P-21).
 - **Prioridade:** M · **Aceite:** CA-019 · **Testes:** T-019 · **Estado:** aprovado.
 
 ### RF-020 — Histórico e revisão de partidas
@@ -141,6 +143,7 @@ Regras FIDE do Livro de Regras (jogo sem relógio na v1, salvo RF-015) via bibli
 ### RF-021 — Estatísticas
 - **Descrição:** por jogo: partidas, vitórias, derrotas, empates, % por modo, evolução de rating, sequência atual.
 - **Regras:** calculadas a partir de `matches` (fonte da verdade); caches/agregados podem ser recalculados.
+- **Detalhamento da implementação (DT-019):** `GET /me/stats` devolve, por jogo visível ao usuário, vitórias/derrotas/empates totais e por modo (`ai`, `online_casual`, `online_ranked`; partida local não entra porque o mesmo usuário ocupa os dois lados; anuladas, abortadas e em andamento ficam de fora), sequência atual (últimas 100 partidas) e, nos jogos ranqueados, rating, partidas ranqueadas, se aparece no ranking e as últimas 30 variações. Só o próprio usuário consulta as suas estatísticas.
 - **Prioridade:** S · **Aceite:** CA-021 · **Testes:** T-021 · **Estado:** aprovado.
 
 ## BoardHub Academy

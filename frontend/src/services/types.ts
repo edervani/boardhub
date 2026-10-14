@@ -78,6 +78,14 @@ export interface MatchView {
   invite_code?: string | null;
   invite_expires_at?: string | null;
   draw_offer_by_seat?: number | null;
+  // Partida ranqueada liquidada (RF-019): rating de cada assento antes e depois.
+  rating_changes?: RatingChange[];
+}
+
+export interface RatingChange {
+  seat: number;
+  before: number;
+  after: number;
 }
 
 export interface ActiveMatch {
@@ -99,6 +107,8 @@ export interface QueueStatus {
   waited_seconds: number;
   offer_ai: boolean;
   match_id: string | null;
+  ranked?: boolean;
+  rating_window?: number | null;
 }
 
 export interface MatchSummary {
@@ -116,4 +126,62 @@ export interface EngineApply {
   state: MatchState;
   outcome: { winner: string | null; reason: string } | null;
   legal_moves: string[];
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  display_name: string;
+  avatar_key: string;
+  rating: number;
+  games_played: number;
+}
+
+export interface LeaderboardPage {
+  game_id: string;
+  min_games: number;
+  items: LeaderboardEntry[];
+  next_cursor: string | null;
+}
+
+export interface ModeStats {
+  mode: "ai" | "online_casual" | "online_ranked";
+  played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  win_rate: number | null;
+}
+
+export interface RatingPoint {
+  match_id: string;
+  created_at: string;
+  before: number;
+  after: number;
+  delta: number;
+}
+
+export interface RatingInfo {
+  rating: number;
+  games_played: number;
+  provisional: boolean;
+  listed: boolean;
+  games_until_listed: number;
+  history: RatingPoint[];
+}
+
+export interface GameStats {
+  game_id: string;
+  name: string;
+  played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  win_rate: number | null;
+  by_mode: ModeStats[];
+  streak: { kind: "win" | "loss" | "draw" | "none"; length: number };
+  rating: RatingInfo | null;
+}
+
+export interface Stats {
+  games: GameStats[];
 }

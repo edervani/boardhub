@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, errorMessage } from "../../services/api";
 import type { Me, Preferences, Profile } from "../../services/types";
+import { StatsPanel } from "./StatsPanel";
 
 export function ProfilePage({ me }: { me: Me }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -21,6 +22,8 @@ export function ProfilePage({ me }: { me: Me }) {
     setMsg(""); setError("");
     try {
       const patch: Record<string, unknown> = { bio: profile.bio ?? "", is_public: profile.is_public };
+      // Menores só entram no ranking por decisão do responsável (RF-034): não enviam o campo.
+      if (!minor) patch.show_in_ranking = profile.is_public && profile.show_in_ranking;
       const saved = await api<Profile>("PATCH", "/me/profile", patch);
       const p = await api<Preferences>("PUT", "/me/preferences", prefs);
       setProfile(saved); setPrefs(p); setMsg("Alterações salvas.");
@@ -31,6 +34,7 @@ export function ProfilePage({ me }: { me: Me }) {
 
   if (!profile || !prefs) return error ? <p role="alert">{error}</p> : <p role="status">Carregando…</p>;
   return (
+    <>
     <form onSubmit={save} aria-labelledby="profile-title">
       <h2 id="profile-title">Seu perfil</h2>
       <p>Nome de exibição: <strong>{profile.display_name}</strong></p>
@@ -39,10 +43,25 @@ export function ProfilePage({ me }: { me: Me }) {
         onChange={(e) => setProfile({ ...profile, bio: e.target.value })} />
       <label>
         <input type="checkbox" checked={profile.is_public} disabled={minor && !profile.is_public}
-          onChange={(e) => setProfile({ ...profile, is_public: e.target.checked })} />{" "}
+          onChange={(e) => setProfile({
+            ...profile, is_public: e.target.checked,
+            show_in_ranking: e.target.checked && profile.show_in_ranking,
+          })} />{" "}
         Perfil público
       </label>
       {minor && <p>Perfis de menores só podem ser tornados públicos pelo responsável.</p>}
+      <label>
+        <input type="checkbox" checked={profile.is_public && profile.show_in_ranking}
+          disabled={!profile.is_public || (minor && !profile.show_in_ranking)}
+          aria-describedby="ranking-hint"
+          onChange={(e) => setProfile({ ...profile, show_in_ranking: e.target.checked })} />{" "}
+        Aparecer no ranking público
+      </label>
+      <p id="ranking-hint">
+        {minor
+          ? "Menores só aparecem no ranking por decisão do responsável; aqui você pode apenas sair dele."
+          : "Só seu nome de exibição e seu rating aparecem, e só com perfil público e pelo menos 10 partidas ranqueadas."}
+      </p>
 
       <h3>Preferências</h3>
       <label htmlFor="theme">Tema</label>
@@ -73,5 +92,7 @@ export function ProfilePage({ me }: { me: Me }) {
       {msg && <p role="status">{msg}</p>}
       <p><button type="submit">Salvar</button></p>
     </form>
+    <StatsPanel />
+    </>
   );
 }

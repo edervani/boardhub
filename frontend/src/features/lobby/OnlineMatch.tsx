@@ -5,6 +5,7 @@ import {
   GAME_TITLES,
   mySeat,
   onlineStatusText,
+  ratingChangeText,
 } from "./onlineStatus";
 import { useOnlineMatch } from "./useOnlineMatch";
 
@@ -63,13 +64,15 @@ export function OnlineMatch({ matchId, renderBoard, onLeave }: Props) {
   const opponent = (match.players ?? []).find((p) => p.seat !== seat);
   const opponentToMove = inProgress && match.to_move_seat !== seat;
   const offer = match.draw_offer_by_seat ?? null;
-  const title = GAME_TITLES[match.game_id] ?? match.game_id;
+  const title = (GAME_TITLES[match.game_id] ?? match.game_id) + (match.mode === "online_ranked" ? " (ranqueada)" : "");
+  const ratingText = ratingChangeText(match);
 
   return (
     <section aria-labelledby="online-title">
       <h2 id="online-title">{title} — contra {opponent?.display_name ?? "o oponente"}</h2>
       <ConnectionBanner state={m.connection} attempt={m.attempt} />
       <p>{onlineStatusText(match)}</p>
+      {ratingText && <p role="status">{ratingText}</p>}
       <p role="status" aria-live="polite">{m.polite}</p>
       <p role="alert" aria-live="assertive">{m.assertive}</p>
 

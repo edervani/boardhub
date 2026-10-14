@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, errorMessage } from "../../services/api";
 import type { ServerMessage } from "../../services/realtime";
-import type { ActiveMatch, MatchView, Me, QueueStatus } from "../../services/types";
+import type { ActiveMatch, Game, MatchView, Me, QueueStatus } from "../../services/types";
 import { OnlineMatch, type BoardRenderer } from "./OnlineMatch";
 import { GAME_TITLES } from "./onlineStatus";
 
@@ -24,8 +24,34 @@ function GameSelect({ id, value, onChange }: { id: string; value: string; onChan
   );
 }
 
+interface RankedToggleProps {
+  id: string;
+  checked: boolean;
+  available: boolean;
+  verified: boolean;
+  onChange: (v: boolean) => void;
+}
+
+/** Escolha casual × ranqueada: sempre com o motivo em texto quando indisponível. */
+function RankedToggle({ id, checked, available, verified, onChange }: RankedToggleProps) {
+  const usable = available && verified;
+  const hint = !verified ? "Confirme seu e-mail para jogar partidas ranqueadas."
+    : !available ? "Este jogo não tem partidas ranqueadas."
+      : "O resultado altera seu rating. Desistir antes do 2º lance de cada lado anula a partida.";
+  return (
+    <>
+      <label htmlFor={id}>
+        <input id={id} type="checkbox" checked={checked && usable} disabled={!usable}
+          aria-describedby={`${id}-hint`} onChange={(e) => onChange(e.target.checked)} />{" "}
+        Partida ranqueada
+      </label>
+      <p id={`${id}-hint`}>{hint}</p>
+    </>
+  );
+}
+
 function activeLabel(m: ActiveMatch): string {
-  const title = GAME_TITLES[m.game_id] ?? m.game_id;
+  const title = (GAME_TITLES[m.game_id] ?? m.game_id) + (m.mode === "online_ranked" ? " (ranqueada)" : "");
   if (m.status === "waiting") return `${title} — aguardando um oponente entrar com o código`;
   return `${title} — contra ${m.opponent_name ?? "o oponente"} — ${m.your_turn ? "sua vez" : "vez do oponente"}`;
 }
@@ -39,6 +65,15 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
   const [busy, setBusy] = useState(false);
   const [inviteGame, setInviteGame] = useState("tictactoe");
   const [queueGame, setQueueGame] = useState("tictactoe");
+  const [games, setGames] = useState<Game[]>([]);
+  const [inviteRanked, setInviteRanked] = useState(false);
+  const [queueRanked, setQueueRanked] = useState(false);
+
+  // Só os jogos com ranking habilitado no servidor oferecem partida ranqueada (RF-019).
+  useEffect(() => {
+    api<Game[]>("GET", "/games").then(setGames, () => undefined);
+  }, []);
+  const rankedIds = new Set(games.filter((g) => g.ranked_enabled).map((g) => g.id));
 
   const loadActive = useCallback(async () => {
     try { setActive(await api<ActiveMatch[]>("GET", "/me/active-matches")); }
@@ -79,7 +114,8 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
     e.preventDefault();
     const seat = String(new FormData(e.currentTarget).get("seat") ?? "");
     void run(async () => {
-      const body: Record<string, unknown> = { game_id: inviteGame, mode: "online_casual" };
+      const ranked = inviteRanked && rankedIds.has(inviteGame);
+      const body: Record<string, unknown> = { game_id: inviteGame, mode: ranked ? "online_ranked" : "online_casual" };
       if (seat === "1" || seat === "2") body.preferred_seat = Number(seat);
       setInvite(await api<MatchView>("POST", "/matches", body));
       await loadActive();
@@ -96,7 +132,8 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
   };
 
   const enterQueue = () => void run(async () => {
-    const s = await api<QueueStatus>("POST", "/matchmaking/queue", { game_id: queueGame });
+    const ranked = queueRanked && rankedIds.has(queueGame);
+    const s = await api<QueueStatus>("POST", "/matchmaking/queue", ranked ? { game_id: queueGame, ranked: true } : { game_id: queueGame });
     if (s.state === "matched" && s.match_id) setOpenId(s.match_id); else setQueue(s);
   });
 
@@ -119,7 +156,7 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
   return (
     <section aria-labelledby="lobby-title">
       <h2 id="lobby-title">Jogar online</h2>
-      <p>Partidas casuais entre pessoas: não valem ranking e não têm chat.</p>
+      <p>Partidas entre pessoas, sem chat. As casuais não valem ranking; as ranqueadas alteram o seu rating.</p>
       {!me.email_verified && (
         <p role="status">Confirme seu e-mail para entrar na fila de pareamento. Convites por código já funcionam.</p>
       )}
@@ -129,6 +166,8 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
         <h3 id="invite-title">Criar convite</h3>
         <label htmlFor="invite-game">Jogo do convite</label>
         <GameSelect id="invite-game" value={inviteGame} onChange={setInviteGame} />
+        <RankedToggle id="invite-ranked" checked={inviteRanked} available={rankedIds.has(inviteGame)}
+          verified={me.email_verified} onChange={setInviteRanked} />
         <label htmlFor="invite-seat">Você joga</label>
         <select id="invite-seat" name="seat" defaultValue="">
           <option value="">Sorteio</option>
@@ -159,8 +198,11 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
         {queue?.state === "queued" ? (
           <>
             <p role="status" aria-live="polite">
-              Procurando oponente de {GAME_TITLES[queue.game_id ?? ""] ?? "jogo"}… ({queue.waited_seconds} s)
+              Procurando oponente {queue.ranked ? "ranqueado " : ""}de {GAME_TITLES[queue.game_id ?? ""] ?? "jogo"}… ({queue.waited_seconds} s)
             </p>
+            {queue.ranked && queue.rating_window != null && (
+              <p>Buscando rating próximo ao seu (± {queue.rating_window}). A faixa aumenta com a espera.</p>
+            )}
             {queue.offer_ai && (
               <p>Ainda sem oponente. Você pode continuar esperando, sair da fila ou jogar contra a IA na aba Jogar.</p>
             )}
@@ -170,6 +212,8 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
           <>
             <label htmlFor="queue-game">Jogo da fila</label>
             <GameSelect id="queue-game" value={queueGame} onChange={setQueueGame} />
+            <RankedToggle id="queue-ranked" checked={queueRanked} available={rankedIds.has(queueGame)}
+              verified={me.email_verified} onChange={setQueueRanked} />
             <p>
               <button type="button" disabled={busy || !me.email_verified} onClick={enterQueue}>
                 Entrar na fila

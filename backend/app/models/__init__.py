@@ -12,6 +12,7 @@ from app.models.base import Base
 from app.models.catalog import Game
 from app.models.identity import AuthSession, AuthToken, User, UserPreferences, UserProfile
 from app.models.match import DrawOffer, Match, MatchMove, MatchPlayer, QueueEntry
+from app.models.rating import Rating, RatingHistory
 
 __all__ = [
     "AuditLog",
@@ -28,6 +29,8 @@ __all__ = [
     "MatchPlayer",
     "PlacementResult",
     "QueueEntry",
+    "Rating",
+    "RatingHistory",
     "SkillProgress",
     "User",
     "UserPreferences",

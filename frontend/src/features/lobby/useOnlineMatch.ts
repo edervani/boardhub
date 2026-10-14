@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { api, errorMessage } from "../../services/api";
 import type { ServerMessage } from "../../services/realtime";
-import type { MatchView } from "../../services/types";
+import type { MatchView, RatingChange } from "../../services/types";
 import { mySeat } from "./onlineStatus";
 
 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
@@ -64,11 +64,14 @@ export function useOnlineMatch(matchId: string) {
       }
       case "match_ended": {
         if (!prev) break;
+        const reason = str(p.end_reason);
+        const annulled = reason === "annulled";
         setMatch({
-          ...prev, status: "finished", result: str(p.result) as MatchView["result"],
-          end_reason: str(p.end_reason), to_move_seat: null, legal_moves: [], draw_offer_by_seat: null,
+          ...prev, status: annulled ? "annulled" : "finished", result: str(p.result) as MatchView["result"],
+          end_reason: reason, to_move_seat: null, legal_moves: [], draw_offer_by_seat: null,
+          rating_changes: Array.isArray(p.rating_changes) ? (p.rating_changes as RatingChange[]) : [],
         });
-        setAssertive("A partida terminou.");
+        setAssertive(annulled ? "A partida foi anulada." : "A partida terminou.");
         break;
       }
       case "draw_offered": {
