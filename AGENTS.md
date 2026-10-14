@@ -17,7 +17,7 @@ BoardHub é recreativo e educacional: jogo da velha, damas e xadrez, contra IA e
 Conforme `docs/00` §3: regras proibitivas e legais > ADRs > requisitos > arquitetura/contratos > critérios e testes > planos > README.
 
 ## 4. Arquitetura aprovada
-Ver `docs/04` e ADR-0001 (atualmente **proposto**). Resumo: monólito modular; dependências `api/realtime → services → game_engines/ai/db → core`; motores puros no servidor; servidor é autoridade de legalidade, resultado e rating; IA generativa só reformula texto.
+Ver `docs/04` e ADR-0001 (**aceito** em 2026-10-13). Resumo: monólito modular; dependências `api/realtime → services → game_engines/ai/db → core`; motores puros no servidor; servidor é autoridade de legalidade, resultado e rating; IA generativa só reformula texto.
 
 ## 5. Segurança e privacidade
 - Nunca confiar em `user_id`, `seat`, `result`, `state` ou pontuação vindos do cliente.
