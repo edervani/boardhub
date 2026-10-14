@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**", "docs/**", "chore/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - name: Verificar documentação
+        run: python3 scripts/check_docs.py
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: backend }
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: boardhub_test
+          POSTGRES_USER: boardhub_test
+          POSTGRES_PASSWORD: senha-de-teste
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U boardhub_test -d boardhub_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DB_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Instalar Python 3.13
+        run: uv python install 3.13
+      - name: Gerar ou validar lockfile
+        run: |
+          if [ -f uv.lock ]; then uv lock --check; else uv lock; fi
+      - name: Instalar dependências
+        run: uv sync --locked --group dev
+      - name: Versões instaladas
+        run: uv pip list
+      - name: Lint
+        run: uv run ruff check .
+      - name: Tipagem
+        run: uv run mypy app
+      - name: Testes
+        run: uv run pytest
+      - name: Auditoria de dependências
+        run: uv run pip-audit --strict --progress-spinner off
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: backend-lock, path: backend/uv.lock, if-no-files-found: ignore }
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: frontend }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "24" }
+      - name: Instalar dependências
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Versões instaladas
+        run: npm ls --depth=0
+      - name: Tipagem
+        run: npm run typecheck
+      - name: Testes
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Auditoria de dependências
+        run: npm audit --audit-level=high
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: frontend-lock, path: frontend/package-lock.json, if-no-files-found: ignore }
