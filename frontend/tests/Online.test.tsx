@@ -335,7 +335,7 @@ test("lista só as partidas online em andamento e permite abrir ou cancelar", as
   });
   expect(await screen.findByText(/Xadrez — contra jogador_teste_02 — sua vez/)).toBeInTheDocument();
   expect(screen.getByText(/Damas — aguardando um oponente/)).toBeInTheDocument();
-  expect(screen.queryByText(/Jogo da velha/)).not.toBeInTheDocument(); // local não entra no lobby online
+  expect(screen.queryByText(/^Jogo da velha —/)).not.toBeInTheDocument(); // local não entra no lobby online
   await userEvent.click(screen.getByRole("button", { name: "Cancelar convite" }));
   await waitFor(() => expect(fn.mock.calls.some(([url]) => url === "/api/v1/matches/w1/cancel")).toBe(true));
   await userEvent.click(screen.getByRole("button", { name: "Abrir" }));

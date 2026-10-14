@@ -59,13 +59,15 @@ export function LobbyPage({ me, renderBoard, pollMs = POLL_MS }: Props) {
   const queued = queue?.state === "queued";
   useEffect(() => {
     if (!queued) return;
+    let vivo = true; // descarta respostas que chegam depois de sair da fila
     const timer = setInterval(() => {
       api<QueueStatus>("GET", "/matchmaking/queue").then((s) => {
+        if (!vivo) return;
         if (s.state === "matched" && s.match_id) { setQueue(null); setOpenId(s.match_id); }
         else setQueue(s.state === "idle" ? null : s);
-      }, (e: unknown) => setError(errorMessage(e)));
+      }, (e: unknown) => { if (vivo) setError(errorMessage(e)); });
     }, pollMs);
-    return () => clearInterval(timer);
+    return () => { vivo = false; clearInterval(timer); };
   }, [queued, pollMs]);
 
   async function run(action: () => Promise<void>) {

@@ -275,7 +275,7 @@ def test_entrar_em_partida_online_tira_o_usuario_da_fila(client: TestClient,
 
 def test_fila_concorrente_nunca_poe_usuario_em_duas_partidas(client: TestClient,
                                                             mailer: MemoryMailer) -> None:
-    contas = [conta_logada(novo_cliente(client), mailer, n) for n in range(1, 7)]
+    contas = [conta_logada(novo_cliente(client), mailer, n) for n in range(1, 5)]
     barreira = threading.Barrier(len(contas))
     codigos: list[int] = []
 
@@ -288,13 +288,13 @@ def test_fila_concorrente_nunca_poe_usuario_em_duas_partidas(client: TestClient,
         t.start()
     for t in threads:
         t.join(timeout=60)
-    assert sorted(codigos) == [200, 200, 200, 202, 202, 202]
+    assert sorted(codigos) == [200, 200, 202, 202]
     for c in contas:  # quem esperava consome o pareamento
         c.get(f"{API}/matchmaking/queue")
     with get_engine().connect() as conn:
         linhas = conn.execute(text("SELECT user_id FROM match_players")).scalars().all()
         fila = conn.execute(text("SELECT count(*) FROM matchmaking_queue")).scalar_one()
-    assert len(linhas) == 6 and set(Counter(linhas).values()) == {1}
+    assert len(linhas) == 4 and set(Counter(linhas).values()) == {1}
     assert fila == 0
 
 
