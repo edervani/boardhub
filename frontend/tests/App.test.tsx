@@ -9,7 +9,7 @@ import { api, ApiError } from "../src/services/api";
 function mockFetch(routes: Record<string, { status?: number; body?: unknown }>) {
   const fn = vi.fn(async (url: string, init?: RequestInit) => {
     const hit = routes[`${init?.method ?? "GET"} ${url.replace("/api/v1", "")}`];
-    const status = hit?.status ?? 404;
+    const status = hit ? (hit.status ?? 200) : 404;
     return new Response(status === 204 ? null : JSON.stringify(hit?.body ?? {}), { status });
   });
   vi.stubGlobal("fetch", fn);
