@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**", "docs/**", "chore/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.13" }
+      - name: Verificar documentação
+        run: scripts/ci/run.sh docs python3 scripts/check_docs.py
+
+  # Gera lockfiles ausentes e os commita na branch (DT-012). Não roda na main.
+  lockfiles:
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v5
+        with: { node-version: "24" }
+      - name: Gerar lockfiles ausentes
+        run: |
+          [ -f backend/uv.lock ] || (cd backend && uv lock)
+          (cd frontend && npm install --package-lock-only --no-audit --no-fund)
+      - name: Commitar lockfiles
+        run: |
+          git add backend/uv.lock frontend/package-lock.json
+          if git diff --cached --quiet; then echo "Nada a commitar"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "chore: lockfiles gerados pelo CI"
+          git push
+
+  backend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run: { working-directory: backend }
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: boardhub_test
+          POSTGRES_USER: boardhub_test
+          POSTGRES_PASSWORD: senha-de-teste
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U boardhub_test -d boardhub_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DB_HOST: localhost
+      RUN: ../scripts/ci/run.sh
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - name: Instalar dependências
+        run: |
+          [ -f uv.lock ] || uv lock
+          $RUN "backend-instalar" uv sync --locked --python 3.13 --group dev
+      - name: Versões instaladas
+        run: uv pip list
+      - name: Lint
+        run: $RUN "backend-ruff" uv run ruff check --output-format=concise .
+      - name: Tipagem
+        run: $RUN "backend-mypy" uv run mypy app
+      - name: Testes
+        run: CI_NOTICE=1 $RUN "backend-pytest" uv run pytest
+      - name: Auditoria de dependências
+        run: $RUN "backend-pip-audit" uv run pip-audit --strict --progress-spinner off
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run: { working-directory: frontend }
+    env:
+      RUN: ../scripts/ci/run.sh
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: "24" }
+      - name: Instalar dependências
+        run: |
+          if [ -f package-lock.json ]; then $RUN "frontend-npm ci" npm ci; else $RUN "frontend-npm install" npm install --no-audit --no-fund; fi
+      - name: Versões instaladas
+        run: npm ls --depth=0
+      - name: Tipagem
+        run: $RUN "frontend-tsc" npm run typecheck
+      - name: Testes
+        run: CI_NOTICE=1 $RUN "frontend-vitest" npm test
+      - name: Build
+        run: $RUN "frontend-build" npm run build
+      - name: Auditoria de dependências
+        run: $RUN "frontend-npm audit" npm audit --audit-level=high

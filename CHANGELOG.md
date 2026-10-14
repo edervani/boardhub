@@ -4,6 +4,20 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (Fase 1 — base técnica)
+- Backend FastAPI (monólito modular): configuração, logs sanitizados, erros RFC 9457, limitador de taxa, cabeçalhos de segurança, CSRF por duplo envio, migração Alembic 0001 (identidade, catálogo, auditoria).
+- Autenticação (RF-001 a RF-005): cadastro com Argon2id, verificação de e-mail, login com cookies `HttpOnly`/`Secure`, sessões revogáveis, redefinição de senha, antienumeração.
+- Perfil e preferências (RF-006, RF-007), perfil público sem e-mail, limite de troca de nome a cada 30 dias.
+- Classificação indicativa (RF-033): `GET /games` filtra pela faixa etária do usuário; visitante vê somente jogos Livres.
+- Supervisão parental (RF-034): vínculo por convite de uso único restrito ao e-mail convidado, painel do responsável, auditoria, remoção de cadastros de menores de 12 anos sem confirmação em 7 dias.
+- Frontend React 19 + Vite: cadastro, login, perfil, preferências e lista de jogos com selo etário em texto; tokens de tema claro/escuro.
+- CI (GitHub Actions): docs, backend (ruff, mypy estrito, pytest com PostgreSQL 17, pip-audit), frontend (tsc, vitest, build, npm audit), geração de lockfiles.
+
+### Pendente nesta fase (ver docs/16 §Pendências, P-15)
+- Bloqueio de nova partida ao atingir o limite diário (CA-034) e histórico visível ao responsável dependem das partidas (Fase 2+).
+- Notação de lances exibida (RF-007) e verificações E2E/Playwright de CA-006/CA-033 ainda não implementadas.
+- Painel do responsável e selo antes da partida no frontend ainda não implementados.
+
 ### Modificado (docs v0.2.0)
 - Documentação aprovada pelo responsável pelo produto; ADR-0001 aceito.
 - Runtimes definidos: Python 3.13, Node.js 24 LTS, PostgreSQL 17 (DT-014). CI: GitHub Actions.

@@ -42,7 +42,7 @@ Reinício do backend durante partidas (RNF-009); restauração de backup em banc
 
 ## 8. Matriz de rastreabilidade
 
-Colunas: requisito · documento de origem · módulo responsável · endpoint/componente · caso de teste · critério de aceite · estado · evidência. Estado atual de todos: **aprovado** (não implementado); evidência: **nenhuma** (nada implementado). Gerada e verificada por `scripts/check_docs.py`.
+Colunas: requisito · documento de origem · módulo responsável · endpoint/componente · caso de teste · critério de aceite · estado · evidência. Estado de todos: **aprovado** (o código da Fase 1 ainda não foi mesclado). Evidência da Fase 1 na branch `feat/fase-1-base`: CI verde (backend 76 testes pytest, frontend 6 testes Vitest); nenhum requisito é marcado `implementado` antes do merge. Gerada e verificada por `scripts/check_docs.py`.
 
 <!-- MATRIZ:INICIO -->
 | Requisito | Origem | Módulo | Endpoint/componente | Teste | Critério | Estado | Evidência |

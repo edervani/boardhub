@@ -25,7 +25,7 @@
 | ID | Pendência | Bloqueia | Recomendação |
 |----|-----------|----------|--------------|
 | P-01 | ~~Responsável pelo produto~~ | — | **Resolvida 2026-10-13:** @edervani (aprova documentos e fases) |
-| P-02 | Runtimes decididos (DT-014); falta verificar versões das bibliotecas e gerar lockfiles | Fase 1 (primeira tarefa) | Feito no início da Fase 1, com acesso aos registros pip/npm |
+| P-02 | ~~Versões das bibliotecas~~ | — | **Resolvida na Fase 1:** versões resolvidas pelo CI nos lockfiles (`backend/uv.lock`, `frontend/package-lock.json`); ex.: FastAPI 0.143.0, SQLAlchemy 2.1.4, Pydantic 2.14.1, React 19.3.0, Vite 7.3.7, Vitest 5.0.4 |
 | P-03 | ~~Permitir menores?~~ | — | **Resolvida 2026-10-13:** sim, com classificação indicativa por jogo (DT-015). Requisitos legais seguem em P-04 |
 | P-04 | Encarregado de dados, política de privacidade, termos, bases legais, licença GPL **e conformidade com o ECA Digital** (verificação de idade, consentimento parental, vínculo de contas de menores) | Beta com pessoas reais; Fase 7; DT-005 | Consultoria jurídica |
 | P-05 | Forma de financiamento compatível com proibições | — | Doações/patrocínio sem vantagem competitiva |
@@ -38,3 +38,4 @@
 | P-12 | Ferramenta de teste de carga | Fase 7 | — |
 | P-13 | Proxy reverso (Caddy × Nginx) | Fase 7 | Caddy pela gestão automática de TLS |
 | P-14 | ~~Plataforma de CI~~ | — | **Resolvida 2026-10-13:** GitHub Actions |
+| P-15 | Lacunas conhecidas da Fase 1: limite diário de tempo ainda sem aplicação (sem partidas), notação de lances (RF-007), painel do responsável e E2E de CA-006/CA-033 no frontend | Aceite completo de RF-007, RF-033, RF-034 | Tratar na Fase 2 (partidas locais/IA) e Fase 7 (E2E); manter os RF em `aprovado` até lá |

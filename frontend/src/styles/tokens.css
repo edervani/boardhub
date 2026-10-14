@@ -1,0 +1,26 @@
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --text: #1b1d20; --text-muted: #5a5f66;
+  --accent: #2f5bd3; --danger: #b42318; --success: #1f7a3d; --focus: #f2a900;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a; --surface: #1f2226; --text: #ecedee; --text-muted: #a6abb2;
+    --accent: #8fa9ff; --danger: #ff8a80; --success: #6fd08f; --focus: #ffd24d;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 1rem/1.5 system-ui, sans-serif; }
+main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+nav { display: flex; flex-wrap: wrap; gap: .5rem; padding: .5rem 1rem; }
+form, .card { background: var(--surface); border-radius: .5rem; padding: 1rem; margin-block: 1rem; }
+label { display: block; margin-block: .75rem .25rem; font-weight: 600; }
+input, select, textarea, button {
+  font: inherit; min-height: 2.75rem; padding: .25rem .5rem; max-width: 100%;
+}
+button { background: var(--accent); color: var(--bg); border: 0; border-radius: .375rem; cursor: pointer; }
+button.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[role="alert"] { color: var(--danger); font-weight: 600; }
+.badge { border: 2px solid var(--text); border-radius: .25rem; padding: 0 .5rem; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
