@@ -6,6 +6,7 @@ Create Date: 2026-10-14
 """
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -16,12 +17,12 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-def _created_at() -> sa.Column[sa.DateTime]:
+def _created_at() -> Any:
     return sa.Column("created_at", sa.DateTime(timezone=True), nullable=False)
 
 
 def _fk(table: str, col: str, ref: str, ondelete: str,
-        nullable: bool = False) -> list[sa.SchemaItem]:
+        nullable: bool = False) -> list[Any]:
     return [
         sa.Column(col, sa.Uuid(), nullable=nullable),
         sa.ForeignKeyConstraint([col], [f"{ref}.id"], name=op.f(f"fk_{table}_{col}_{ref}"),
@@ -29,8 +30,8 @@ def _fk(table: str, col: str, ref: str, ondelete: str,
     ]
 
 
-def _table(name: str, *items: list[sa.SchemaItem] | sa.SchemaItem) -> None:
-    flat: list[sa.SchemaItem] = []
+def _table(name: str, *items: list[Any] | Any) -> None:
+    flat: list[Any] = []
     for item in items:
         flat.extend(item if isinstance(item, list) else [item])
     op.create_table(name, *flat)
