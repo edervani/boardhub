@@ -32,16 +32,23 @@ class Auth:
     session: AuthSession
 
 
-def _auth(request: Request, db: DbSession) -> Auth:
+def _optional_auth(request: Request, db: DbSession) -> Auth | None:
     sess = auth_service.session_from_cookie(db, request.cookies.get(SESSION_COOKIE))
     if sess is None:
-        raise ProblemError(401, "not_authenticated", "Faça login para continuar")
+        return None
     user = db.get(User, sess.user_id)
     if user is None or user.status == "suspended":
-        raise ProblemError(401, "not_authenticated", "Faça login para continuar")
+        return None
     return Auth(user, sess)
 
 
+def _auth(auth: Annotated[Auth | None, Depends(_optional_auth)]) -> Auth:
+    if auth is None:
+        raise ProblemError(401, "not_authenticated", "Faça login para continuar")
+    return auth
+
+
+OptionalAuth = Annotated[Auth | None, Depends(_optional_auth)]
 CurrentAuth = Annotated[Auth, Depends(_auth)]
 
 

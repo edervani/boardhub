@@ -55,7 +55,7 @@ def _issue_token(
     return raw
 
 
-def _consume_token(db: Session, raw: str, purpose: str) -> AuthToken:
+def consume_token(db: Session, raw: str, purpose: str) -> AuthToken:
     tok = db.scalar(
         select(AuthToken)
         .where(AuthToken.token_hash == token_digest(raw), AuthToken.purpose == purpose)
@@ -160,7 +160,7 @@ def _send(mailer: Mailer, mail: Mail) -> None:
 
 def verify_email(db: Session, raw_token: str, client_ip: str) -> None:
     limiter.hit(f"verify:ip:{client_ip}", 10, HOUR)
-    tok = _consume_token(db, raw_token, "verify_email")
+    tok = consume_token(db, raw_token, "verify_email")
     user = db.get(User, tok.user_id)
     if user is None:
         raise _invalid_token()
@@ -291,7 +291,7 @@ def reset_password(db: Session, mailer: Mailer, raw_token: str, new_password: st
     limiter.hit(f"reset:ip:{client_ip}", 10, HOUR)
     if (problem := password_problem(new_password)) is not None:
         raise ProblemError(422, "weak_password", "Senha recusada", problem)
-    tok = _consume_token(db, raw_token, "reset_password")
+    tok = consume_token(db, raw_token, "reset_password")
     user = db.get(User, tok.user_id)
     if user is None:
         raise _invalid_token()
