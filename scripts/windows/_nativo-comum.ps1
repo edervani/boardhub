@@ -222,7 +222,7 @@ function Invoke-NativoExe {
 }
 
 # Inicia em segundo plano com a saída em arquivos; devolve o processo.
-function Start-NativoSegundoPlano {
+function Invoke-NativoSegundoPlano {
     param(
         [string]$Exe,
         [string[]]$Argumentos,
@@ -262,7 +262,7 @@ function Get-NativoProcesso {
     return $proc
 }
 
-function Stop-NativoProcesso {
+function Close-NativoProcesso {
     param([string]$Nome)
     $proc = Get-NativoProcesso $Nome
     if ($null -ne $proc) {

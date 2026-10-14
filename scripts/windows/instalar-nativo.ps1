@@ -229,7 +229,7 @@ function Resolve-NativoPostgresUrl {
     throw 'Não foi possível descobrir o zip de binários do PostgreSQL 17. Baixe-o manualmente (EDB: "PostgreSQL binaries") e use -PostgresZip, ou informe -PostgresZipUrl / -UsarPostgresDe.'
 }
 
-function Install-NativoPostgres {
+function Install-NativoPgPortatil {
     $portatil = Join-Path $script:Ferramentas 'pgsql\bin'
     if (Test-Path -LiteralPath (Join-Path $portatil 'pg_ctl.exe')) { return }
     if ($UsarPostgresDe) {
@@ -461,7 +461,7 @@ Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.ps1' | Unblock-File -ErrorAc
 Install-NativoRuntimeVC
 Install-NativoUv
 Install-NativoPythonEDependencia
-Install-NativoPostgres
+Install-NativoPgPortatil
 $pgBin = $UsarPostgresDe
 if (-not $pgBin) { $pgBin = Get-NativoPgBin }
 if (-not $pgBin) { throw 'PostgreSQL não encontrado após a instalação.' }

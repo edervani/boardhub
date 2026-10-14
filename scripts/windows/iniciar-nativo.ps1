@@ -67,7 +67,7 @@ if ($Mailpit) {
         $env:MAIL_BACKEND = 'smtp'
         $env:SMTP_HOST = '127.0.0.1'
         $env:SMTP_PORT = '1025'
-        $m = Start-NativoSegundoPlano -Exe $mailpitExe -Argumentos @('--listen', '127.0.0.1:8025', '--smtp', '127.0.0.1:1025') `
+        $m = Invoke-NativoSegundoPlano -Exe $mailpitExe -Argumentos @('--listen', '127.0.0.1:8025', '--smtp', '127.0.0.1:1025') `
             -Diretorio $script:Nativo -LogBase (Join-Path $script:Logs 'mailpit')
         Save-NativoPid 'mailpit' $m.Id
         $urlEmails = 'http://localhost:8025'
@@ -75,7 +75,7 @@ if ($Mailpit) {
 }
 
 Write-Passo "Iniciando o backend em http://localhost:$Porta"
-$proc = Start-NativoSegundoPlano -Exe $python `
+$proc = Invoke-NativoSegundoPlano -Exe $python `
     -Argumentos @('-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', [string]$Porta, '--no-access-log') `
     -Diretorio $script:Backend -LogBase (Join-Path $script:Logs 'backend')
 Save-NativoPid 'backend' $proc.Id

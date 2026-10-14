@@ -201,9 +201,11 @@ jobs:
         run: |
           Import-Module PSScriptAnalyzer
           $achados = @()
-          $achados += Invoke-ScriptAnalyzer -Path scripts/windows -Settings scripts/windows/PSScriptAnalyzerSettings.psd1
-          $compat = @{ IncludeRules = @('PSUseCompatibleSyntax'); Rules = @{ PSUseCompatibleSyntax = @{ Enable = $true; TargetVersions = @('5.1') } } }
-          $achados += Invoke-ScriptAnalyzer -Path scripts/windows -Settings $compat
+          $alvos = @(Get-ChildItem scripts/windows -Filter '*-nativo.ps1') + @(Get-Item scripts/windows/PSScriptAnalyzerSettings.psd1)
+          foreach ($alvo in $alvos) {
+            $achados += Invoke-ScriptAnalyzer -Path $alvo.FullName -Settings scripts/windows/PSScriptAnalyzerSettings.psd1
+            $achados += Invoke-ScriptAnalyzer -Path $alvo.FullName -Settings @{ IncludeRules = @('PSUseCompatibleSyntax'); Rules = @{ PSUseCompatibleSyntax = @{ Enable = $true; TargetVersions = @('5.1') } } }
+          }
           foreach ($a in $achados) { Write-Host "::error file=$($a.ScriptPath),line=$($a.Line),title=$($a.RuleName)::$($a.Message)" }
           "$($achados.Count) achado(s)"
           if ($achados.Count -gt 0) { exit 1 }
@@ -284,40 +286,43 @@ jobs:
           $p = @{ PostgresPortatil = $true }
           if ($env:MODO -eq 'construir') { $p.ConstruirFrontend = $true }
           if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
-          .\scripts\windows\instalar-nativo.ps1 @p
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-instalar' { .\scripts\windows\instalar-nativo.ps1 @p }
       - name: Verificar depois de instalar
         working-directory: ${{ env.BH_DIR }}
         run: |
           $p = @{ SomenteVerificar = $true }
           if ($env:MODO -eq 'construir') { $p.ConstruirFrontend = $true }
           if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
-          .\scripts\windows\instalar-nativo.ps1 @p
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-verificar' { .\scripts\windows\instalar-nativo.ps1 @p }
       - name: Iniciar
         working-directory: ${{ env.BH_DIR }}
         run: |
           $p = @{}
           if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
-          .\scripts\windows\iniciar-nativo.ps1 @p
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-iniciar' { .\scripts\windows\iniciar-nativo.ps1 @p }
       - name: Teste de fumaça (site, API, banco e e-mail)
         working-directory: ${{ env.BH_DIR }}
         run: |
           $env:SMOKE_WEB = 'http://localhost:8080'
           if ($env:COM_MAILPIT -ne 'true') { $env:SMOKE_MAIL_FILE = Join-Path $env:BH_DIR '.native\data\emails.jsonl' }
-          & (Join-Path $env:BH_DIR 'backend\.venv\Scripts\python.exe') -I scripts\smoke_compose.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-fumaca' { & (Join-Path $env:BH_DIR 'backend\.venv\Scripts\python.exe') -I scripts\smoke_compose.py }
       - name: Rotina diária (python -m app.jobs)
         working-directory: ${{ env.BH_DIR }}
         run: |
-          .\scripts\windows\jobs-nativo.ps1
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
+          Invoke-Passo 'nativo-jobs' { .\scripts\windows\jobs-nativo.ps1 }
           Get-Content .native\logs\jobs.log
       - name: Registros (falha)
         if: failure()
         working-directory: ${{ env.BH_DIR }}
         run: |
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
           foreach ($f in Get-ChildItem .native\logs -ErrorAction SilentlyContinue) {
-            "----- $($f.Name)"
-            Get-Content $f.FullName -Tail 60
+            Write-Anotacao ("log " + $f.Name) @(Get-Content $f.FullName -Tail 40) 'error' 40
           }
       - name: Parar
         if: always()

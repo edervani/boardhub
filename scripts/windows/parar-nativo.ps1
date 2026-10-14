@@ -21,8 +21,8 @@ param(
 
 . (Join-Path $PSScriptRoot '_nativo-comum.ps1')
 
-Stop-NativoProcesso 'backend'
-Stop-NativoProcesso 'mailpit'
+Close-NativoProcesso 'backend'
+Close-NativoProcesso 'mailpit'
 
 $pgBin = Get-NativoPgBin
 if ($pgBin -and (Test-Path -LiteralPath (Join-Path $script:PgDados 'PG_VERSION'))) {
