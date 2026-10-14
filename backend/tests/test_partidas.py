@@ -84,7 +84,7 @@ def test_jogo_desabilitado_nao_cria_partida(jogador: TestClient) -> None:
         assert resp.status_code == 404
     finally:
         with get_engine().begin() as conn:
-            conn.execute(text("UPDATE games SET enabled = (id = 'tictactoe')"))
+            conn.execute(text("UPDATE games SET enabled = (id IN ('tictactoe', 'checkers'))"))
 
 
 def test_limite_de_20_partidas_por_hora(jogador: TestClient) -> None:
@@ -326,3 +326,46 @@ def test_motor_sem_estado_tem_limite_de_taxa(client: TestClient) -> None:
     codigos = {client.post(f"{API}/engines/tictactoe/apply",
                            json={"state": estado, "move": "4"}).status_code for _ in range(125)}
     assert 429 in codigos
+
+
+# ---------- damas ----------
+
+def test_damas_contra_ia_comeca_com_lances_legais_do_motor(jogador: TestClient) -> None:
+    from app.game_engines.checkers import CheckersEngine
+
+    eng = CheckersEngine()
+    m = criar(jogador, game_id="checkers", ai_level=2)
+    esperado = sorted(str(x) for x in eng.legal_moves(eng.initial_state()))
+    assert m["ply"] == 0
+    assert sorted(m["legal_moves"]) == esperado
+    assert len(esperado) == 7
+
+
+def test_damas_lance_ilegal_e_recusado_e_legal_avanca(jogador: TestClient) -> None:
+    m = criar(jogador, game_id="checkers", ai_level=1)
+    assert jogar(jogador, m, "1-5").status_code in (409, 422)
+    lance = m["legal_moves"][0]
+    resp = jogar(jogador, m, lance)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["ply"] == 2
+
+
+def test_damas_partida_local_aleatoria_mantem_replay_consistente(
+        jogador: TestClient, db: Session) -> None:
+    from app.game_engines.checkers import CheckersEngine
+
+    rng = random.Random(7)
+    m = criar(jogador, game_id="checkers", mode="local", ai_level=None)
+    for _ in range(80):
+        if m["status"] != "in_progress":
+            break
+        resp = jogar(jogador, m, rng.choice(m["legal_moves"]))
+        assert resp.status_code == 200, resp.text
+        m = resp.json()
+    eng = CheckersEngine()
+    moves = db.scalars(select(MatchMove).where(MatchMove.match_id == uuid.UUID(m["id"]))
+                       .order_by(MatchMove.ply)).all()
+    state = eng.initial_state()
+    for mv in moves:
+        state = eng.apply(state, eng.parse_move(mv.move))
+        assert mv.state_after_hash.hex() == state_hash(eng.serialize(state))

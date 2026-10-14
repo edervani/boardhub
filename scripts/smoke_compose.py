@@ -86,7 +86,7 @@ def main() -> None:
     status, me = call("POST", f"{WEB}/api/v1/auth/login", {"email": EMAIL, "password": PASSWORD})
     check(status == 200 and me["email_verified"] is True, "login funciona")
     status, games = call("GET", f"{WEB}/api/v1/games")
-    check(status == 200 and [g["id"] for g in games] == ["tictactoe"], "catálogo só tem o jogo da velha")
+    check(status == 200 and sorted(g["id"] for g in games) == ["checkers", "tictactoe"], "catálogo tem velha e damas")
     status, match = call("POST", f"{WEB}/api/v1/matches",
                          {"game_id": "tictactoe", "mode": "ai", "ai_level": 5})
     check(status == 201 and match["ply"] == 0, "partida contra a IA criada")
