@@ -282,6 +282,8 @@ jobs:
           exit 0
       - name: Instalar (modo nativo)
         working-directory: ${{ env.BH_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           $p = @{ PostgresPortatil = $true }
           if ($env:MODO -eq 'construir') { $p.ConstruirFrontend = $true }
@@ -296,24 +298,20 @@ jobs:
           if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
           . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
           Invoke-Passo 'nativo-verificar' { .\scripts\windows\instalar-nativo.ps1 @p }
-      - name: Iniciar
+      # Iniciar, fumaça e rotina ficam no MESMO passo: o runner encerra os processos filhos de cada
+      # passo ao terminá-lo (o backend é filho do PowerShell). Fora do CI isso não ocorre.
+      - name: Iniciar, teste de fumaça (site, API, banco e e-mail) e rotina diária
         working-directory: ${{ env.BH_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
+          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
           $p = @{}
           if ($env:COM_MAILPIT -eq 'true') { $p.Mailpit = $true }
-          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
           Invoke-Passo 'nativo-iniciar' { .\scripts\windows\iniciar-nativo.ps1 @p }
-      - name: Teste de fumaça (site, API, banco e e-mail)
-        working-directory: ${{ env.BH_DIR }}
-        run: |
           $env:SMOKE_WEB = 'http://localhost:8080'
           if ($env:COM_MAILPIT -ne 'true') { $env:SMOKE_MAIL_FILE = Join-Path $env:BH_DIR '.native\data\emails.jsonl' }
-          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
           Invoke-Passo 'nativo-fumaca' { & (Join-Path $env:BH_DIR 'backend\.venv\Scripts\python.exe') -I scripts\smoke_compose.py }
-      - name: Rotina diária (python -m app.jobs)
-        working-directory: ${{ env.BH_DIR }}
-        run: |
-          . "$env:GITHUB_WORKSPACE\scripts\ci\ci-win.ps1"
           Invoke-Passo 'nativo-jobs' { .\scripts\windows\jobs-nativo.ps1 }
           Get-Content .native\logs\jobs.log
       - name: Registros (falha)

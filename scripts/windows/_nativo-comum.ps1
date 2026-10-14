@@ -133,6 +133,20 @@ function Get-NativoTexto {
     return [string]$conteudo
 }
 
+# Procura um arquivo na última release de um repositório do GitHub (API pública; usa GITHUB_TOKEN
+# se existir, só para evitar o limite de requisições). Devolve o asset (name, browser_download_url,
+# digest quando houver) ou $null.
+function Get-NativoAssetGitHub {
+    param([string]$Repositorio, [string]$PadraoNome)
+    $cabecalhos = @{ 'User-Agent' = 'boardhub-instalar-nativo'; 'Accept' = 'application/vnd.github+json' }
+    if ($env:GITHUB_TOKEN) { $cabecalhos['Authorization'] = "Bearer $($env:GITHUB_TOKEN)" }
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repositorio/releases/latest" -Headers $cabecalhos
+    foreach ($asset in @($release.assets)) {
+        if ($asset.name -match $PadraoNome) { return $asset }
+    }
+    return $null
+}
+
 function Assert-NativoSha256 {
     param([string]$Arquivo, [string]$Esperado)
     $real = (Get-FileHash -LiteralPath $Arquivo -Algorithm SHA256).Hash

@@ -417,18 +417,28 @@ function Invoke-NativoBuildFrontend {
 function Install-NativoMailpit {
     $destino = Join-Path $script:Ferramentas 'mailpit'
     if (Test-Path -LiteralPath (Join-Path $destino 'mailpit.exe')) { return }
-    Write-Passo 'Instalando Mailpit (SHA-256 conferido contra checksums.txt)'
+    Write-Passo 'Instalando Mailpit (SHA-256 conferido)'
     $tmp = Get-NativoTemporario
     try {
         $zip = Join-Path $tmp 'mailpit.zip'
         if ($MailpitZip) {
             Copy-Item -LiteralPath $MailpitZip -Destination $zip
         } else {
-            $base = 'https://github.com/axllent/mailpit/releases/latest/download'
-            Save-NativoArquivo "$base/mailpit-windows-amd64.zip" $zip
-            $item = Get-NativoHashDeLista (Get-NativoTexto "$base/checksums.txt") '^mailpit-windows-amd64\.zip$'
-            if ($null -eq $item) { throw 'SHA-256 do Mailpit não encontrado em checksums.txt; instalação cancelada.' }
-            Assert-NativoSha256 $zip $item.Hash
+            $asset = Get-NativoAssetGitHub 'axllent/mailpit' '^mailpit-windows-amd64\.zip$'
+            if ($null -eq $asset) { throw 'Zip do Mailpit para Windows x64 não encontrado na última release.' }
+            Save-NativoArquivo $asset.browser_download_url $zip
+            $hash = $null
+            $prop = $asset.PSObject.Properties['digest']
+            if ($null -ne $prop -and "$($prop.Value)" -match '^sha256:([0-9a-fA-F]{64})$') { $hash = $Matches[1] }
+            if ($null -eq $hash) {
+                $lista = Get-NativoAssetGitHub 'axllent/mailpit' 'checksums'
+                if ($null -ne $lista) {
+                    $item = Get-NativoHashDeLista (Get-NativoTexto $lista.browser_download_url) '^mailpit-windows-amd64\.zip$'
+                    if ($null -ne $item) { $hash = $item.Hash }
+                }
+            }
+            if ($null -eq $hash) { throw 'SHA-256 do Mailpit não encontrado (digest do GitHub ou checksums); instalação cancelada.' }
+            Assert-NativoSha256 $zip $hash
             Write-Ok 'Mailpit baixado e SHA-256 conferido'
         }
         $extraido = Join-Path $tmp 'x'
