@@ -89,6 +89,14 @@ export function GamePage({ me }: { me: Me | null }) {
       <p role="status" aria-live="polite">{statusText(match)}</p>
       <MatchBoard match={match} playable={playable} onPlay={(mv) => void m.play(mv)} />
       {m.error && <p role="alert">{m.error}</p>}
+      {match.status === "in_progress" && match.can_claim_draw === true && (
+        <div className="card" role="group" aria-label="Reivindicação de empate">
+          <p role="status" aria-live="polite">
+            Você pode reivindicar empate: a mesma posição se repete pela terceira vez ou há 50 lances sem captura nem movimento de peão.
+          </p>
+          <button type="button" onClick={() => void m.claimDraw()}>Reivindicar empate</button>
+        </div>
+      )}
       <p>
         {match.status === "in_progress" && (
           <button type="button" className="secondary" onClick={() => void m.resign()}>Desistir</button>

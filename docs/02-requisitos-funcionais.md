@@ -125,7 +125,7 @@ Regras, estado e IA conforme [doc 07 §2](07-motores-e-regras-dos-jogos.md#2-jog
 Variante **damas brasileiras** (8×8, regras internacionais de captura) conforme [doc 07 §3](07-motores-e-regras-dos-jogos.md#3-damas) — pendente de aprovação (DT-006). **Prioridade:** M · **Aceite:** CA-017 · **Testes:** T-017 · **Estado:** aprovado.
 
 ### RF-018 — Xadrez
-Regras FIDE do Livro de Regras (jogo sem relógio na v1, salvo RF-015) via biblioteca consolidada, conforme [doc 07 §4](07-motores-e-regras-dos-jogos.md#4-xadrez). **Prioridade:** M · **Aceite:** CA-018 · **Testes:** T-018 · **Estado:** aprovado.
+Regras FIDE do Livro de Regras (jogo sem relógio na v1, salvo RF-015) via biblioteca consolidada, conforme [doc 07 §4](07-motores-e-regras-dos-jogos.md#4-xadrez). Repetição tripla e regra dos 50 lances são **reivindicadas** por quem tem a vez (`POST /matches/{id}/claim-draw`, validadas no servidor; `end_reason` `repetition`/`fifty_move`, resultado empate, rating liquidado); quíntupla repetição e 75 lances seguem automáticas (P-17). **Prioridade:** M · **Aceite:** CA-018 · **Testes:** T-018 · **Estado:** aprovado.
 
 ## Competição e histórico
 

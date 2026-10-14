@@ -95,6 +95,15 @@ export function OnlineMatch({ matchId, renderBoard, onLeave }: Props) {
         </div>
       )}
 
+      {inProgress && match.can_claim_draw === true && myTurn && (
+        <div className="card" role="group" aria-label="Reivindicação de empate">
+          <p role="status" aria-live="polite">
+            Você pode reivindicar empate: a mesma posição se repete pela terceira vez ou há 50 lances sem captura nem movimento de peão.
+          </p>
+          <button type="button" disabled={m.pending} onClick={m.claimDraw}>Reivindicar empate</button>
+        </div>
+      )}
+
       {inProgress && offer !== null && offer !== seat && (
         <div className="card" role="group" aria-label="Proposta de empate">
           <p>O adversário propôs empate.</p>

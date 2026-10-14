@@ -34,7 +34,12 @@ export function onlineStatusText(
   if (m.status === "annulled") return "Partida anulada: terminou cedo demais e não altera o rating.";
   if (m.status === "finished") {
     if (m.result === "draw") {
-      return m.end_reason === "agreement" ? "Empate por acordo." : "Empate.";
+      const reasons: Record<string, string> = {
+        agreement: "Empate por acordo.",
+        repetition: "Empate por repetição de posição.",
+        fifty_move: "Empate pela regra dos 50 lances.",
+      };
+      return reasons[m.end_reason ?? ""] ?? "Empate.";
     }
     const winner = m.result === "p1_win" ? 1 : 2;
     const yours = winner === mine;

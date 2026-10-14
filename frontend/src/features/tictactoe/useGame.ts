@@ -40,8 +40,15 @@ export function useServerMatch() {
     catch (e) { setError(errorMessage(e)); }
   }, [match]);
 
+  const claimDraw = useCallback(async () => {
+    if (!match) return;
+    setError("");
+    try { setMatch(await api<MatchView>("POST", `/matches/${match.id}/claim-draw`)); }
+    catch (e) { setError(errorMessage(e)); }
+  }, [match]);
+
   const reset = useCallback(() => { setMatch(null); setError(""); }, []);
-  return { match, error, busy, start, play, resign, reset };
+  return { match, error, busy, start, play, resign, claimDraw, reset };
 }
 
 const INITIAL: MatchState = { schema_version: 1, board: "_________", to_move: "X" };

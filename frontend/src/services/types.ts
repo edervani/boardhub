@@ -96,6 +96,8 @@ export interface MatchView {
   rating_changes?: RatingChange[];
   /** Xadrez: lances já jogados em SAN internacional (K, Q, R, B, N), para exibição. */
   san_moves?: string[];
+  /** Xadrez (P-17): o servidor indica que quem tem a vez pode reivindicar empate agora. */
+  can_claim_draw?: boolean;
 }
 
 export interface RatingChange {

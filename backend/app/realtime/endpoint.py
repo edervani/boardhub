@@ -29,6 +29,7 @@ from app.models import User
 from app.realtime.hub import Connection, hub
 from app.realtime.protocol import (
     ClaimAbandon,
+    ClaimDraw,
     ClientMessage,
     JoinMatch,
     LeaveMatch,
@@ -166,6 +167,13 @@ class _Handler:
             _, events = await _run(self.uid, lambda db, user: online_service.respond_draw(
                 db, user, mid, accept))
             self._deliver(events, reply_to)
+        elif isinstance(msg, ClaimDraw):
+            await _run(self.uid, _only_online(mid))
+            _, events = await _run(self.uid, lambda db, user: match_service.claim_draw_result(
+                db, user, mid))
+            self._deliver(events, reply_to)
+            if not events:  # pedido repetido (idempotente): responde para o cliente não esperar
+                self.conn.send(reply_message("ack", {"match_id": str(mid)}, reply_to))
         elif isinstance(msg, ClaimAbandon):
             _, events = await _run(self.uid, lambda db, user: online_service.claim_abandon(
                 db, user, mid))

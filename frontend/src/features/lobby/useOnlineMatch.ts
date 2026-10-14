@@ -59,12 +59,16 @@ export function useOnlineMatch(matchId: string) {
         const san = str(p.san);
         const sanMoves = san !== null && (prev.san_moves?.length ?? 0) === ply - 1
           ? [...(prev.san_moves ?? []), san] : prev.san_moves;
+        // P-17: o servidor diz se quem tem a vez (`next_seat`) pode reivindicar empate.
+        const canClaim = p.can_claim_draw === true && num(p.next_seat) === mine;
         setMatch({
           ...prev, ply, state: p.state as MatchView["state"], to_move_seat: num(p.next_seat),
           legal_moves: Array.isArray(p.legal_moves) ? (p.legal_moves as string[]) : [],
-          san_moves: sanMoves,
+          san_moves: sanMoves, can_claim_draw: canClaim,
         });
-        if (num(p.seat) !== mine) setPolite(`O adversário jogou ${str(p.move) ?? ""}. Sua vez.`);
+        if (num(p.seat) !== mine) {
+          setPolite(`O adversário jogou ${str(p.move) ?? ""}. Sua vez.${canClaim ? " Você pode reivindicar empate." : ""}`);
+        }
         break;
       }
       case "match_ended": {
@@ -73,7 +77,7 @@ export function useOnlineMatch(matchId: string) {
         const annulled = reason === "annulled";
         setMatch({
           ...prev, status: annulled ? "annulled" : "finished", result: str(p.result) as MatchView["result"],
-          end_reason: reason, to_move_seat: null, legal_moves: [], draw_offer_by_seat: null,
+          end_reason: reason, to_move_seat: null, legal_moves: [], draw_offer_by_seat: null, can_claim_draw: false,
           rating_changes: Array.isArray(p.rating_changes) ? (p.rating_changes as RatingChange[]) : [],
         });
         setAssertive(annulled ? "A partida foi anulada." : "A partida terminou.");
@@ -154,5 +158,6 @@ export function useOnlineMatch(matchId: string) {
     offerDraw: () => command("offer_draw"),
     respondDraw: (accept: boolean) => command("respond_draw", { accept }),
     claimAbandon: () => command("claim_abandon"),
+    claimDraw: () => command("claim_draw"),
   };
 }

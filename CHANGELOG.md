@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ## [Não lançado]
 
+### Adicionado (reivindicação de empate no xadrez e agendador da rotina diária — fecha P-17, parte de P-22)
+- Xadrez: `POST /matches/{id}/claim-draw` e mensagem WebSocket `claim_draw`. Repetição tripla e regra dos 50 lances são reivindicadas por quem tem a vez e validadas no servidor com python-chess; fim `repetition`/`fifty_move`, resultado empate, rating liquidado e `match_ended` para a outra parte. 403 sem a vez, 404 para não participante, 409 sem base, idempotente. `can_claim_draw` na visão da partida e em `move_applied`. Sem migração (DT-024).
+- Frontend: botão "Reivindicar empate" (online, local e contra a IA) só quando o servidor indica, com aviso `aria-live`; textos de fim "repetição de posição" e "50/75 lances".
+- Compose: serviço `jobs` executa `python -m app.jobs` ao subir e a cada `JOBS_INTERVAL_SECONDS` (24 h), sem portas, com healthcheck; o smoke do compose confere que está saudável. Docs 02/06/07/13 e README atualizados.
+- Testes: pytest (`test_empate_xadrez.py`) e Vitest (`ClaimDraw.test.tsx`).
+
 ### Adicionado (limite diário de tempo, painel do responsável e notação de lances — RF-034, RF-007; fecha parte de P-15)
 - Limite diário de tempo para contas supervisionadas: o servidor mede a atividade dos menores (lance, criação de partida, tentativa/dica/avaliação da Academy; intervalos de até 5 min) por dia de America/Sao_Paulo em `daily_usage` (migração 0009). Com o tempo esgotado, criar partida (local, IA ou convite), entrar por código e entrar na fila (e consultá-la) respondem 429 `daily_limit_reached` com `Retry-After` e mensagem em pt-BR; quem esgotou o tempo não é pareado. A partida em andamento pode terminar (RF-034); a chave `DAILY_LIMIT_BLOCKS_MOVES` bloqueia também os lances (HTTP e WebSocket, com `retry_after` no erro) — **P-23**. DT-021 (proposta).
 - API: `GET /guardian/children/{id}` e `usage_today` em `ChildOut` (tempo usado, limite e quando o dia vira); vínculo inexistente ⇒ 404 igual ao inexistente. A exportação de dados inclui `daily_usage`.

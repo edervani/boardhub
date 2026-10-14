@@ -4,9 +4,9 @@ Nenhuma regra é reimplementada aqui. O estado é a lista de lances UCI desde a 
 ela é necessária para detectar repetição e permite validar o estado ao carregá-lo (os lances são
 reexecutados e o FEN gravado precisa coincidir).
 
-Nesta fase só valem os empates automáticos (quíntupla repetição e 75 lances, além de afogamento e
-material insuficiente). A reivindicação de empate (3x / 50 lances) e o acordo ficam para depois
-(pendência P-17).
+Empates automáticos: afogamento, material insuficiente, quíntupla repetição e 75 lances. A repetição
+tripla e a regra dos 50 lances (FIDE 9.2 e 9.3) são apenas *reivindicáveis* por quem tem a vez:
+`claimable_draw` diz se cabe a reivindicação; quem encerra a partida é o serviço (P-17).
 """
 
 import re
@@ -73,6 +73,22 @@ class ChessEngine:
             return Outcome(None, "fifty_move")
         if len(state.moves) >= MAX_PLIES:
             return Outcome(None, "ply_limit")
+        return None
+
+    def claimable_draw(self, state: State) -> str | None:
+        """Motivo ("repetition" ou "fifty_move") que permite a quem tem a vez reivindicar empate.
+
+        Vale para a posição já repetida 3 vezes ou que se repetiria com um lance legal, e para
+        50 lances sem captura nem peão (python-chess aplica FIDE 9.2/9.3). `None` se a partida
+        já terminou ou não cabe reivindicação.
+        """
+        if self.outcome(state) is not None:
+            return None
+        board = state.board
+        if board.can_claim_threefold_repetition():
+            return "repetition"
+        if board.can_claim_fifty_moves():
+            return "fifty_move"
         return None
 
     def serialize(self, state: State) -> dict[str, Any]:
