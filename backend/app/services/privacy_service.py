@@ -29,9 +29,9 @@ from app.models import (
     MatchMove,
     MatchPlayer,
     PlacementResult,
+    QueueEntry,
     Rating,
     RatingHistory,
-    QueueEntry,
     SkillProgress,
     User,
 )
