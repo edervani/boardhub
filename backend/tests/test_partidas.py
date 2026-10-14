@@ -66,7 +66,6 @@ def test_ia_joga_primeiro_quando_o_usuario_escolhe_o_assento_2(jogador: TestClie
     {"mode": "local", "ai_level": 3},
     {"mode": "online_ranked"},
     {"game_id": "go"},
-    {"game_id": "chess"},   # sem motor implementado
     {"user_id": "x"},
 ])
 def test_criacao_invalida_e_recusada(jogador: TestClient, extra: dict[str, object]) -> None:

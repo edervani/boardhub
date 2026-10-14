@@ -319,8 +319,10 @@ def test_estado_adulterado_e_recusado(nome: str, alterar: Callable[[dict[str, An
 
 def test_estado_no_limite_de_lances_e_aceito() -> None:
     """600 meios-lances válidos cabem; é o teto do tamanho do estado."""
-    data = {"schema_version": 1, "fen": chess.STARTING_FEN,
-            "moves": ["g1f3", "g8f6", "f3g1", "f6g8"] * (MAX_PLIES // 4)}
-    assert len(data["moves"]) == MAX_PLIES
+    moves = ["g1f3", "g8f6", "f3g1", "f6g8"] * (MAX_PLIES // 4)
+    ref = chess.Board()
+    for m in moves:
+        ref.push_uci(m)
+    data = {"schema_version": 1, "fen": ref.fen(), "moves": moves}
     s = E.deserialize(data)
-    assert len(s.moves) == MAX_PLIES and s.board.fen() == chess.STARTING_FEN
+    assert len(s.moves) == MAX_PLIES and s.board.fen() == ref.fen()
