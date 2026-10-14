@@ -50,9 +50,11 @@ Legenda auth: **—** pública · **U** usuário autenticado · **V** usuário c
 | GET /ranking/{game_id} | Ranking | — | `cursor, limit` | 200 | 404 | — | — | RF-019 |
 | GET /academy/{game_id}/lessons | Lições | U | — | 200 | — | — | — | RF-023 |
 | GET /academy/exercises/{id} | Exercício (sem a resposta) | U | — | 200 | 404 | — | — | RF-023 |
-| POST /academy/exercises/{id}/attempts | Responder | U | `answer, hints_used, duration_ms` | 200 `{correct, feedback, mastery}` | 422, 429 | 60/min | exercise_attempts, progress | RF-023/025 |
-| POST /academy/{game_id}/placement | Avaliação inicial | U | respostas | 200 nível estimado | 422 | 5/dia | progress | RF-022 |
-| GET /matches/{id}/analysis | Análise pós-partida | U participante; partida finalizada e **não** em andamento | — | 200 ou 202 (processando) | 403, 409 | 10/h | cache de análise | RF-024 |
+| POST /academy/exercises/{id}/attempts | Responder | U | `answer, duration_ms` (as dicas são contadas no servidor) | 200 `{correct, feedback, mastery}` | 422, 429 | 60/min | exercise_attempts, progress | RF-023/025 |
+| POST /academy/exercises/{id}/hints | Pedir dica (nível 1–3, registrada no servidor) | U | `level` | 200 `{level, text, hints_used}` | 404, 409, 422 | — | exercise_hints | RF-023 |
+| GET /academy/tracks, GET /academy/progress | Trilhas e progresso por conceito | U | — | 200 | — | — | progress | RF-022/025 |
+| POST /academy/{game_id}/placement | Avaliação inicial | U | respostas | 200 próximo exercício ou nível estimado (o servidor reexecuta as respostas; sem estado no cliente) | 409 `placement_too_soon`, 422 | 5/dia | progress | RF-022 |
+| GET /matches/{id}/analysis | Análise pós-partida | U participante; partida finalizada e **não** em andamento | — | 200 (análise síncrona; 202 não implementado, P-20) | 403, 409 | 10/h | cache de análise | RF-024 |
 | POST /me/export | Pedir exportação | U | — | 202 | 429 | 1/24 h | data_export_requests, audit | RF-029 |
 | GET /me/export/{id} | Baixar | U dono | — | 200 arquivo | 404, 410 | — | — | RF-029 |
 | POST /me/delete | Pedir exclusão | U | `password` | 202 | 401, 429 | 3/dia | users.status, audit | RF-030 |

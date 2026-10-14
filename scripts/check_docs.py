@@ -183,11 +183,16 @@ IMPLEMENTADOS = {1, 2, 3, 4, 5}
 PARCIAIS = {6, 7, 8, 11, 12, 14, 17, 18, 9, 10, 13, 15, 16, 20, 33, 34}  # código mesclado, aceite incompleto (P-15)
 
 
+ACADEMY = {22, 23, 24, 25}  # Academy e Mentor (fase 6)
+
+
 def state_evidence(n: int) -> tuple[str, str]:
     if n in IMPLEMENTADOS:
         return "implementado", f"{PR1}; CI verde"
     if n in PARCIAIS:
         return "aprovado", f"parcial em {PR1}; lacunas em P-15"
+    if n in ACADEMY:
+        return "aprovado", "código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge)"
     return "aprovado", "—"
 
 

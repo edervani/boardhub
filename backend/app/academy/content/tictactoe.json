@@ -1,0 +1,142 @@
+{
+  "content_version": "2026-10-14.1",
+  "game_id": "tictactoe",
+  "track": {
+    "title": "Jogo da velha: do básico ao garfo",
+    "description": "Aprenda as regras, a vencer e a bloquear na hora certa, a escolher boas casas e a montar o garfo, a jogada que cria duas ameaças ao mesmo tempo."
+  },
+  "concepts": [
+    {"key": "tt.rules", "title": "Regras e objetivo", "prerequisites": [],
+     "summary": "O tabuleiro tem nove casas e oito linhas de três: três horizontais, três verticais e duas diagonais. Quem completa uma linha com a sua marca vence; se as nove casas ficam cheias sem linha, é empate."},
+    {"key": "tt.win_in_one", "title": "Vencer na hora", "prerequisites": ["tt.rules"],
+     "summary": "Antes de qualquer plano, procure uma linha em que você já tem duas marcas e a terceira casa está livre. Completar essa linha encerra a partida a seu favor."},
+    {"key": "tt.block", "title": "Bloquear o adversário", "prerequisites": ["tt.win_in_one"],
+     "summary": "Se você não pode vencer agora, olhe as linhas do adversário. Quando ele tem duas marcas e a terceira casa livre, ocupe essa casa; senão ele vence no próximo lance."},
+    {"key": "tt.center_corners", "title": "Centro e cantos", "prerequisites": ["tt.rules"],
+     "summary": "O centro participa de quatro linhas, cada canto de três e cada lado de duas. Por isso o centro e os cantos costumam ser as melhores casas, e a resposta certa a uma abertura depende de onde o adversário jogou."},
+    {"key": "tt.fork", "title": "O garfo", "prerequisites": ["tt.block", "tt.center_corners"],
+     "summary": "Garfo é um lance que cria duas ameaças de vitória de uma só vez. O adversário só consegue bloquear uma, e você completa a outra."}
+  ],
+  "lessons": [
+    {
+      "id": "tt-l1", "concept": "tt.rules", "title": "Como se joga",
+      "summary": "O tabuleiro, as marcas e como a partida termina.",
+      "body": [
+        "O jogo da velha usa um tabuleiro de três por três casas. Um jogador usa X e o outro usa O, e eles se alternam: cada um coloca uma marca numa casa vazia por vez. O X sempre começa.",
+        "Vence quem alinhar três marcas suas em uma linha: na horizontal, na vertical ou na diagonal. Há oito linhas possíveis no total.",
+        "Se todas as casas forem preenchidas e ninguém tiver alinhado três marcas, a partida termina empatada. Entre dois jogadores que não erram, o resultado é sempre empate."
+      ],
+      "exercises": [
+        {"id": "tt-rules-1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Quantas linhas de três casas existem no tabuleiro (horizontais, verticais e diagonais)?",
+         "options": [{"id": "a", "text": "6"}, {"id": "b", "text": "8"}, {"id": "c", "text": "9"}, {"id": "d", "text": "10"}],
+         "correct_option": "b",
+         "explanation": "São três linhas horizontais, três verticais e duas diagonais: 3 + 3 + 2 = 8."},
+        {"id": "tt-rules-2", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Se os dois jogadores jogam sem errar, como termina a partida?",
+         "options": [{"id": "a", "text": "O X sempre vence"}, {"id": "b", "text": "O O sempre vence"}, {"id": "c", "text": "Em empate"}, {"id": "d", "text": "Depende só da cor das marcas"}],
+         "correct_option": "c",
+         "explanation": "O jogo da velha é resolvido: com jogo perfeito dos dois lados, ninguém consegue vencer e a partida acaba empatada."},
+        {"id": "tt-rules-3", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "As nove casas estão preenchidas e ninguém alinhou três marcas. O que acontece?",
+         "options": [{"id": "a", "text": "Vence quem jogou por último"}, {"id": "b", "text": "Vence quem tem mais marcas"}, {"id": "c", "text": "A partida termina empatada"}, {"id": "d", "text": "As marcas são apagadas e o jogo continua"}],
+         "correct_option": "c",
+         "explanation": "Tabuleiro cheio sem linha completa é empate."}
+      ]
+    },
+    {
+      "id": "tt-l2", "concept": "tt.win_in_one", "title": "Vencer na hora",
+      "summary": "Reconheça a linha com duas marcas suas e complete-a.",
+      "body": [
+        "A primeira pergunta em toda jogada é: eu posso vencer agora? Confira as oito linhas. Se alguma já tem duas marcas suas e a terceira casa está vazia, jogue nela.",
+        "Vencer na hora vale mais do que qualquer outra ideia, inclusive bloquear: se você completa a sua linha primeiro, a partida acaba antes de o adversário jogar."
+      ],
+      "exercises": [
+        {"id": "tt-win-1", "type": "best_move", "goal": "win_now", "difficulty": 1,
+         "prompt": "Você joga com X. Encontre o lance que vence a partida agora.",
+         "position": {"board": "XX_O_O___", "to_move": "X"},
+         "explanation": "A primeira linha já tinha dois X; completar a casa vazia da direita fecha a linha e encerra a partida."},
+        {"id": "tt-win-2", "type": "best_move", "goal": "win_now", "difficulty": 1,
+         "prompt": "Você joga com X. Qual lance vence agora?",
+         "position": {"board": "XOO_X____", "to_move": "X"},
+         "explanation": "As casas do canto superior esquerdo e do centro são suas; o canto inferior direito completa a diagonal."},
+        {"id": "tt-win-3", "type": "best_move", "goal": "win_now", "difficulty": 2,
+         "prompt": "Agora você joga com O. Existe um lance que vence na hora. Qual?",
+         "position": {"board": "XXOXO____", "to_move": "O"},
+         "explanation": "Mesmo com o X ameaçando duas linhas, você vence primeiro: o canto inferior esquerdo completa a sua diagonal."}
+      ]
+    },
+    {
+      "id": "tt-l3", "concept": "tt.block", "title": "Bloquear a ameaça",
+      "summary": "Quando você não vence agora, impeça a vitória do adversário.",
+      "body": [
+        "Se não há vitória imediata para você, olhe as linhas do adversário. Uma linha com duas marcas dele e uma casa vazia é uma ameaça: se você não ocupar essa casa, ele completa a linha no próximo lance.",
+        "Bloquear é jogar exatamente na casa que falta. Qualquer outro lance deixa a ameaça de pé."
+      ],
+      "exercises": [
+        {"id": "tt-block-1", "type": "best_move", "goal": "block_loss", "difficulty": 2,
+         "prompt": "Você joga com X e não pode vencer agora. O adversário ameaça vencer. Qual lance impede a derrota?",
+         "position": {"board": "X__OO___X", "to_move": "X"},
+         "explanation": "As duas marcas O da linha do meio deixam a casa da direita como a única que falta; ocupando-a, a ameaça acaba."},
+        {"id": "tt-block-2", "type": "best_move", "goal": "block_loss", "difficulty": 2,
+         "prompt": "Você joga com O. O adversário está prestes a completar uma coluna. Qual lance o impede?",
+         "position": {"board": "X__XOO__X", "to_move": "O"},
+         "explanation": "A coluna da esquerda tem dois X e a casa de baixo vazia. Jogar ali bloqueia a ameaça."},
+        {"id": "tt-block-3", "type": "best_move", "goal": "block_loss", "difficulty": 2,
+         "prompt": "Você joga com X. Onde jogar para não perder?",
+         "position": {"board": "X_O__O_X_", "to_move": "X"},
+         "explanation": "A coluna da direita tem dois O e a casa de baixo vazia; ocupá-la evita a derrota."}
+      ]
+    },
+    {
+      "id": "tt-l4", "concept": "tt.center_corners", "title": "Centro e cantos",
+      "summary": "Por que o centro e os cantos valem mais, e como responder a cada abertura.",
+      "body": [
+        "Cada casa participa de um número diferente de linhas: o centro faz parte de quatro (uma horizontal, uma vertical e as duas diagonais), cada canto de três e cada lado de duas. Mais linhas significam mais chances de criar ameaças.",
+        "Se o adversário abre no centro, responda num canto: responder num lado perde força. Se ele abre num canto, a resposta certa é o centro."
+      ],
+      "exercises": [
+        {"id": "tt-center-q1", "type": "rule_quiz", "difficulty": 1,
+         "prompt": "Em quantas linhas de três participa a casa do centro?",
+         "options": [{"id": "a", "text": "2"}, {"id": "b", "text": "3"}, {"id": "c", "text": "4"}, {"id": "d", "text": "8"}],
+         "correct_option": "c",
+         "explanation": "O centro está na linha do meio, na coluna do meio e nas duas diagonais: quatro linhas."},
+        {"id": "tt-center-1", "type": "best_move", "goal": "optimal", "difficulty": 2,
+         "prompt": "O X abriu no centro e agora é a sua vez de jogar com O. Qual resposta mantém o empate?",
+         "position": {"board": "____X____", "to_move": "O"},
+         "explanation": "Responder num canto mantém a partida equilibrada. Responder num lado permite ao X forçar a vitória."},
+        {"id": "tt-corner-1", "type": "best_move", "goal": "optimal", "difficulty": 2,
+         "prompt": "O X abriu num canto. Você joga com O: qual é a única resposta que não perde com jogo perfeito do adversário?",
+         "position": {"board": "X________", "to_move": "O"},
+         "explanation": "Contra uma abertura de canto, o centro é a única resposta que segura o empate."}
+      ]
+    },
+    {
+      "id": "tt-l5", "concept": "tt.fork", "title": "O garfo",
+      "summary": "Crie duas ameaças ao mesmo tempo.",
+      "body": [
+        "Um garfo é um lance que cria duas ameaças de vitória de uma só vez. O adversário só pode bloquear uma delas, e na jogada seguinte você completa a outra.",
+        "Para achar um garfo, procure uma casa livre que seja ponto de encontro de duas linhas em que você já tem uma marca e as outras casas estão livres."
+      ],
+      "exercises": [
+        {"id": "tt-fork-q1", "type": "rule_quiz", "difficulty": 2,
+         "prompt": "O que é um garfo no jogo da velha?",
+         "options": [
+           {"id": "a", "text": "Um lance que bloqueia duas linhas do adversário"},
+           {"id": "b", "text": "Um lance que cria duas ameaças de vitória ao mesmo tempo"},
+           {"id": "c", "text": "Uma jogada nas duas diagonais"},
+           {"id": "d", "text": "Uma jogada num canto vazio"}],
+         "correct_option": "b",
+         "explanation": "Com duas ameaças simultâneas, o adversário só consegue bloquear uma."},
+        {"id": "tt-fork-1", "type": "best_move", "goal": "optimal", "difficulty": 3,
+         "prompt": "Você joga com X. Existe um lance que cria duas ameaças ao mesmo tempo e garante a vitória. Encontre-o.",
+         "position": {"board": "XOX___O__", "to_move": "X"},
+         "explanation": "O canto inferior direito cria duas ameaças: uma na diagonal e outra na coluna da direita. O adversário só bloqueia uma."},
+        {"id": "tt-fork-2", "type": "best_move", "goal": "optimal", "difficulty": 3,
+         "prompt": "Você joga com X. Qual lance cria um garfo e leva à vitória?",
+         "position": {"board": "XO_O_X___", "to_move": "X"},
+         "explanation": "O canto inferior direito ameaça ao mesmo tempo a diagonal principal e a coluna da direita."}
+      ]
+    }
+  ]
+}

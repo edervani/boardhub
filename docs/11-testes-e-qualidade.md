@@ -68,10 +68,10 @@ Colunas: requisito · documento de origem · módulo responsável · endpoint/co
 | RF-019 | doc 02 | services/rating_service | GET /ranking/{game_id} | T-019 | CA-019 | aprovado | — |
 | RF-020 | doc 02 | services/match_service | GET /me/matches; /matches/{id}/moves | T-020 | CA-020 | aprovado | parcial em [PR #1](https://github.com/edervani/boardhub/pull/1); lacunas em P-15 |
 | RF-021 | doc 02 | services/stats_service | GET /me/stats | T-021 | CA-021 | aprovado | — |
-| RF-022 | doc 02 | services/academy_service | POST /academy/{game}/placement | T-022 | CA-022 | aprovado | — |
-| RF-023 | doc 02 | services/academy_service | /academy/exercises/* | T-023 | CA-023 | aprovado | — |
-| RF-024 | doc 02 | ai/mentor + ai/llm | GET /matches/{id}/analysis | T-024 | CA-024 | aprovado | — |
-| RF-025 | doc 02 | services/academy_service | features/academy | T-025 | CA-025 | aprovado | — |
+| RF-022 | doc 02 | services/academy_service | POST /academy/{game}/placement | T-022 | CA-022 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
+| RF-023 | doc 02 | services/academy_service | /academy/exercises/* | T-023 | CA-023 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
+| RF-024 | doc 02 | ai/mentor + ai/llm | GET /matches/{id}/analysis | T-024 | CA-024 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
+| RF-025 | doc 02 | services/academy_service | features/academy | T-025 | CA-025 | aprovado | código na branch `feat/fase-6-academy` (PR aberto; `implementado` só após merge) |
 | RF-026 | doc 02 | services/achievement_service | (fase 6) | T-026 | CA-026 | aprovado | — |
 | RF-027 | doc 02 | services/academy_service | (fase 6) | T-027 | CA-027 | aprovado | — |
 | RF-028 | doc 02 | services/notification_service | WS eventos | T-028 | CA-028 | aprovado | — |
