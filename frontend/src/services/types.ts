@@ -46,7 +46,9 @@ export interface MatchState {
   schema_version: number;
   board?: string; // jogo da velha
   squares?: string[]; // damas
-  to_move: "X" | "O" | "w" | "b";
+  to_move?: "X" | "O" | "w" | "b"; // ausente no xadrez
+  fen?: string; // xadrez
+  moves?: string[]; // xadrez: lances UCI já jogados
 }
 
 export interface MatchView {
